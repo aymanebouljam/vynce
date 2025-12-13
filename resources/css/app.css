@@ -1,3 +1,15 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    body {
+        font-family: "Avenir Next", "Segoe UI", sans-serif;
+    }
+}
+
+@layer components {
+    .field {
+        @apply w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white placeholder:text-slate-500 focus:border-[#ff6a3d] focus:outline-none focus:ring-0;
+    }
+}
