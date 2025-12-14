@@ -15,15 +15,6 @@ class SocialGraphService
     public function follow(User $actor, User $target): Follow
     {
         return DB::transaction(function () use ($actor, $target) {
-            UserBlock::query()
-                ->where(fn ($query) => $query
-                    ->where('blocker_id', $actor->id)
-                    ->where('blocked_id', $target->id))
-                ->orWhere(fn ($query) => $query
-                    ->where('blocker_id', $target->id)
-                    ->where('blocked_id', $actor->id))
-                ->delete();
-
             $follow = Follow::query()->updateOrCreate(
                 [
                     'follower_id' => $actor->id,
