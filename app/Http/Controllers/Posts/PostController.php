@@ -27,9 +27,14 @@ class PostController extends Controller
     {
         $this->authorize('update', $post);
 
+        preg_match_all('/#([\pL\pN_]+)/u', $request->string('body')->value(), $hashtags);
+        preg_match_all('/@([a-z0-9_.]+)/i', $request->string('body')->value(), $mentions);
+
         $post->update([
             'body' => $request->string('body')->value(),
             'visibility' => $request->string('visibility')->value(),
+            'hashtags' => array_values(array_unique(array_map('mb_strtolower', $hashtags[1] ?? []))),
+            'mentions' => array_values(array_unique(array_map('strtolower', $mentions[1] ?? []))),
         ]);
 
         return back()->with('success', 'Post updated.');
