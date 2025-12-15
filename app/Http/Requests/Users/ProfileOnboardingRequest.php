@@ -18,7 +18,7 @@ class ProfileOnboardingRequest extends FormRequest
                 'lowercase',
                 'min:3',
                 'max:30',
-                'regex:/^[a-z0-9_.]+$/',
+                'regex:/^[a-z0-9_.-]+$/',
                 Rule::unique(User::class, 'username')->ignore($this->user()->id),
             ],
             'bio' => ['nullable', 'string', 'max:240'],
