@@ -1,0 +1,53 @@
+<?php
+
+namespace Tests\Feature\Feed;
+
+use App\Enums\FollowStatus;
+use App\Models\Follow;
+use App\Models\Post;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class FeedTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_home_feed_includes_own_posts_and_followed_posts(): void
+    {
+        $viewer = User::factory()->create();
+        $followed = User::factory()->create();
+        $outsider = User::factory()->create();
+
+        Follow::query()->create([
+            'follower_id' => $viewer->id,
+            'followed_id' => $followed->id,
+            'status' => FollowStatus::Accepted,
+            'accepted_at' => now(),
+        ]);
+
+        $ownPost = Post::factory()->for($viewer)->create(['body' => 'My post', 'visibility' => 'public']);
+        $followedPost = Post::factory()->for($followed)->create(['body' => 'Followed post', 'visibility' => 'public']);
+        $outsiderPost = Post::factory()->for($outsider)->create(['body' => 'Outsider post', 'visibility' => 'public']);
+
+        $response = $this->actingAs($viewer)->get(route('feed.home'));
+
+        $response->assertOk();
+        $response->assertSee($ownPost->body);
+        $response->assertSee($followedPost->body);
+        $response->assertDontSee($outsiderPost->body);
+    }
+
+    public function test_discover_feed_shows_public_non_self_posts(): void
+    {
+        $viewer = User::factory()->create();
+        $publicPost = Post::factory()->create(['body' => 'Discover me', 'visibility' => 'public']);
+        $ownPost = Post::factory()->for($viewer)->create(['body' => 'Do not show me']);
+
+        $response = $this->actingAs($viewer)->get(route('feed.discover'));
+
+        $response->assertOk();
+        $response->assertSee($publicPost->body);
+        $response->assertDontSee($ownPost->body);
+    }
+}
