@@ -17,7 +17,7 @@ Route::get('/', function () {
     ]);
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     Route::get('/app', fn () => redirect()->route('feed.home'))->name('dashboard');
     Route::get('/onboarding', [OnboardingController::class, 'show'])->name('onboarding.show');
     Route::post('/onboarding', [OnboardingController::class, 'store'])->name('onboarding.store');
@@ -42,7 +42,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/users/{user}/mute', [RelationshipController::class, 'mute'])->name('users.mute');
     Route::delete('/users/{user}/mute', [RelationshipController::class, 'unmute'])->name('users.unmute');
 
-    Route::get('/{user:username}', [FeedController::class, 'profile'])->name('users.show');
 });
 
 require __DIR__.'/auth.php';
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/{user:username}', [FeedController::class, 'profile'])->name('users.show');
+});
