@@ -8,17 +8,15 @@ use App\Http\Controllers\SocialGraph\RelationshipController;
 use App\Http\Controllers\Users\ProfileController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
-
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-    ]);
-});
+    return auth()->check()
+        ? redirect()->route('feed.home')
+        : redirect()->route('login');
+})->name('home');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/app', fn () => redirect()->route('feed.home'))->name('dashboard');
+    Route::get('/settings', fn () => redirect()->route('profile.edit'))->name('settings');
     Route::get('/onboarding', [OnboardingController::class, 'show'])->name('onboarding.show');
     Route::post('/onboarding', [OnboardingController::class, 'store'])->name('onboarding.store');
 
