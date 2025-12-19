@@ -6,7 +6,7 @@ const navigation = [
     { label: 'Home', route: 'feed.home' },
     { label: 'Following', route: 'feed.following' },
     { label: 'Discover', route: 'feed.discover' },
-    { label: 'Profile', route: 'profile.edit' },
+    { label: 'Settings', route: 'settings' },
 ];
 
 export default function AppShell({ children, title, sidebar }) {
@@ -28,7 +28,7 @@ export default function AppShell({ children, title, sidebar }) {
                                     <div>
                                         <div className="text-lg font-semibold">Vynce</div>
                                         <div className="text-xs text-slate-400">
-                                            Signal-first social
+                                            Your people, your pace
                                         </div>
                                     </div>
                                 </Link>
@@ -56,6 +56,15 @@ export default function AppShell({ children, title, sidebar }) {
                                     <div className="text-xs text-slate-400">
                                         @{auth.user.username}
                                     </div>
+                                    <div className="mt-3 text-xs leading-6 text-slate-500">
+                                        Drop a post, check your circle, and see what conversations are gaining heat.
+                                    </div>
+                                    <Link
+                                        href={route('users.show', auth.user.username)}
+                                        className="mt-4 inline-flex rounded-full border border-white/10 px-3 py-2 text-xs text-slate-200 transition hover:bg-white/5"
+                                    >
+                                        View my profile
+                                    </Link>
                                 </div>
 
                                 <Link
