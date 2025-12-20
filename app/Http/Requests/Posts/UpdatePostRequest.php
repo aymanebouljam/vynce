@@ -2,6 +2,4 @@
 
 namespace App\Http\Requests\Posts;
 
-class UpdatePostRequest extends StorePostRequest
-{
-}
+class UpdatePostRequest extends StorePostRequest {}

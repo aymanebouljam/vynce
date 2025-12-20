@@ -9,8 +9,7 @@ class UserPolicy
 {
     public function __construct(
         private readonly SocialGraphService $socialGraphService,
-    ) {
-    }
+    ) {}
 
     public function view(?User $viewer, User $user): bool
     {

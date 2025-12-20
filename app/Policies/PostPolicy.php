@@ -10,8 +10,7 @@ class PostPolicy
 {
     public function __construct(
         private readonly SocialGraphService $socialGraphService,
-    ) {
-    }
+    ) {}
 
     public function view(?User $viewer, Post $post): bool
     {
