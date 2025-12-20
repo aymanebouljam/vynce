@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Users\UpsertProfileAction;
-use App\Http\Resources\UserResource;
 use App\Http\Requests\Users\ProfileOnboardingRequest;
+use App\Http\Resources\UserResource;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;

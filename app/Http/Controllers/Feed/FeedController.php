@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Feed;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\UserResource;
 use App\Http\Resources\PostResource;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Services\Feed\FeedService;
 use App\Services\SocialGraph\SocialGraphService;
@@ -48,8 +48,7 @@ class FeedController extends Controller
         User $user,
         FeedService $feedService,
         SocialGraphService $socialGraphService,
-    ): Response
-    {
+    ): Response {
         $this->authorize('view', $user);
 
         $profile = $user->loadCount([
