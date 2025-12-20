@@ -13,8 +13,7 @@ class FeedService
 {
     public function __construct(
         private readonly SocialGraphService $socialGraphService,
-    ) {
-    }
+    ) {}
 
     public function home(User $user, int $perPage = 10): LengthAwarePaginator
     {
@@ -63,7 +62,7 @@ class FeedService
             ->where('user_id', $profileUser->id)
             ->when(
                 ! $viewer || ! $viewer->is($profileUser),
-                fn (Builder $query) => $query->whereNot('visibility', 'private')
+                fn (Builder $query) => $query->whereNot('visibility', 'private'),
             )
             ->latest('published_at')
             ->paginate($perPage);

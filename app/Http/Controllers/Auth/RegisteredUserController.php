@@ -23,13 +23,11 @@ class RegisteredUserController extends Controller
 
     /**
      * Handle an incoming registration request.
-     *
      */
     public function store(
         RegisterRequest $request,
         RegisterUserAction $registerUserAction,
-    ): RedirectResponse
-    {
+    ): RedirectResponse {
         $user = $registerUserAction->execute($request);
 
         event(new Registered($user));

@@ -6,8 +6,8 @@ use App\Http\Controllers\Posts\PostController;
 use App\Http\Controllers\SocialGraph\FollowController;
 use App\Http\Controllers\SocialGraph\RelationshipController;
 use App\Http\Controllers\Users\ProfileController;
-use App\Models\User;
 use Illuminate\Support\Facades\Route;
+
 Route::get('/', function () {
     return auth()->check()
         ? redirect()->route('feed.home')
@@ -39,7 +39,6 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/users/{user}/block', [RelationshipController::class, 'unblock'])->name('users.unblock');
     Route::post('/users/{user}/mute', [RelationshipController::class, 'mute'])->name('users.mute');
     Route::delete('/users/{user}/mute', [RelationshipController::class, 'unmute'])->name('users.unmute');
-
 });
 
 require __DIR__.'/auth.php';
