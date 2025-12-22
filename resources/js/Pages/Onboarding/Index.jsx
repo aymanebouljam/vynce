@@ -32,7 +32,8 @@ export default function Onboarding({ profile }) {
                         Finish your profile in one pass
                     </h1>
                     <p className="mt-3 text-sm leading-7 text-slate-400">
-                        Add the essentials now. You can refine visuals, privacy, and content style any time from settings.
+                        Add the essentials now. You can refine visuals, privacy, and content style
+                        any time from settings.
                     </p>
                 </div>
 
@@ -63,9 +64,7 @@ export default function Onboarding({ profile }) {
                     <Field label="Website" error={errors.website_url}>
                         <input
                             value={data.website_url}
-                            onChange={(event) =>
-                                setData('website_url', event.target.value)
-                            }
+                            onChange={(event) => setData('website_url', event.target.value)}
                             className="field"
                         />
                     </Field>
@@ -81,9 +80,7 @@ export default function Onboarding({ profile }) {
                         <input
                             type="file"
                             accept="image/*"
-                            onChange={(event) =>
-                                setData('avatar', event.target.files[0] ?? null)
-                            }
+                            onChange={(event) => setData('avatar', event.target.files[0] ?? null)}
                             className="field file:mr-3 file:rounded-full file:border-0 file:bg-white/10 file:px-4 file:py-2 file:text-white"
                         />
                     </Field>
@@ -91,20 +88,16 @@ export default function Onboarding({ profile }) {
                         <input
                             type="file"
                             accept="image/*"
-                            onChange={(event) =>
-                                setData('cover', event.target.files[0] ?? null)
-                            }
+                            onChange={(event) => setData('cover', event.target.files[0] ?? null)}
                             className="field file:mr-3 file:rounded-full file:border-0 file:bg-white/10 file:px-4 file:py-2 file:text-white"
                         />
                     </Field>
 
-                    <label className="md:col-span-2 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-200">
+                    <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-200 md:col-span-2">
                         <input
                             type="checkbox"
                             checked={data.is_private}
-                            onChange={(event) =>
-                                setData('is_private', event.target.checked)
-                            }
+                            onChange={(event) => setData('is_private', event.target.checked)}
                             className="rounded border-white/10 bg-slate-900 text-[#ff6a3d] focus:ring-[#ff6a3d]"
                         />
                         Start with a private account

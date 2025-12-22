@@ -10,6 +10,10 @@ class PostResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $user = $this->relationLoaded('user') && $this->user
+            ? UserResource::make($this->user)->resolve($request)
+            : null;
+
         return [
             'id' => $this->id,
             'body' => $this->body,
@@ -18,7 +22,7 @@ class PostResource extends JsonResource
             'mentions' => $this->mentions ?? [],
             'published_at' => optional($this->published_at)->toIso8601String(),
             'created_at' => optional($this->created_at)->toIso8601String(),
-            'user' => UserResource::make($this->whenLoaded('user')),
+            'user' => $user,
             'media' => $this->media->map(fn ($media) => [
                 'id' => $media->id,
                 'url' => Storage::disk($media->disk)->url($media->path),

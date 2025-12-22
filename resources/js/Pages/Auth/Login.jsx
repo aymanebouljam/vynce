@@ -36,9 +36,7 @@ export default function Login({ status, canResetPassword }) {
 
             <form onSubmit={submit} className="space-y-5">
                 <div>
-                    <label className="mb-2 block text-sm text-slate-300">
-                        Email
-                    </label>
+                    <label className="mb-2 block text-sm text-slate-300">Email</label>
                     <input
                         type="email"
                         value={data.email}
@@ -51,9 +49,7 @@ export default function Login({ status, canResetPassword }) {
                 </div>
 
                 <div>
-                    <label className="mb-2 block text-sm text-slate-300">
-                        Password
-                    </label>
+                    <label className="mb-2 block text-sm text-slate-300">Password</label>
                     <input
                         type="password"
                         value={data.password}

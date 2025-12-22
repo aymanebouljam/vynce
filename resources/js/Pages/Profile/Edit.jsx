@@ -70,16 +70,10 @@ export default function Edit({ profile }) {
                                 className="field"
                             />
                         </Field>
-                        <Field
-                            label="Website"
-                            error={errors.website_url}
-                            className="md:col-span-2"
-                        >
+                        <Field label="Website" error={errors.website_url} className="md:col-span-2">
                             <input
                                 value={data.website_url}
-                                onChange={(event) =>
-                                    setData('website_url', event.target.value)
-                                }
+                                onChange={(event) => setData('website_url', event.target.value)}
                                 className="field"
                             />
                         </Field>
@@ -111,13 +105,11 @@ export default function Edit({ profile }) {
                             />
                         </Field>
 
-                        <label className="md:col-span-2 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-200">
+                        <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-200 md:col-span-2">
                             <input
                                 type="checkbox"
                                 checked={data.is_private}
-                                onChange={(event) =>
-                                    setData('is_private', event.target.checked)
-                                }
+                                onChange={(event) => setData('is_private', event.target.checked)}
                                 className="rounded border-white/10 bg-slate-900 text-[#ff6a3d] focus:ring-[#ff6a3d]"
                             />
                             Private account

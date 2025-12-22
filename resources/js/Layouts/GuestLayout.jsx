@@ -23,9 +23,8 @@ export default function GuestLayout({ children }) {
                             Build signal, not noise.
                         </h1>
                         <p className="max-w-lg text-lg leading-8 text-slate-300">
-                            Vynce gives creators and communities a modern feed,
-                            profile-first identity, and privacy-aware social graph
-                            without the clutter.
+                            Vynce gives creators and communities a modern feed, profile-first
+                            identity, and privacy-aware social graph without the clutter.
                         </p>
                     </div>
                 </div>

@@ -71,9 +71,12 @@ export default function Home({ feed, activeTab }) {
                 <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 backdrop-blur">
                     <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                         <div>
-                            <h1 className="text-3xl font-semibold">What your circle is talking about</h1>
+                            <h1 className="text-3xl font-semibold">
+                                What your circle is talking about
+                            </h1>
                             <p className="mt-2 text-sm leading-7 text-slate-400">
-                                Jump between close-follow updates, broader discovery, and the conversations worth replying to tonight.
+                                Jump between close-follow updates, broader discovery, and the
+                                conversations worth replying to tonight.
                             </p>
                         </div>
                         <FeedTabs activeTab={activeTab} />
@@ -85,7 +88,8 @@ export default function Home({ feed, activeTab }) {
                 <div className="space-y-4">
                     {feed.data.length === 0 ? (
                         <div className="rounded-[28px] border border-dashed border-white/10 bg-slate-950/40 p-8 text-sm text-slate-400">
-                            Nothing has landed here yet. Follow a few people, post an update, or switch to Discover to find voices worth bringing into your feed.
+                            Nothing has landed here yet. Follow a few people, post an update, or
+                            switch to Discover to find voices worth bringing into your feed.
                         </div>
                     ) : (
                         feed.data.map((post) => <PostCard key={post.id} post={post} />)

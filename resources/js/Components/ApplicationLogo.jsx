@@ -1,11 +1,6 @@
 export default function ApplicationLogo(props) {
     return (
-        <svg
-            {...props}
-            viewBox="0 0 128 128"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-        >
+        <svg {...props} viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <path
                 fill="currentColor"
                 d="M25 27c3.4 0 6.5 2.1 7.7 5.3L50 81.1c1.1 3.1 5.5 3.1 6.6 0L73.1 35c1.2-3.3 4.3-5.5 7.8-5.5h0.2c5.7 0 9.7 5.7 7.7 11L66.7 99.4c-1.3 3.4-4.5 5.6-8.2 5.6h-9.3c-3.6 0-6.9-2.3-8.1-5.7L17.3 37.9C15.4 32.5 19.4 27 25 27Z"

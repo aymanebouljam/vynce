@@ -8,8 +8,18 @@ if [ -z "$STAGED_FILES" ]; then
     exit 0
 fi
 
-PHP_FILES=$(printf '%s\n' "$STAGED_FILES" | rg '\.php$' || true)
-PRETTIER_FILES=$(printf '%s\n' "$STAGED_FILES" | rg '\.(js|jsx|ts|tsx|json|md|css|scss|html|yml|yaml)$' || true)
+filter_files() {
+    pattern=$1
+
+    if command -v rg >/dev/null 2>&1; then
+        printf '%s\n' "$STAGED_FILES" | rg "$pattern" || true
+    else
+        printf '%s\n' "$STAGED_FILES" | grep -E "$pattern" || true
+    fi
+}
+
+PHP_FILES=$(filter_files '\.php$')
+PRETTIER_FILES=$(filter_files '\.(js|jsx|ts|tsx|json|md|css|scss|html|yml|yaml)$')
 
 if [ -n "$PHP_FILES" ]; then
     echo "Running Pint on staged PHP files..."

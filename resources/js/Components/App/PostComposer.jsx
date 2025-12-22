@@ -41,9 +41,7 @@ export default function PostComposer() {
                 <div className="flex flex-col gap-3 md:flex-row md:items-center">
                     <select
                         value={data.visibility}
-                        onChange={(event) =>
-                            setData('visibility', event.target.value)
-                        }
+                        onChange={(event) => setData('visibility', event.target.value)}
                         className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-2 text-sm text-white focus:border-[#ff6a3d] focus:outline-none"
                     >
                         <option value="public">Public</option>
@@ -55,9 +53,7 @@ export default function PostComposer() {
                         type="file"
                         multiple
                         accept="image/*"
-                        onChange={(event) =>
-                            setData('media', Array.from(event.target.files))
-                        }
+                        onChange={(event) => setData('media', Array.from(event.target.files))}
                         className="block text-xs text-slate-400 file:mr-3 file:rounded-full file:border-0 file:bg-white/10 file:px-4 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-white/20"
                     />
                 </div>

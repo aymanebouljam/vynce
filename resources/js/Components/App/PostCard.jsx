@@ -1,18 +1,23 @@
 import { Link } from '@inertiajs/react';
 
 export default function PostCard({ post, canManage = false }) {
+    const authorName = post.user?.name ?? 'Unknown user';
+    const authorUsername = post.user?.username ?? null;
+    const authorHref = authorUsername ? route('users.show', authorUsername) : null;
+
     return (
         <article className="overflow-hidden rounded-[28px] border border-white/10 bg-slate-950/60 shadow-[0_24px_80px_rgba(15,23,42,0.24)]">
             <div className="flex items-start justify-between gap-4 p-5">
                 <div>
-                    <Link
-                        href={route('users.show', post.user.username)}
-                        className="text-sm font-semibold text-white"
-                    >
-                        {post.user.name}
-                    </Link>
+                    {authorHref ? (
+                        <Link href={authorHref} className="text-sm font-semibold text-white">
+                            {authorName}
+                        </Link>
+                    ) : (
+                        <div className="text-sm font-semibold text-white">{authorName}</div>
+                    )}
                     <div className="mt-1 text-xs text-slate-400">
-                        @{post.user.username} ·{' '}
+                        {authorUsername ? `@${authorUsername} · ` : ''}
                         {new Date(post.published_at || post.created_at).toLocaleString()}
                     </div>
                 </div>
@@ -23,9 +28,7 @@ export default function PostCard({ post, canManage = false }) {
             </div>
 
             <div className="space-y-4 px-5 pb-5">
-                <p className="whitespace-pre-wrap text-sm leading-7 text-slate-100">
-                    {post.body}
-                </p>
+                <p className="whitespace-pre-wrap text-sm leading-7 text-slate-100">{post.body}</p>
 
                 {post.media?.length > 0 && (
                     <div className="grid gap-3 md:grid-cols-2">
@@ -63,7 +66,8 @@ export default function PostCard({ post, canManage = false }) {
 
                 {canManage && (
                     <div className="text-xs text-slate-400">
-                        Owner controls are wired on the backend and ready for a fuller inline composer pass.
+                        Owner controls are wired on the backend and ready for a fuller inline
+                        composer pass.
                     </div>
                 )}
             </div>

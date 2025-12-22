@@ -83,9 +83,9 @@ export default function Welcome({ auth, canLogin, canRegister }) {
                                 A social space that feels alive, selective, and worth checking.
                             </h1>
                             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
-                                Follow people you actually care about, keep some
-                                updates private, publish others to the wider network,
-                                and let your feed feel like community instead of noise.
+                                Follow people you actually care about, keep some updates private,
+                                publish others to the wider network, and let your feed feel like
+                                community instead of noise.
                             </p>
 
                             <div className="mt-8 flex flex-wrap gap-4">
@@ -119,9 +119,12 @@ export default function Welcome({ auth, canLogin, canRegister }) {
                             <div className="rounded-[32px] border border-white/10 bg-white/5 p-5 backdrop-blur">
                                 <div className="mb-4 flex items-center justify-between">
                                     <div>
-                                        <div className="text-sm font-semibold">Tonight on Vynce</div>
+                                        <div className="text-sm font-semibold">
+                                            Tonight on Vynce
+                                        </div>
                                         <div className="text-xs text-slate-400">
-                                            Product notes, launch clips, and replies that go somewhere
+                                            Product notes, launch clips, and replies that go
+                                            somewhere
                                         </div>
                                     </div>
                                     <div className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs text-emerald-200">
@@ -136,7 +139,9 @@ export default function Welcome({ auth, canLogin, canRegister }) {
                                             className="rounded-3xl bg-slate-950/70 p-5"
                                         >
                                             <div className="text-sm font-semibold">{post.name}</div>
-                                            <div className="text-xs text-slate-400">{post.handle}</div>
+                                            <div className="text-xs text-slate-400">
+                                                {post.handle}
+                                            </div>
                                             <p className="mt-3 text-sm leading-7 text-slate-200">
                                                 {post.body}
                                             </p>
@@ -151,15 +156,21 @@ export default function Welcome({ auth, canLogin, canRegister }) {
                             <div className="grid gap-4 sm:grid-cols-3">
                                 <div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5">
                                     <div className="text-2xl font-semibold">12K+</div>
-                                    <div className="mt-1 text-sm text-slate-400">posts saved into close-knit feeds</div>
+                                    <div className="mt-1 text-sm text-slate-400">
+                                        posts saved into close-knit feeds
+                                    </div>
                                 </div>
                                 <div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5">
                                     <div className="text-2xl font-semibold">89%</div>
-                                    <div className="mt-1 text-sm text-slate-400">of posts come from followed people</div>
+                                    <div className="mt-1 text-sm text-slate-400">
+                                        of posts come from followed people
+                                    </div>
                                 </div>
                                 <div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5">
                                     <div className="text-2xl font-semibold">4x</div>
-                                    <div className="mt-1 text-sm text-slate-400">more profile visits after a thread lands</div>
+                                    <div className="mt-1 text-sm text-slate-400">
+                                        more profile visits after a thread lands
+                                    </div>
                                 </div>
                             </div>
                         </div>

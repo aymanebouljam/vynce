@@ -26,7 +26,8 @@ export default function Register() {
             <div className="mb-8">
                 <h1 className="text-3xl font-semibold">Create your account</h1>
                 <p className="mt-2 text-sm leading-7 text-slate-400">
-                    Start with a clean identity, then finish your profile in a short onboarding flow.
+                    Start with a clean identity, then finish your profile in a short onboarding
+                    flow.
                 </p>
             </div>
 
@@ -45,9 +46,7 @@ export default function Register() {
                     <label className="mb-2 block text-sm text-slate-300">Username</label>
                     <input
                         value={data.username}
-                        onChange={(event) =>
-                            setData('username', event.target.value.toLowerCase())
-                        }
+                        onChange={(event) => setData('username', event.target.value.toLowerCase())}
                         className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white focus:border-[#ff6a3d] focus:outline-none"
                         placeholder="your-name"
                     />

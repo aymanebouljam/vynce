@@ -57,7 +57,8 @@ export default function AppShell({ children, title, sidebar }) {
                                         @{auth.user.username}
                                     </div>
                                     <div className="mt-3 text-xs leading-6 text-slate-500">
-                                        Drop a post, check your circle, and see what conversations are gaining heat.
+                                        Drop a post, check your circle, and see what conversations
+                                        are gaining heat.
                                     </div>
                                     <Link
                                         href={route('users.show', auth.user.username)}
@@ -85,9 +86,7 @@ export default function AppShell({ children, title, sidebar }) {
                     </main>
 
                     {sidebar && (
-                        <aside className="lg:sticky lg:top-6 lg:h-fit lg:w-80">
-                            {sidebar}
-                        </aside>
+                        <aside className="lg:sticky lg:top-6 lg:h-fit lg:w-80">{sidebar}</aside>
                     )}
                 </div>
             </div>

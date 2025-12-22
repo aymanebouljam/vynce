@@ -34,9 +34,7 @@ export default function Show({ profile, relationship, feed }) {
                                 {profile.name?.charAt(0)}
                             </div>
                             <h1 className="text-3xl font-semibold">{profile.name}</h1>
-                            <div className="mt-1 text-sm text-slate-400">
-                                @{profile.username}
-                            </div>
+                            <div className="mt-1 text-sm text-slate-400">@{profile.username}</div>
                             <div className="mt-3 inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300">
                                 {profile.is_private ? 'Private profile' : 'Public profile'}
                             </div>
@@ -57,7 +55,9 @@ export default function Show({ profile, relationship, feed }) {
                                 <span>{profile.posts_count ?? 0} posts</span>
                             </div>
                             <div className="mt-4 max-w-2xl text-sm leading-7 text-slate-500">
-                                A profile on Vynce is part timeline, part identity card. The strongest accounts make it easy to understand what they share and why people follow them.
+                                A profile on Vynce is part timeline, part identity card. The
+                                strongest accounts make it easy to understand what they share and
+                                why people follow them.
                             </div>
                         </div>
 
@@ -90,15 +90,12 @@ export default function Show({ profile, relationship, feed }) {
             <section className="mt-6 space-y-4">
                 {feed.data.length === 0 ? (
                     <div className="rounded-[28px] border border-dashed border-white/10 bg-slate-950/40 p-8 text-sm text-slate-400">
-                        No posts yet. This space will fill with updates, threads, and media as soon as the first post goes live.
+                        No posts yet. This space will fill with updates, threads, and media as soon
+                        as the first post goes live.
                     </div>
                 ) : (
                     feed.data.map((post) => (
-                        <PostCard
-                            key={post.id}
-                            post={post}
-                            canManage={isOwnProfile}
-                        />
+                        <PostCard key={post.id} post={post} canManage={isOwnProfile} />
                     ))
                 )}
             </section>
