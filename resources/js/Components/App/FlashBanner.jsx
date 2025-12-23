@@ -7,9 +7,5 @@ export default function FlashBanner() {
         return null;
     }
 
-    return (
-        <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
-            {flash.success}
-        </div>
-    );
+    return <div className="app-flash rounded-2xl px-4 py-3 text-sm">{flash.success}</div>;
 }
