@@ -3,13 +3,306 @@
 @tailwind utilities;
 
 @layer base {
+    :root {
+        --vynce-text: #ffffff;
+        --vynce-bg: #0c134f;
+        --vynce-bg-strong: #11185f;
+        --vynce-surface: #1d267d;
+        --vynce-surface-strong: rgba(29, 38, 125, 0.74);
+        --vynce-surface-soft: rgba(29, 38, 125, 0.54);
+        --vynce-surface-muted: rgba(29, 38, 125, 0.42);
+        --vynce-surface-subtle: rgba(29, 38, 125, 0.36);
+        --vynce-surface-inset: rgba(12, 19, 79, 0.92);
+        --vynce-surface-inset-soft: rgba(12, 19, 79, 0.42);
+        --vynce-surface-inset-muted: rgba(12, 19, 79, 0.34);
+        --vynce-accent: #5c469c;
+        --vynce-accent-hover: #d4adfc;
+        --vynce-accent-soft: rgba(92, 70, 156, 0.16);
+        --vynce-accent-surface: rgba(92, 70, 156, 0.24);
+        --vynce-accent-border: rgba(212, 173, 252, 0.3);
+        --vynce-glow: rgba(212, 173, 252, 0.18);
+        --vynce-border: rgba(160, 163, 189, 0.16);
+        --vynce-border-soft: rgba(160, 163, 189, 0.14);
+        --vynce-text-muted: #a0a3bd;
+        --vynce-text-muted-strong: rgba(160, 163, 189, 0.92);
+        --vynce-text-muted-soft: rgba(160, 163, 189, 0.72);
+        --vynce-text-subtle: rgba(160, 163, 189, 0.56);
+        --vynce-text-high: rgba(255, 255, 255, 0.84);
+        --vynce-text-soft: rgba(255, 255, 255, 0.76);
+        --vynce-shadow-lg: 0 24px 80px rgba(10, 12, 16, 0.28);
+        --vynce-shadow-md: 0 18px 60px rgba(10, 12, 16, 0.16);
+        --vynce-cover-gradient: linear-gradient(
+            135deg,
+            rgba(92, 70, 156, 0.82),
+            rgba(29, 38, 125, 0.76)
+        );
+        --vynce-accent-active: #4a387d;
+    }
+
     body {
         font-family: 'Avenir Next', 'Segoe UI', sans-serif;
+        color: var(--vynce-text);
+        background: var(--vynce-bg);
     }
 }
 
 @layer components {
+    .app-page-shell {
+        color: var(--vynce-text);
+        background:
+            radial-gradient(circle at top, var(--vynce-glow), transparent 32%),
+            linear-gradient(
+                180deg,
+                var(--vynce-bg) 0%,
+                var(--vynce-bg-strong) 52%,
+                var(--vynce-bg) 100%
+            );
+    }
+
+    .app-page-shell--guest {
+        background:
+            radial-gradient(circle at top, var(--vynce-glow), transparent 32%),
+            linear-gradient(180deg, var(--vynce-bg) 0%, var(--vynce-bg-strong) 100%);
+    }
+
+    .app-page-shell--welcome {
+        background:
+            radial-gradient(circle at top, var(--vynce-glow), transparent 28%),
+            linear-gradient(180deg, var(--vynce-bg) 0%, var(--vynce-bg-strong) 100%);
+    }
+
+    .app-panel {
+        border: 1px solid var(--vynce-border);
+        background: var(--vynce-surface-soft);
+        box-shadow: var(--vynce-shadow-lg);
+    }
+
+    .app-panel-strong {
+        border: 1px solid var(--vynce-border);
+        background: var(--vynce-surface-strong);
+        box-shadow: var(--vynce-shadow-lg);
+    }
+
+    .app-panel-muted {
+        border: 1px solid var(--vynce-border);
+        background: var(--vynce-surface-muted);
+    }
+
+    .app-panel-subtle {
+        border: 1px solid var(--vynce-border);
+        background: var(--vynce-surface-subtle);
+    }
+
+    .app-panel-inset {
+        border: 1px solid var(--vynce-border);
+        background: var(--vynce-surface-inset);
+    }
+
+    .app-card-inset {
+        background: var(--vynce-surface-inset-soft);
+    }
+
+    .app-dashed-panel {
+        border: 1px dashed var(--vynce-border);
+        background: var(--vynce-surface-subtle);
+    }
+
+    .app-text-muted {
+        color: var(--vynce-text-muted-strong);
+    }
+
+    .app-text-soft {
+        color: var(--vynce-text-muted-soft);
+    }
+
+    .app-text-subtle {
+        color: var(--vynce-text-subtle);
+    }
+
+    .app-text-high {
+        color: var(--vynce-text-high);
+    }
+
+    .app-link {
+        color: var(--vynce-text);
+        transition:
+            color 150ms ease,
+            background-color 150ms ease,
+            border-color 150ms ease;
+    }
+
+    .app-link:hover {
+        color: var(--vynce-text);
+    }
+
+    .app-logo-tile {
+        background: var(--vynce-accent);
+        color: var(--vynce-text);
+    }
+
+    .app-logo-tile--gradient {
+        background: linear-gradient(135deg, var(--vynce-accent), var(--vynce-surface));
+        color: var(--vynce-text);
+    }
+
+    .app-avatar-fallback {
+        background: var(--vynce-accent);
+        color: var(--vynce-text);
+    }
+
+    .app-chip {
+        border: 1px solid var(--vynce-accent-border);
+        background: var(--vynce-accent-surface);
+        color: var(--vynce-text);
+    }
+
+    .app-pill {
+        border: 1px solid var(--vynce-border);
+        color: var(--vynce-text);
+    }
+
+    .app-pill-muted {
+        background: rgba(160, 163, 189, 0.12);
+        color: var(--vynce-text);
+    }
+
+    .app-button-primary {
+        background: var(--vynce-accent);
+        color: var(--vynce-text);
+        transition:
+            background-color 150ms ease,
+            color 150ms ease,
+            opacity 150ms ease;
+    }
+
+    .app-button-primary:hover {
+        background: var(--vynce-accent-hover);
+    }
+
+    .app-button-primary:focus {
+        background: var(--vynce-accent-hover);
+    }
+
+    .app-button-primary:active {
+        background: var(--vynce-accent-active);
+    }
+
+    .app-button-secondary {
+        border: 1px solid var(--vynce-border);
+        color: var(--vynce-text);
+        transition:
+            background-color 150ms ease,
+            color 150ms ease,
+            border-color 150ms ease;
+    }
+
+    .app-button-secondary:hover {
+        background: var(--vynce-accent-soft);
+    }
+
+    .app-nav-link {
+        color: var(--vynce-text);
+        transition:
+            background-color 150ms ease,
+            color 150ms ease;
+    }
+
+    .app-nav-link:hover {
+        background: var(--vynce-accent-soft);
+        color: var(--vynce-text);
+    }
+
+    .app-nav-link-active {
+        background: var(--vynce-accent);
+        color: var(--vynce-text);
+    }
+
+    .app-search {
+        border: 1px solid var(--vynce-border);
+        background: rgba(29, 38, 125, 0.58);
+        box-shadow: var(--vynce-shadow-md);
+        color: var(--vynce-text);
+    }
+
+    .app-search:focus-within {
+        border-color: var(--vynce-accent);
+    }
+
+    .app-search-input {
+        color: var(--vynce-text);
+    }
+
+    .app-search-input::placeholder {
+        color: var(--vynce-text-muted-soft);
+    }
+
+    .app-tab-list {
+        border: 1px solid var(--vynce-border-soft);
+        background: rgba(29, 38, 125, 0.46);
+    }
+
+    .app-tab {
+        color: var(--vynce-text-soft);
+        transition:
+            background-color 150ms ease,
+            color 150ms ease;
+    }
+
+    .app-tab:hover {
+        background: rgba(12, 19, 79, 0.46);
+        color: var(--vynce-text);
+    }
+
+    .app-tab-active {
+        background: var(--vynce-accent);
+        color: var(--vynce-text);
+    }
+
+    .app-flash {
+        border: 1px solid var(--vynce-accent-border);
+        background: var(--vynce-accent-surface);
+        color: var(--vynce-text);
+    }
+
+    .app-input-check {
+        border-color: var(--vynce-border);
+        background: var(--vynce-surface-inset);
+        color: var(--vynce-accent);
+    }
+
+    .app-input-check:focus {
+        --tw-ring-color: var(--vynce-accent);
+    }
+
+    .app-file-input {
+        color: var(--vynce-text-muted-strong);
+    }
+
+    .app-file-input::file-selector-button {
+        margin-right: 0.75rem;
+        border-radius: 9999px;
+        border: 0;
+        background: rgba(92, 70, 156, 0.22);
+        padding: 0.5rem 1rem;
+        color: var(--vynce-text);
+    }
+
+    .app-file-input:hover::file-selector-button {
+        background: rgba(212, 173, 252, 0.28);
+    }
+
     .field {
-        @apply w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white placeholder:text-slate-500 focus:border-[#ff6a3d] focus:outline-none focus:ring-0;
+        @apply w-full rounded-2xl px-4 py-3 focus:outline-none focus:ring-0;
+        border: 1px solid var(--vynce-border);
+        background: var(--vynce-surface-inset);
+        color: var(--vynce-text);
+    }
+
+    .field::placeholder {
+        color: var(--vynce-text-subtle);
+    }
+
+    .field:focus {
+        border-color: var(--vynce-accent);
     }
 }
