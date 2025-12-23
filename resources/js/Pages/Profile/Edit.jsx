@@ -30,10 +30,10 @@ export default function Edit({ profile }) {
             <Head title="Edit profile" />
 
             <div className="space-y-6">
-                <section className="rounded-[32px] border border-white/10 bg-slate-950/60 p-6">
+                <section className="app-panel rounded-[32px] p-6">
                     <div className="mb-6">
                         <h1 className="text-2xl font-semibold">Edit profile</h1>
-                        <p className="mt-2 text-sm leading-7 text-slate-400">
+                        <p className="app-text-soft mt-2 text-sm leading-7">
                             Keep identity fields clean and update your public-facing details here.
                         </p>
                     </div>
@@ -91,7 +91,7 @@ export default function Edit({ profile }) {
                                 onChange={(event) =>
                                     setData('avatar', event.target.files[0] ?? null)
                                 }
-                                className="field file:mr-3 file:rounded-full file:border-0 file:bg-white/10 file:px-4 file:py-2 file:text-white"
+                                className="field app-file-input"
                             />
                         </Field>
                         <Field label="Cover image" error={errors.cover}>
@@ -101,16 +101,16 @@ export default function Edit({ profile }) {
                                 onChange={(event) =>
                                     setData('cover', event.target.files[0] ?? null)
                                 }
-                                className="field file:mr-3 file:rounded-full file:border-0 file:bg-white/10 file:px-4 file:py-2 file:text-white"
+                                className="field app-file-input"
                             />
                         </Field>
 
-                        <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-200 md:col-span-2">
+                        <label className="app-panel-inset app-text-high flex items-center gap-3 rounded-2xl px-4 py-4 text-sm md:col-span-2">
                             <input
                                 type="checkbox"
                                 checked={data.is_private}
                                 onChange={(event) => setData('is_private', event.target.checked)}
-                                className="rounded border-white/10 bg-slate-900 text-[#ff6a3d] focus:ring-[#ff6a3d]"
+                                className="app-input-check rounded"
                             />
                             Private account
                         </label>
@@ -119,7 +119,7 @@ export default function Edit({ profile }) {
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="rounded-full bg-[#ff6a3d] px-5 py-3 text-sm font-semibold text-slate-950"
+                                className="app-button-primary rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 Save changes
                             </button>
@@ -127,11 +127,11 @@ export default function Edit({ profile }) {
                     </form>
                 </section>
 
-                <section className="rounded-[32px] border border-white/10 bg-slate-950/60 p-6">
+                <section className="app-panel rounded-[32px] p-6">
                     <UpdatePasswordForm className="max-w-xl" />
                 </section>
 
-                <section className="rounded-[32px] border border-white/10 bg-slate-950/60 p-6">
+                <section className="app-panel rounded-[32px] p-6">
                     <DeleteUserForm className="max-w-xl" />
                 </section>
             </div>
@@ -142,7 +142,7 @@ export default function Edit({ profile }) {
 function Field({ label, error, className = '', children }) {
     return (
         <div className={className}>
-            <label className="mb-2 block text-sm text-slate-300">{label}</label>
+            <label className="app-text-high mb-2 block text-sm">{label}</label>
             {children}
             {error && <div className="mt-2 text-sm text-rose-300">{error}</div>}
         </div>
