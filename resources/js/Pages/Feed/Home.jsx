@@ -1,4 +1,3 @@
-import FeedTabs from '@/Components/App/FeedTabs';
 import PostCard from '@/Components/App/PostCard';
 import PostComposer from '@/Components/App/PostComposer';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
@@ -18,46 +17,63 @@ const suggestions = [
 
 export default function Home({ feed, activeTab }) {
     const { auth } = usePage().props;
+    const initials = auth.user.name
+        ?.split(' ')
+        .map((part) => part[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase();
 
     const sidebar = (
         <div className="space-y-4">
-            <div className="rounded-[28px] border border-white/10 bg-slate-950/60 p-5">
-                <div className="text-sm text-slate-400">Your profile</div>
-                <div className="mt-3 text-xl font-semibold">{auth.user.name}</div>
-                <div className="text-sm text-slate-400">@{auth.user.username}</div>
-                <div className="mt-3 text-sm leading-7 text-slate-500">
-                    Keep your people close and your updates easy to find.
+            <div className="app-panel rounded-[28px] p-5">
+                <div className="flex items-center gap-3">
+                    {auth.user.avatar_url ? (
+                        <img
+                            src={auth.user.avatar_url}
+                            alt={auth.user.name}
+                            className="h-14 w-14 rounded-2xl object-cover"
+                        />
+                    ) : (
+                        <div className="app-avatar-fallback flex h-14 w-14 items-center justify-center rounded-2xl text-sm font-semibold">
+                            {initials}
+                        </div>
+                    )}
+
+                    <div className="min-w-0">
+                        <div className="truncate text-base font-semibold">{auth.user.name}</div>
+                        <div className="app-text-muted truncate text-sm">@{auth.user.username}</div>
+                    </div>
                 </div>
+
                 <Link
                     href={route('users.show', auth.user.username)}
-                    className="mt-5 inline-flex rounded-full border border-white/10 px-4 py-2 text-sm text-slate-200"
+                    className="app-button-secondary mt-4 inline-flex rounded-full px-4 py-2 text-sm"
                 >
                     View profile
                 </Link>
             </div>
 
-            <div className="rounded-[28px] border border-white/10 bg-slate-950/60 p-5">
+            <div className="app-panel rounded-[28px] p-5">
                 <div className="text-sm font-semibold">Trending now</div>
                 <div className="mt-4 space-y-4">
                     {trends.map((trend) => (
                         <div key={trend.label}>
-                            <div className="text-sm text-slate-100">#{trend.label}</div>
-                            <div className="text-xs text-slate-500">{trend.posts}</div>
+                            <div className="text-sm">#{trend.label}</div>
+                            <div className="app-text-soft text-xs">{trend.posts}</div>
                         </div>
                     ))}
                 </div>
             </div>
 
-            <div className="rounded-[28px] border border-white/10 bg-slate-950/60 p-5">
+            <div className="app-panel rounded-[28px] p-5">
                 <div className="text-sm font-semibold">People to watch</div>
                 <div className="mt-4 space-y-4">
                     {suggestions.map((person) => (
-                        <div key={person.username} className="rounded-2xl bg-white/5 p-3">
+                        <div key={person.username} className="app-card-inset rounded-2xl p-3">
                             <div className="text-sm font-medium">{person.name}</div>
-                            <div className="text-xs text-slate-400">@{person.username}</div>
-                            <div className="mt-2 text-xs leading-6 text-slate-500">
-                                {person.tag}
-                            </div>
+                            <div className="app-text-muted text-xs">@{person.username}</div>
+                            <div className="app-text-soft mt-2 text-xs leading-6">{person.tag}</div>
                         </div>
                     ))}
                 </div>
@@ -68,26 +84,11 @@ export default function Home({ feed, activeTab }) {
     return (
         <AuthenticatedLayout title="Feed" sidebar={sidebar}>
             <section className="space-y-6">
-                <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 backdrop-blur">
-                    <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                        <div>
-                            <h1 className="text-3xl font-semibold">
-                                What your circle is talking about
-                            </h1>
-                            <p className="mt-2 text-sm leading-7 text-slate-400">
-                                Jump between close-follow updates, broader discovery, and the
-                                conversations worth replying to tonight.
-                            </p>
-                        </div>
-                        <FeedTabs activeTab={activeTab} />
-                    </div>
-
-                    <PostComposer />
-                </div>
+                <PostComposer />
 
                 <div className="space-y-4">
                     {feed.data.length === 0 ? (
-                        <div className="rounded-[28px] border border-dashed border-white/10 bg-slate-950/40 p-8 text-sm text-slate-400">
+                        <div className="app-dashed-panel app-text-muted rounded-[28px] p-8 text-sm">
                             Nothing has landed here yet. Follow a few people, post an update, or
                             switch to Discover to find voices worth bringing into your feed.
                         </div>
@@ -107,7 +108,7 @@ export default function Home({ feed, activeTab }) {
                                       : 'feed.home',
                                 { page: feed.meta.current_page + 1 },
                             )}
-                            className="inline-flex rounded-full border border-white/10 px-5 py-3 text-sm text-slate-200"
+                            className="app-button-secondary inline-flex rounded-full px-5 py-3 text-sm"
                         >
                             Load more
                         </Link>
