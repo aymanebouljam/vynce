@@ -6,29 +6,29 @@ export default function PostCard({ post, canManage = false }) {
     const authorHref = authorUsername ? route('users.show', authorUsername) : null;
 
     return (
-        <article className="overflow-hidden rounded-[28px] border border-white/10 bg-slate-950/60 shadow-[0_24px_80px_rgba(15,23,42,0.24)]">
+        <article className="app-panel-muted overflow-hidden rounded-[28px]">
             <div className="flex items-start justify-between gap-4 p-5">
                 <div>
                     {authorHref ? (
-                        <Link href={authorHref} className="text-sm font-semibold text-white">
+                        <Link href={authorHref} className="app-link text-sm font-semibold">
                             {authorName}
                         </Link>
                     ) : (
-                        <div className="text-sm font-semibold text-white">{authorName}</div>
+                        <div className="text-sm font-semibold">{authorName}</div>
                     )}
-                    <div className="mt-1 text-xs text-slate-400">
+                    <div className="app-text-muted mt-1 text-xs">
                         {authorUsername ? `@${authorUsername} · ` : ''}
                         {new Date(post.published_at || post.created_at).toLocaleString()}
                     </div>
                 </div>
 
-                <span className="rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-slate-300">
+                <span className="app-pill rounded-full px-3 py-1 text-xs uppercase tracking-[0.2em]">
                     {post.visibility}
                 </span>
             </div>
 
             <div className="space-y-4 px-5 pb-5">
-                <p className="whitespace-pre-wrap text-sm leading-7 text-slate-100">{post.body}</p>
+                <p className="whitespace-pre-wrap text-sm leading-7">{post.body}</p>
 
                 {post.media?.length > 0 && (
                     <div className="grid gap-3 md:grid-cols-2">
@@ -46,18 +46,12 @@ export default function PostCard({ post, canManage = false }) {
                 {(post.hashtags?.length > 0 || post.mentions?.length > 0) && (
                     <div className="flex flex-wrap gap-2 text-xs">
                         {post.hashtags?.map((tag) => (
-                            <span
-                                key={tag}
-                                className="rounded-full bg-[#ff6a3d]/15 px-3 py-1 text-[#ffb39a]"
-                            >
+                            <span key={tag} className="app-chip rounded-full px-3 py-1">
                                 #{tag}
                             </span>
                         ))}
                         {post.mentions?.map((mention) => (
-                            <span
-                                key={mention}
-                                className="rounded-full bg-sky-500/15 px-3 py-1 text-sky-200"
-                            >
+                            <span key={mention} className="app-pill-muted rounded-full px-3 py-1">
                                 @{mention}
                             </span>
                         ))}
@@ -65,7 +59,7 @@ export default function PostCard({ post, canManage = false }) {
                 )}
 
                 {canManage && (
-                    <div className="text-xs text-slate-400">
+                    <div className="app-text-muted text-xs">
                         Owner controls are wired on the backend and ready for a fuller inline
                         composer pass.
                     </div>
