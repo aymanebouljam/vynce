@@ -23,49 +23,45 @@ export default function Login({ status, canResetPassword }) {
 
             <div className="mb-8">
                 <h1 className="text-3xl font-semibold">Welcome back</h1>
-                <p className="mt-2 text-sm leading-7 text-slate-400">
+                <p className="app-text-muted mt-2 text-sm leading-7">
                     Log in to publish, follow, and shape your Vynce feed.
                 </p>
             </div>
 
-            {status && (
-                <div className="mb-4 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
-                    {status}
-                </div>
-            )}
+            {status && <div className="app-flash mb-4 rounded-2xl px-4 py-3 text-sm">{status}</div>}
 
             <form onSubmit={submit} className="space-y-5">
                 <div>
-                    <label className="mb-2 block text-sm text-slate-300">Email</label>
+                    <label className="app-text-high mb-2 block text-sm">Email</label>
                     <input
                         type="email"
                         value={data.email}
                         autoFocus
                         autoComplete="username"
                         onChange={(event) => setData('email', event.target.value)}
-                        className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white placeholder:text-slate-500 focus:border-[#ff6a3d] focus:outline-none"
+                        className="field w-full"
                     />
                     <InputError message={errors.email} className="mt-2" />
                 </div>
 
                 <div>
-                    <label className="mb-2 block text-sm text-slate-300">Password</label>
+                    <label className="app-text-high mb-2 block text-sm">Password</label>
                     <input
                         type="password"
                         value={data.password}
                         autoComplete="current-password"
                         onChange={(event) => setData('password', event.target.value)}
-                        className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white placeholder:text-slate-500 focus:border-[#ff6a3d] focus:outline-none"
+                        className="field w-full"
                     />
                     <InputError message={errors.password} className="mt-2" />
                 </div>
 
-                <label className="flex items-center gap-3 text-sm text-slate-300">
+                <label className="app-text-high flex items-center gap-3 text-sm">
                     <input
                         type="checkbox"
                         checked={data.remember}
                         onChange={(event) => setData('remember', event.target.checked)}
-                        className="rounded border-white/10 bg-slate-900 text-[#ff6a3d] focus:ring-[#ff6a3d]"
+                        className="app-input-check rounded"
                     />
                     Remember me
                 </label>
@@ -74,7 +70,7 @@ export default function Login({ status, canResetPassword }) {
                     {canResetPassword && (
                         <Link
                             href={route('password.request')}
-                            className="text-sm text-slate-400 transition hover:text-white"
+                            className="app-link app-text-muted text-sm"
                         >
                             Forgot your password?
                         </Link>
@@ -83,16 +79,16 @@ export default function Login({ status, canResetPassword }) {
                     <button
                         type="submit"
                         disabled={processing}
-                        className="rounded-full bg-[#ff6a3d] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#ff875f] disabled:cursor-not-allowed disabled:opacity-60"
+                        className="app-button-primary rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         Log in
                     </button>
                 </div>
             </form>
 
-            <div className="mt-8 text-sm text-slate-400">
+            <div className="app-text-muted mt-8 text-sm">
                 New to Vynce?{' '}
-                <Link href={route('register')} className="text-white">
+                <Link href={route('register')} className="app-link">
                     Create an account
                 </Link>
             </div>

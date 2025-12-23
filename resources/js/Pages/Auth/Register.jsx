@@ -25,7 +25,7 @@ export default function Register() {
 
             <div className="mb-8">
                 <h1 className="text-3xl font-semibold">Create your account</h1>
-                <p className="mt-2 text-sm leading-7 text-slate-400">
+                <p className="app-text-muted mt-2 text-sm leading-7">
                     Start with a clean identity, then finish your profile in a short onboarding
                     flow.
                 </p>
@@ -33,60 +33,58 @@ export default function Register() {
 
             <form onSubmit={submit} className="space-y-5">
                 <div>
-                    <label className="mb-2 block text-sm text-slate-300">Name</label>
+                    <label className="app-text-high mb-2 block text-sm">Name</label>
                     <input
                         value={data.name}
                         onChange={(event) => setData('name', event.target.value)}
-                        className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white focus:border-[#ff6a3d] focus:outline-none"
+                        className="field w-full"
                     />
                     <InputError message={errors.name} className="mt-2" />
                 </div>
 
                 <div>
-                    <label className="mb-2 block text-sm text-slate-300">Username</label>
+                    <label className="app-text-high mb-2 block text-sm">Username</label>
                     <input
                         value={data.username}
                         onChange={(event) => setData('username', event.target.value.toLowerCase())}
-                        className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white focus:border-[#ff6a3d] focus:outline-none"
+                        className="field w-full"
                         placeholder="your-name"
                     />
                     <InputError message={errors.username} className="mt-2" />
                 </div>
 
                 <div>
-                    <label className="mb-2 block text-sm text-slate-300">Email</label>
+                    <label className="app-text-high mb-2 block text-sm">Email</label>
                     <input
                         type="email"
                         value={data.email}
                         onChange={(event) => setData('email', event.target.value)}
-                        className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white focus:border-[#ff6a3d] focus:outline-none"
+                        className="field w-full"
                     />
                     <InputError message={errors.email} className="mt-2" />
                 </div>
 
                 <div className="grid gap-5 md:grid-cols-2">
                     <div>
-                        <label className="mb-2 block text-sm text-slate-300">Password</label>
+                        <label className="app-text-high mb-2 block text-sm">Password</label>
                         <input
                             type="password"
                             value={data.password}
                             onChange={(event) => setData('password', event.target.value)}
-                            className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white focus:border-[#ff6a3d] focus:outline-none"
+                            className="field w-full"
                         />
                         <InputError message={errors.password} className="mt-2" />
                     </div>
 
                     <div>
-                        <label className="mb-2 block text-sm text-slate-300">
-                            Confirm password
-                        </label>
+                        <label className="app-text-high mb-2 block text-sm">Confirm password</label>
                         <input
                             type="password"
                             value={data.password_confirmation}
                             onChange={(event) =>
                                 setData('password_confirmation', event.target.value)
                             }
-                            className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white focus:border-[#ff6a3d] focus:outline-none"
+                            className="field w-full"
                         />
                     </div>
                 </div>
@@ -94,15 +92,15 @@ export default function Register() {
                 <button
                     type="submit"
                     disabled={processing}
-                    className="w-full rounded-full bg-[#ff6a3d] px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-[#ff875f] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="app-button-primary w-full rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
                 >
                     Create account
                 </button>
             </form>
 
-            <div className="mt-8 text-sm text-slate-400">
+            <div className="app-text-muted mt-8 text-sm">
                 Already have an account?{' '}
-                <Link href={route('login')} className="text-white">
+                <Link href={route('login')} className="app-link">
                     Log in
                 </Link>
             </div>
