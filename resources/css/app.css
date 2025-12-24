@@ -4,39 +4,39 @@
 
 @layer base {
     :root {
-        --vynce-text: #ffffff;
-        --vynce-bg: #0c134f;
-        --vynce-bg-strong: #11185f;
-        --vynce-surface: #1d267d;
-        --vynce-surface-strong: rgba(29, 38, 125, 0.74);
-        --vynce-surface-soft: rgba(29, 38, 125, 0.54);
-        --vynce-surface-muted: rgba(29, 38, 125, 0.42);
-        --vynce-surface-subtle: rgba(29, 38, 125, 0.36);
-        --vynce-surface-inset: rgba(12, 19, 79, 0.92);
-        --vynce-surface-inset-soft: rgba(12, 19, 79, 0.42);
-        --vynce-surface-inset-muted: rgba(12, 19, 79, 0.34);
-        --vynce-accent: #5c469c;
-        --vynce-accent-hover: #d4adfc;
-        --vynce-accent-soft: rgba(92, 70, 156, 0.16);
-        --vynce-accent-surface: rgba(92, 70, 156, 0.24);
-        --vynce-accent-border: rgba(212, 173, 252, 0.3);
-        --vynce-glow: rgba(212, 173, 252, 0.18);
-        --vynce-border: rgba(160, 163, 189, 0.16);
-        --vynce-border-soft: rgba(160, 163, 189, 0.14);
-        --vynce-text-muted: #a0a3bd;
-        --vynce-text-muted-strong: rgba(160, 163, 189, 0.92);
-        --vynce-text-muted-soft: rgba(160, 163, 189, 0.72);
-        --vynce-text-subtle: rgba(160, 163, 189, 0.56);
-        --vynce-text-high: rgba(255, 255, 255, 0.84);
-        --vynce-text-soft: rgba(255, 255, 255, 0.76);
+        --vynce-text: #f1ebfb;
+        --vynce-bg: #371b58;
+        --vynce-bg-strong: #2c1547;
+        --vynce-surface: #5b4b8a;
+        --vynce-surface-strong: rgba(91, 75, 138, 0.86);
+        --vynce-surface-soft: rgba(91, 75, 138, 0.72);
+        --vynce-surface-muted: rgba(91, 75, 138, 0.58);
+        --vynce-surface-subtle: rgba(91, 75, 138, 0.42);
+        --vynce-surface-inset: rgba(55, 27, 88, 0.94);
+        --vynce-surface-inset-soft: rgba(76, 53, 117, 0.76);
+        --vynce-surface-inset-muted: rgba(76, 53, 117, 0.62);
+        --vynce-accent: #7858a6;
+        --vynce-accent-hover: #8a6ab8;
+        --vynce-accent-soft: rgba(120, 88, 166, 0.16);
+        --vynce-accent-surface: rgba(120, 88, 166, 0.22);
+        --vynce-accent-border: rgba(120, 88, 166, 0.3);
+        --vynce-glow: rgba(120, 88, 166, 0.18);
+        --vynce-border: rgba(241, 235, 251, 0.12);
+        --vynce-border-soft: rgba(241, 235, 251, 0.08);
+        --vynce-text-muted: #d9ccf0;
+        --vynce-text-muted-strong: rgba(217, 204, 240, 0.86);
+        --vynce-text-muted-soft: rgba(217, 204, 240, 0.68);
+        --vynce-text-subtle: rgba(217, 204, 240, 0.48);
+        --vynce-text-high: rgba(241, 235, 251, 0.92);
+        --vynce-text-soft: rgba(241, 235, 251, 0.76);
         --vynce-shadow-lg: 0 24px 80px rgba(10, 12, 16, 0.28);
         --vynce-shadow-md: 0 18px 60px rgba(10, 12, 16, 0.16);
         --vynce-cover-gradient: linear-gradient(
             135deg,
-            rgba(92, 70, 156, 0.82),
-            rgba(29, 38, 125, 0.76)
+            rgba(120, 88, 166, 0.74),
+            rgba(91, 75, 138, 0.92)
         );
-        --vynce-accent-active: #4a387d;
+        --vynce-accent-active: #684994;
     }
 
     body {
@@ -99,7 +99,7 @@
     }
 
     .app-card-inset {
-        background: var(--vynce-surface-inset-soft);
+        background: var(--vynce-surface-inset);
     }
 
     .app-dashed-panel {
@@ -218,22 +218,44 @@
     }
 
     .app-search {
-        border: 1px solid var(--vynce-border);
-        background: rgba(29, 38, 125, 0.58);
+        border: 0;
+        outline: none;
+        background: var(--vynce-surface-soft);
         box-shadow: var(--vynce-shadow-md);
         color: var(--vynce-text);
     }
 
     .app-search:focus-within {
-        border-color: var(--vynce-accent);
+        border-color: transparent;
+        outline: none;
+        box-shadow: var(--vynce-shadow-md);
     }
 
     .app-search-input {
+        appearance: none;
+        border: 0;
+        outline: none;
+        box-shadow: none;
+        -webkit-appearance: none;
         color: var(--vynce-text);
+    }
+
+    .app-search-input:focus,
+    .app-search-input:focus-visible {
+        outline: none;
+        box-shadow: none;
+        border: 0;
     }
 
     .app-search-input::placeholder {
         color: var(--vynce-text-muted-soft);
+    }
+
+    .app-search-input::-webkit-search-decoration,
+    .app-search-input::-webkit-search-cancel-button,
+    .app-search-input::-webkit-search-results-button,
+    .app-search-input::-webkit-search-results-decoration {
+        -webkit-appearance: none;
     }
 
     .app-tab-list {
@@ -282,13 +304,17 @@
         margin-right: 0.75rem;
         border-radius: 9999px;
         border: 0;
-        background: rgba(92, 70, 156, 0.22);
+        background: var(--vynce-surface-strong);
         padding: 0.5rem 1rem;
-        color: var(--vynce-text);
+        color: var(--vynce-text-high);
+        transition:
+            background-color 150ms ease,
+            color 150ms ease;
     }
 
     .app-file-input:hover::file-selector-button {
-        background: rgba(212, 173, 252, 0.28);
+        background: var(--vynce-accent-hover);
+        color: var(--vynce-text);
     }
 
     .field {

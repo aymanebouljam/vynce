@@ -1,4 +1,5 @@
 import InputError from '@/Components/InputError';
+import { ChevronDown } from 'lucide-react';
 import { useForm } from '@inertiajs/react';
 
 export default function PostComposer() {
@@ -36,15 +37,20 @@ export default function PostComposer() {
 
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center">
-                    <select
-                        value={data.visibility}
-                        onChange={(event) => setData('visibility', event.target.value)}
-                        className="field rounded-2xl py-2 text-sm"
-                    >
-                        <option value="public">Public</option>
-                        <option value="followers">Followers</option>
-                        <option value="private">Only me</option>
-                    </select>
+                    <div className="relative">
+                        <select
+                            value={data.visibility}
+                            onChange={(event) => setData('visibility', event.target.value)}
+                            className="field w-28 appearance-none rounded-2xl py-2 pl-4 pr-10 text-sm"
+                        >
+                            <option value="public">Public</option>
+                            <option value="followers">Followers</option>
+                        </select>
+                        <ChevronDown
+                            className="app-text-muted pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2"
+                            strokeWidth={2}
+                        />
+                    </div>
 
                     <input
                         type="file"
