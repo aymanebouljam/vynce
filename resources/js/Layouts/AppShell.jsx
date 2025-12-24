@@ -76,7 +76,7 @@ export default function AppShell({ children, title, sidebar }) {
                                     href={route('logout')}
                                     method="post"
                                     as="button"
-                                    className="app-button-secondary flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm"
+                                    className="app-button-secondary app-panel-inset flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm"
                                 >
                                     <LogOut className="h-5 w-5 shrink-0" strokeWidth={1.8} />
                                     Log out
