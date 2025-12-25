@@ -64,6 +64,8 @@ class FeedController extends Controller
                 'has_pending_request' => $socialGraphService->hasPendingRequest(request()->user(), $user),
                 'can_follow' => request()->user()->id !== $user->id
                     && ! $socialGraphService->hasBlockBetween(request()->user(), $user),
+                'can_message' => request()->user()->id !== $user->id
+                    && ! $socialGraphService->hasBlockBetween(request()->user(), $user),
             ],
             'feed' => InertiaPaginatedData::fromPaginator(
                 $feedService->profile(request()->user(), $user),

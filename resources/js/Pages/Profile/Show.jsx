@@ -72,19 +72,33 @@ export default function Show({ profile, relationship, feed }) {
                                 >
                                     Edit profile
                                 </Link>
-                            ) : relationship.can_follow ? (
-                                <button
-                                    type="button"
-                                    onClick={submitFollow}
-                                    className="app-button-primary rounded-full px-5 py-3 text-sm font-semibold"
-                                >
-                                    {relationship.is_following
-                                        ? 'Unfollow'
-                                        : relationship.has_pending_request
-                                          ? 'Cancel request'
-                                          : 'Follow'}
-                                </button>
-                            ) : null}
+                            ) : (
+                                <>
+                                    {relationship.can_follow && (
+                                        <button
+                                            type="button"
+                                            onClick={submitFollow}
+                                            className="app-button-primary rounded-full px-5 py-3 text-sm font-semibold"
+                                        >
+                                            {relationship.is_following
+                                                ? 'Unfollow'
+                                                : relationship.has_pending_request
+                                                  ? 'Cancel request'
+                                                  : 'Follow'}
+                                        </button>
+                                    )}
+                                    {relationship.can_message && (
+                                        <Link
+                                            href={route('messages.start', profile.id)}
+                                            method="post"
+                                            as="button"
+                                            className="app-button-secondary rounded-full px-5 py-3 text-sm"
+                                        >
+                                            Message
+                                        </Link>
+                                    )}
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>

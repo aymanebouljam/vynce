@@ -1,7 +1,7 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import FlashBanner from '@/Components/App/FlashBanner';
-import { Head, Link, usePage } from '@inertiajs/react';
-import { Compass, House, LogOut, Search, Settings, UserPlus } from 'lucide-react';
+import { Head, Link } from '@inertiajs/react';
+import { Compass, House, LogOut, MessageCircle, Search, Settings, UserPlus } from 'lucide-react';
 
 const navigation = [
     {
@@ -20,6 +20,11 @@ const navigation = [
         icon: Compass,
     },
     {
+        label: 'Messages',
+        route: 'messages.index',
+        icon: MessageCircle,
+    },
+    {
         label: 'Settings',
         route: 'settings',
         icon: Settings,
@@ -27,8 +32,6 @@ const navigation = [
 ];
 
 export default function AppShell({ children, title, sidebar }) {
-    const { auth } = usePage().props;
-
     return (
         <>
             <Head title={title} />
