@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Feed\FeedController;
+use App\Http\Controllers\Messaging\ConversationController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\Posts\PostController;
 use App\Http\Controllers\SocialGraph\FollowController;
@@ -23,6 +24,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/feed', [FeedController::class, 'home'])->name('feed.home');
     Route::get('/feed/following', [FeedController::class, 'following'])->name('feed.following');
     Route::get('/feed/discover', [FeedController::class, 'discover'])->name('feed.discover');
+    Route::get('/messages', [ConversationController::class, 'index'])->name('messages.index');
+    Route::get('/messages/{conversation}', [ConversationController::class, 'show'])->name('messages.show');
+    Route::post('/messages/start/{user}', [ConversationController::class, 'start'])->middleware('throttle:60,1')->name('messages.start');
+    Route::post('/messages/{conversation}/messages', [ConversationController::class, 'storeMessage'])->middleware('throttle:120,1')->name('messages.messages.store');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
