@@ -75,4 +75,26 @@ class FollowSystemTest extends TestCase
             'status' => FollowStatus::Accepted->value,
         ]);
     }
+
+    public function test_account_owner_can_reject_a_follow_request(): void
+    {
+        $requester = User::factory()->create();
+        $owner = User::factory()->create(['is_private' => true]);
+
+        Follow::query()->create([
+            'follower_id' => $requester->id,
+            'followed_id' => $owner->id,
+            'status' => FollowStatus::Pending,
+        ]);
+
+        $this->actingAs($owner)
+            ->delete(route('users.follow-requests.reject', $requester))
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('follows', [
+            'follower_id' => $requester->id,
+            'followed_id' => $owner->id,
+            'status' => FollowStatus::Pending->value,
+        ]);
+    }
 }

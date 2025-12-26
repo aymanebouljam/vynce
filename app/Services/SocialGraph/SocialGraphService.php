@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\UserBlock;
 use App\Models\UserMute;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class SocialGraphService
@@ -52,6 +53,15 @@ class SocialGraphService
         ]);
 
         return $follow->refresh();
+    }
+
+    public function rejectRequest(User $actor, User $requester): void
+    {
+        Follow::query()
+            ->where('follower_id', $requester->id)
+            ->where('followed_id', $actor->id)
+            ->where('status', FollowStatus::Pending)
+            ->delete();
     }
 
     public function block(User $actor, User $target): void
@@ -166,5 +176,72 @@ class SocialGraphService
             ->where('follows.follower_id', $user->id)
             ->where('follows.status', FollowStatus::Accepted)
             ->paginate($perPage);
+    }
+
+    public function friends(User $user, int $perPage = 20): LengthAwarePaginator
+    {
+        return User::query()
+            ->select('users.*')
+            ->join('follows as outbound_follows', 'users.id', '=', 'outbound_follows.followed_id')
+            ->where('outbound_follows.follower_id', $user->id)
+            ->where('outbound_follows.status', FollowStatus::Accepted)
+            ->whereExists(function ($query) use ($user) {
+                $query->selectRaw('1')
+                    ->from('follows as inbound_follows')
+                    ->whereColumn('inbound_follows.follower_id', 'users.id')
+                    ->where('inbound_follows.followed_id', $user->id)
+                    ->where('inbound_follows.status', FollowStatus::Accepted);
+            })
+            ->paginate($perPage);
+    }
+
+    public function pendingRequests(User $user): Collection
+    {
+        return User::query()
+            ->select('users.*')
+            ->join('follows', 'users.id', '=', 'follows.follower_id')
+            ->where('follows.followed_id', $user->id)
+            ->where('follows.status', FollowStatus::Pending)
+            ->orderByDesc('follows.created_at')
+            ->limit(6)
+            ->get();
+    }
+
+    public function suggestions(User $user, int $limit = 3): Collection
+    {
+        return User::query()
+            ->whereKeyNot($user->id)
+            ->whereNotIn('users.id', function ($query) use ($user) {
+                $query->select('followed_id')
+                    ->from('follows')
+                    ->where('follower_id', $user->id);
+            })
+            ->whereNotIn('users.id', function ($query) use ($user) {
+                $query->select('blocked_id')
+                    ->from('user_blocks')
+                    ->where('blocker_id', $user->id);
+            })
+            ->whereNotIn('users.id', function ($query) use ($user) {
+                $query->select('blocker_id')
+                    ->from('user_blocks')
+                    ->where('blocked_id', $user->id);
+            })
+            ->latest('users.id')
+            ->limit($limit)
+            ->get();
+    }
+
+    public function friendsCount(User $user): int
+    {
+        return Follow::query()
+            ->where('follower_id', $user->id)
+            ->where('status', FollowStatus::Accepted)
+            ->whereIn('followed_id', function ($query) use ($user) {
+                $query->select('follower_id')
+                    ->from('follows')
+                    ->where('followed_id', $user->id)
+                    ->where('status', FollowStatus::Accepted);
+            })
+            ->count();
     }
 }

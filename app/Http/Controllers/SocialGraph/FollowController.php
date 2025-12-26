@@ -46,4 +46,16 @@ class FollowController extends Controller
 
         return back()->with('success', 'Follow request accepted.');
     }
+
+    public function reject(
+        FollowRequest $request,
+        User $user,
+        SocialGraphService $socialGraphService,
+    ): RedirectResponse {
+        abort_if($request->user()->is($user), 422);
+
+        $socialGraphService->rejectRequest($request->user(), $user);
+
+        return back()->with('success', 'Follow request refused.');
+    }
 }
