@@ -14,33 +14,51 @@ use Inertia\Response;
 
 class FeedController extends Controller
 {
-    public function home(FeedService $feedService): Response
+    public function home(FeedService $feedService, SocialGraphService $socialGraphService): Response
     {
         $feed = $feedService->home(request()->user());
 
         return Inertia::render('Feed/Home', [
             'feed' => InertiaPaginatedData::fromPaginator($feed, PostResource::class),
             'activeTab' => 'home',
+            'pendingRequests' => UserResource::collection(
+                $socialGraphService->pendingRequests(request()->user()),
+            )->resolve(),
+            'suggestions' => UserResource::collection(
+                $socialGraphService->suggestions(request()->user()),
+            )->resolve(),
         ]);
     }
 
-    public function following(FeedService $feedService): Response
+    public function following(FeedService $feedService, SocialGraphService $socialGraphService): Response
     {
         $feed = $feedService->following(request()->user());
 
         return Inertia::render('Feed/Home', [
             'feed' => InertiaPaginatedData::fromPaginator($feed, PostResource::class),
             'activeTab' => 'following',
+            'pendingRequests' => UserResource::collection(
+                $socialGraphService->pendingRequests(request()->user()),
+            )->resolve(),
+            'suggestions' => UserResource::collection(
+                $socialGraphService->suggestions(request()->user()),
+            )->resolve(),
         ]);
     }
 
-    public function discover(FeedService $feedService): Response
+    public function discover(FeedService $feedService, SocialGraphService $socialGraphService): Response
     {
         $feed = $feedService->discover(request()->user());
 
         return Inertia::render('Feed/Home', [
             'feed' => InertiaPaginatedData::fromPaginator($feed, PostResource::class),
             'activeTab' => 'discover',
+            'pendingRequests' => UserResource::collection(
+                $socialGraphService->pendingRequests(request()->user()),
+            )->resolve(),
+            'suggestions' => UserResource::collection(
+                $socialGraphService->suggestions(request()->user()),
+            )->resolve(),
         ]);
     }
 
@@ -56,6 +74,7 @@ class FeedController extends Controller
             'acceptedFollowers',
             'acceptedFollowing',
         ]);
+        $profile->friends_count = $socialGraphService->friendsCount($user);
 
         return Inertia::render('Profile/Show', [
             'profile' => UserResource::make($profile)->resolve(),

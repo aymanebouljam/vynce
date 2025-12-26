@@ -4,6 +4,7 @@ use App\Http\Controllers\Feed\FeedController;
 use App\Http\Controllers\Messaging\ConversationController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\Posts\PostController;
+use App\Http\Controllers\SocialGraph\ConnectionController;
 use App\Http\Controllers\SocialGraph\FollowController;
 use App\Http\Controllers\SocialGraph\RelationshipController;
 use App\Http\Controllers\Users\ProfileController;
@@ -24,6 +25,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/feed', [FeedController::class, 'home'])->name('feed.home');
     Route::get('/feed/following', [FeedController::class, 'following'])->name('feed.following');
     Route::get('/feed/discover', [FeedController::class, 'discover'])->name('feed.discover');
+    Route::get('/contacts', [ConnectionController::class, 'contacts'])->name('contacts.index');
     Route::get('/messages', [ConversationController::class, 'index'])->name('messages.index');
     Route::get('/messages/{conversation}', [ConversationController::class, 'show'])->name('messages.show');
     Route::post('/messages/start/{user}', [ConversationController::class, 'start'])->middleware('throttle:60,1')->name('messages.start');
@@ -40,6 +42,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/users/{user}/follow', [FollowController::class, 'store'])->middleware('throttle:60,1')->name('users.follow');
     Route::delete('/users/{user}/follow', [FollowController::class, 'destroy'])->middleware('throttle:60,1')->name('users.unfollow');
     Route::post('/users/{user}/accept-follow-request', [FollowController::class, 'accept'])->middleware('throttle:60,1')->name('users.follow-requests.accept');
+    Route::delete('/users/{user}/reject-follow-request', [FollowController::class, 'reject'])->middleware('throttle:60,1')->name('users.follow-requests.reject');
     Route::post('/users/{user}/block', [RelationshipController::class, 'block'])->name('users.block');
     Route::delete('/users/{user}/block', [RelationshipController::class, 'unblock'])->name('users.unblock');
     Route::post('/users/{user}/mute', [RelationshipController::class, 'mute'])->name('users.mute');
@@ -49,5 +52,8 @@ Route::middleware(['auth'])->group(function () {
 require __DIR__.'/auth.php';
 
 Route::middleware(['auth'])->group(function () {
+    Route::get('/{user:username}/friends', [ConnectionController::class, 'friends'])->name('users.friends');
+    Route::get('/{user:username}/followers', [ConnectionController::class, 'followers'])->name('users.followers');
+    Route::get('/{user:username}/following', [ConnectionController::class, 'following'])->name('users.following');
     Route::get('/{user:username}', [FeedController::class, 'profile'])->name('users.show');
 });
