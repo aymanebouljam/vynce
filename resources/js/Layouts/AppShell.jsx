@@ -1,7 +1,7 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import FlashBanner from '@/Components/App/FlashBanner';
 import { Head, Link } from '@inertiajs/react';
-import { Compass, House, LogOut, MessageCircle, Search, Settings, UserPlus } from 'lucide-react';
+import { Compass, House, LogOut, MessageCircle, Search, Settings, Users } from 'lucide-react';
 
 const navigation = [
     {
@@ -10,9 +10,9 @@ const navigation = [
         icon: House,
     },
     {
-        label: 'Following',
-        route: 'feed.following',
-        icon: UserPlus,
+        label: 'Contacts',
+        route: 'contacts.index',
+        icon: Users,
     },
     {
         label: 'Discover',

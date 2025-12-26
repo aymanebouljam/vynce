@@ -16,6 +16,16 @@ export default function Show({ profile, relationship, feed }) {
         followForm.post(route('users.follow', profile.id));
     };
 
+    const relationshipLabel = profile.is_private
+        ? relationship.is_following
+            ? 'Friends'
+            : relationship.has_pending_request
+              ? 'Cancel invite'
+              : 'Add'
+        : relationship.is_following
+          ? 'Unfollow'
+          : 'Follow';
+
     return (
         <AuthenticatedLayout title={`${profile.name}`}>
             <section className="app-panel overflow-hidden rounded-[32px]">
@@ -53,8 +63,24 @@ export default function Show({ profile, relationship, feed }) {
                                         {profile.website_url}
                                     </a>
                                 )}
-                                <span>{profile.followers_count ?? 0} followers</span>
-                                <span>{profile.following_count ?? 0} following</span>
+                                <Link
+                                    href={route('users.friends', profile.username)}
+                                    className="app-link"
+                                >
+                                    {profile.friends_count ?? 0} friends
+                                </Link>
+                                <Link
+                                    href={route('users.followers', profile.username)}
+                                    className="app-link"
+                                >
+                                    {profile.followers_count ?? 0} followers
+                                </Link>
+                                <Link
+                                    href={route('users.following', profile.username)}
+                                    className="app-link"
+                                >
+                                    {profile.following_count ?? 0} following
+                                </Link>
                                 <span>{profile.posts_count ?? 0} posts</span>
                             </div>
                             <div className="app-text-soft mt-4 max-w-2xl text-sm leading-7">
@@ -80,11 +106,7 @@ export default function Show({ profile, relationship, feed }) {
                                             onClick={submitFollow}
                                             className="app-button-primary rounded-full px-5 py-3 text-sm font-semibold"
                                         >
-                                            {relationship.is_following
-                                                ? 'Unfollow'
-                                                : relationship.has_pending_request
-                                                  ? 'Cancel request'
-                                                  : 'Follow'}
+                                            {relationshipLabel}
                                         </button>
                                     )}
                                     {relationship.can_message && (

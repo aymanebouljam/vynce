@@ -9,13 +9,7 @@ const trends = [
     { label: 'Creator workflow', posts: '511 posts today' },
 ];
 
-const suggestions = [
-    { name: 'Layla Stone', username: 'laylastone', tag: 'Shares launch breakdowns' },
-    { name: 'Noah Vale', username: 'noahvale', tag: 'Writes product postmortems' },
-    { name: 'Kenza Idris', username: 'kenzaidris', tag: 'Posts sharp design critiques' },
-];
-
-export default function Home({ feed, activeTab }) {
+export default function Home({ feed, activeTab, pendingRequests = [], suggestions = [] }) {
     const { auth } = usePage().props;
     const initials = auth.user.name
         ?.split(' ')
@@ -66,16 +60,78 @@ export default function Home({ feed, activeTab }) {
                 </div>
             </div>
 
-            <div className="app-panel rounded-[28px] p-5">
-                <div className="text-sm font-semibold">People to watch</div>
-                <div className="mt-4 space-y-4">
-                    {suggestions.map((person) => (
-                        <div key={person.username} className="app-card-inset rounded-2xl p-3">
-                            <div className="text-sm font-medium">{person.name}</div>
-                            <div className="app-text-muted text-xs">@{person.username}</div>
-                            <div className="app-text-soft mt-2 text-xs leading-6">{person.tag}</div>
+            {pendingRequests.length > 0 && (
+                <div className="app-panel rounded-[28px] p-5">
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="text-sm font-semibold">Invitations</div>
+                        <div className="app-text-soft text-xs">
+                            {pendingRequests.length} pending
                         </div>
-                    ))}
+                    </div>
+                    <div className="mt-4 space-y-3">
+                        {pendingRequests.map((person) => (
+                            <div key={person.id} className="app-card-inset rounded-2xl p-3">
+                                <div className="text-sm font-medium">{person.name}</div>
+                                <div className="app-text-muted text-xs">@{person.username}</div>
+                                <div className="mt-3 flex gap-2">
+                                    <Link
+                                        href={route('users.follow-requests.accept', person.id)}
+                                        method="post"
+                                        as="button"
+                                        className="app-button-primary rounded-full px-3 py-2 text-xs font-semibold"
+                                    >
+                                        Accept
+                                    </Link>
+                                    <Link
+                                        href={route('users.follow-requests.reject', person.id)}
+                                        method="delete"
+                                        as="button"
+                                        className="app-button-secondary rounded-full px-3 py-2 text-xs"
+                                    >
+                                        Refuse
+                                    </Link>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            <div className="app-panel rounded-[28px] p-5">
+                <div className="text-sm font-semibold">Add people</div>
+                <div className="mt-4 space-y-4">
+                    {suggestions.length === 0 ? (
+                        <div className="app-text-soft text-sm leading-6">
+                            You’re caught up for now. As more people join your orbit, they’ll show
+                            up here.
+                        </div>
+                    ) : (
+                        suggestions.map((person) => (
+                            <div key={person.id} className="app-card-inset rounded-2xl p-3">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <div className="truncate text-sm font-medium">
+                                            {person.name}
+                                        </div>
+                                        <div className="app-text-muted truncate text-xs">
+                                            @{person.username}
+                                        </div>
+                                        <div className="app-text-soft mt-2 text-xs leading-6">
+                                            {person.bio || 'See what they’re sharing on Vynce.'}
+                                        </div>
+                                    </div>
+                                    <Link
+                                        href={route('users.follow', person.id)}
+                                        method="post"
+                                        as="button"
+                                        className="app-button-primary shrink-0 rounded-full px-3 py-2 text-xs font-semibold"
+                                    >
+                                        {person.is_private ? 'Add' : 'Follow'}
+                                    </Link>
+                                </div>
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
         </div>
