@@ -200,6 +200,11 @@
         background: var(--vynce-accent-soft);
     }
 
+    .app-button-secondary--logout:hover {
+        background: var(--vynce-accent);
+        color: var(--vynce-text);
+    }
+
     .app-nav-link {
         color: var(--vynce-text);
         transition:
@@ -304,17 +309,24 @@
         margin-right: 0.75rem;
         border-radius: 9999px;
         border: 0;
-        background: var(--vynce-surface-strong);
+        background: var(--vynce-accent-hover);
         padding: 0.5rem 1rem;
         color: var(--vynce-text-high);
+        cursor: pointer;
         transition:
             background-color 150ms ease,
             color 150ms ease;
     }
 
     .app-file-input:hover::file-selector-button {
-        background: var(--vynce-accent-hover);
+        background: var(--vynce-accent);
         color: var(--vynce-text);
+    }
+
+    .app-file-input-compact::file-selector-button {
+        margin-right: 0.5rem;
+        padding: 0.35rem 0.75rem;
+        font-size: 0.75rem;
     }
 
     .field {
@@ -330,5 +342,39 @@
 
     .field:focus {
         border-color: var(--vynce-accent);
+    }
+
+    .field.app-select {
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        border-radius: 9999px !important;
+        background-image: none !important;
+    }
+
+    .field.app-select:focus,
+    .field.app-select:focus-visible {
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
+    .app-select-field {
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        -moz-appearance: none !important;
+        border: 1px solid var(--vynce-border);
+        border-radius: 9999px !important;
+        background-color: var(--vynce-surface-inset);
+        background-image: none !important;
+        color: var(--vynce-text);
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
+    .app-select-field:focus,
+    .app-select-field:focus-visible {
+        border-color: var(--vynce-accent);
+        outline: none !important;
+        box-shadow: none !important;
     }
 }
