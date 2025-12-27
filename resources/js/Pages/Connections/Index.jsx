@@ -13,7 +13,7 @@ export default function Index({ profile, connections, type, title, emptyState })
                             </Link>
                         </div>
                         <h1 className="mt-2 text-3xl font-semibold">
-                            {profile.name}'s {title.toLowerCase()}
+                            {profile.name}&apos;s {title.toLowerCase()}
                         </h1>
                         <p className="app-text-soft mt-3 text-sm leading-7">
                             Browse the people connected to this profile.

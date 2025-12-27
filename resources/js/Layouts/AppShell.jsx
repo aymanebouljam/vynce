@@ -37,8 +37,8 @@ export default function AppShell({ children, title, sidebar }) {
             <Head title={title} />
 
             <div className="app-page-shell min-h-screen">
-                <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-6 px-4 py-6 lg:flex-row lg:px-6">
-                    <aside className="lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)] lg:w-72">
+                <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-6 px-4 py-6 min-[1246px]:flex-row min-[1246px]:px-6">
+                    <aside className="min-[1246px]:sticky min-[1246px]:top-6 min-[1246px]:h-[calc(100vh-3rem)] min-[1246px]:w-72">
                         <div className="app-panel-strong flex h-full flex-col justify-between rounded-[32px] p-5 backdrop-blur">
                             <div className="space-y-6">
                                 <Link href={route('feed.home')} className="flex items-center gap-3">
@@ -79,7 +79,7 @@ export default function AppShell({ children, title, sidebar }) {
                                     href={route('logout')}
                                     method="post"
                                     as="button"
-                                    className="app-button-secondary app-panel-inset flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm"
+                                    className="app-button-secondary app-button-secondary--logout app-panel-inset flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm"
                                 >
                                     <LogOut className="h-5 w-5 shrink-0" strokeWidth={1.8} />
                                     Log out
@@ -103,7 +103,9 @@ export default function AppShell({ children, title, sidebar }) {
                     </main>
 
                     {sidebar && (
-                        <aside className="lg:sticky lg:top-6 lg:h-fit lg:w-80">{sidebar}</aside>
+                        <aside className="min-[1246px]:sticky min-[1246px]:top-6 min-[1246px]:h-fit min-[1246px]:w-80">
+                            {sidebar}
+                        </aside>
                     )}
                 </div>
             </div>
