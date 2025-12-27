@@ -91,7 +91,7 @@ export default function Edit({ profile }) {
                                 onChange={(event) =>
                                     setData('avatar', event.target.files[0] ?? null)
                                 }
-                                className="field app-file-input"
+                                className="field app-file-input app-file-input-compact"
                             />
                         </Field>
                         <Field label="Cover image" error={errors.cover}>
@@ -101,7 +101,7 @@ export default function Edit({ profile }) {
                                 onChange={(event) =>
                                     setData('cover', event.target.files[0] ?? null)
                                 }
-                                className="field app-file-input"
+                                className="field app-file-input app-file-input-compact"
                             />
                         </Field>
 
