@@ -1,44 +1,210 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import { Link } from '@inertiajs/react';
+import { Bell, Heart, Image, MessageCircle, Repeat2, SendHorizontal } from 'lucide-react';
+import linaAvatar from '@/../assets/lina.jpg';
+import nightViewImage from '@/../assets/night-view.jpg';
+import otherCommentAvatar from '@/../assets/other-comment.jpg';
+import otherCommentAvatarTwo from '@/../assets/other-comment2.jpg';
+import userAvatar from '@/../assets/user.jpg';
+
+const quickSignals = [
+    { icon: Bell, label: '12 new mentions', className: 'auth-signal-card auth-signal-card--top' },
+    {
+        icon: Heart,
+        label: '326 reactions in the last hour',
+        className: 'auth-signal-card auth-signal-card--middle',
+    },
+    {
+        icon: MessageCircle,
+        label: 'Conversation picked up again',
+        className: 'auth-signal-card auth-signal-card--bottom',
+    },
+];
 
 export default function GuestLayout({ children }) {
     return (
-        <div className="app-page-shell app-page-shell--guest flex min-h-screen items-center justify-center px-4 py-8">
-            <div className="grid w-full max-w-6xl gap-8 lg:grid-cols-[1.2fr,0.9fr]">
-                <div className="app-panel-muted hidden rounded-[36px] p-10 backdrop-blur lg:block">
-                    <Link href="/" className="inline-flex items-center gap-3">
-                        <div className="app-logo-tile rounded-2xl p-2">
-                            <ApplicationLogo className="h-10 w-10 fill-current" />
-                        </div>
-                        <div>
-                            <div className="text-2xl font-semibold">Vynce</div>
-                            <div className="app-text-muted text-sm">
-                                A clean, fast social layer for thoughtful posts.
-                            </div>
-                        </div>
-                    </Link>
+        <div className="app-page-shell app-page-shell--guest min-h-screen overflow-hidden">
+            <div className="grid min-h-screen lg:grid-cols-[minmax(0,1.2fr)_minmax(420px,0.8fr)]">
+                <div className="relative hidden overflow-hidden lg:flex">
+                    <div className="auth-ambient auth-ambient--one" />
+                    <div className="auth-ambient auth-ambient--two" />
+                    <div className="auth-grid-pattern" />
 
-                    <div className="mt-10 space-y-6">
-                        <h1 className="max-w-xl text-5xl font-semibold leading-tight">
-                            Build signal, not noise.
-                        </h1>
-                        <p className="app-text-high max-w-lg text-lg leading-8">
-                            Vynce gives creators and communities a modern feed, profile-first
-                            identity, and privacy-aware social graph without the clutter.
-                        </p>
+                    <div className="relative z-10 flex min-h-screen w-full flex-col px-10 py-10 xl:px-16">
+                        <Link href="/" className="inline-flex items-center gap-0 self-start">
+                            <ApplicationLogo className="auth-wordmark-icon h-12 w-12 fill-current" />
+                            <div>
+                                <div className="auth-wordmark text-3xl font-semibold">ynce</div>
+                            </div>
+                        </Link>
+
+                        <div className="relative mt-12 flex-1">
+                            <div className="auth-app-stage">
+                                <div className="auth-app-window">
+                                    <div className="auth-app-window__topbar">
+                                        <div className="auth-window-dots">
+                                            <span />
+                                            <span />
+                                            <span />
+                                        </div>
+                                        <div className="auth-window-title">Home</div>
+                                        <div className="auth-window-status">Live now</div>
+                                    </div>
+
+                                    <div className="auth-app-window__body">
+                                        <div className="auth-composer-card">
+                                            <img
+                                                src={userAvatar}
+                                                alt="Current user"
+                                                className="auth-avatar-image auth-avatar-image--composer"
+                                            />
+                                            <div className="auth-composer-body">
+                                                <div className="auth-composer-pill">
+                                                    Sharing a new photo set from tonight&apos;s
+                                                    meetup...
+                                                </div>
+                                                <div className="auth-composer-actions">
+                                                    <div className="auth-composer-action">
+                                                        <Image className="h-4 w-4" />
+                                                        Media
+                                                    </div>
+                                                    <div className="auth-composer-action">
+                                                        <MessageCircle className="h-4 w-4" />
+                                                        Poll
+                                                    </div>
+                                                    <div className="auth-composer-send">
+                                                        <SendHorizontal className="h-4 w-4" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="auth-post-card">
+                                            <div className="flex items-center gap-3">
+                                                <img
+                                                    src={linaAvatar}
+                                                    alt="Lina Mercer"
+                                                    className="auth-avatar-image"
+                                                />
+                                                <div className="min-w-0">
+                                                    <div className="truncate text-sm font-semibold">
+                                                        Lina Mercer
+                                                    </div>
+                                                    <div className="app-text-muted text-xs">
+                                                        @lina.mercer · 2m
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <p className="mt-4 text-sm leading-7 text-[rgba(241,235,251,0.9)]">
+                                                Tonight&apos;s view from the overlook was unreal.
+                                                Everyone just stopped to take in the whole city at
+                                                once.
+                                            </p>
+
+                                            <div className="auth-post-media">
+                                                <img
+                                                    src={nightViewImage}
+                                                    alt="Night city view"
+                                                    className="auth-post-media__image"
+                                                />
+                                                <div className="auth-post-media__badge">
+                                                    24 photos
+                                                </div>
+                                                <div className="auth-post-media__shine" />
+                                            </div>
+
+                                            <div className="auth-post-stats">
+                                                <div className="auth-post-stat auth-post-stat--liked">
+                                                    <Heart className="h-4 w-4 fill-current" />
+                                                    1.8k
+                                                </div>
+                                                <div className="auth-post-stat">
+                                                    <Repeat2 className="h-4 w-4" />
+                                                    214
+                                                </div>
+                                                <div className="auth-post-stat">
+                                                    <MessageCircle className="h-4 w-4" />
+                                                    89
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="auth-thread-card">
+                                            <div className="auth-thread-card__header">
+                                                <div className="text-sm font-semibold">
+                                                    Active thread
+                                                </div>
+                                                <div className="auth-thread-live">
+                                                    <span className="auth-thread-live__dot" />3
+                                                    typing
+                                                </div>
+                                            </div>
+
+                                            <div className="auth-chat-list">
+                                                <div className="auth-chat-row auth-chat-row--left">
+                                                    <img
+                                                        src={otherCommentAvatar}
+                                                        alt="Noa Olsen"
+                                                        className="auth-avatar-image auth-avatar-image--commenter-one auth-avatar-image--small"
+                                                    />
+                                                    <div className="auth-chat-bubble">
+                                                        That skyline looks unreal from up there.
+                                                    </div>
+                                                </div>
+                                                <div className="auth-chat-row auth-chat-row--right">
+                                                    <div className="auth-chat-bubble auth-chat-bubble--accent">
+                                                        We stayed up there for twenty minutes just
+                                                        watching the lights shift.
+                                                    </div>
+                                                </div>
+                                                <div className="auth-chat-row auth-chat-row--left auth-chat-row--typing">
+                                                    <img
+                                                        src={otherCommentAvatarTwo}
+                                                        alt="Kara Ali"
+                                                        className="auth-avatar-image auth-avatar-image--commenter-two auth-avatar-image--small"
+                                                    />
+                                                    <div className="auth-typing-bubble">
+                                                        <span />
+                                                        <span />
+                                                        <span />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {quickSignals.map(({ icon: Icon, label, className }) => (
+                                <div key={label} className={className}>
+                                    <div className="auth-signal-icon">
+                                        <Icon className="h-4 w-4" />
+                                    </div>
+                                    <span>{label}</span>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
 
-                <div className="app-panel rounded-[32px] px-6 py-8 backdrop-blur sm:px-8">
-                    <div className="mb-8 lg:hidden">
-                        <Link href="/" className="inline-flex items-center gap-3">
-                            <div className="app-logo-tile rounded-2xl p-2">
-                                <ApplicationLogo className="h-8 w-8 fill-current" />
-                            </div>
-                            <div className="text-xl font-semibold">Vynce</div>
-                        </Link>
+                <div className="auth-form-panel flex min-h-screen items-center justify-center px-4 py-8 sm:px-6 lg:rounded-none lg:px-10 xl:px-14">
+                    <div className="w-full max-w-xl">
+                        <div className="mb-8 lg:hidden">
+                            <Link href="/" className="inline-flex items-center gap-0">
+                                <ApplicationLogo className="auth-wordmark-icon auth-wordmark-icon--mobile h-10 w-10 fill-current" />
+                                <div>
+                                    <div className="auth-wordmark auth-wordmark--mobile text-2xl font-semibold">
+                                        ynce
+                                    </div>
+                                </div>
+                            </Link>
+                        </div>
+
+                        <div className="app-panel auth-form-surface rounded-[32px] px-6 py-8 backdrop-blur sm:px-8 sm:py-10">
+                            {children}
+                        </div>
                     </div>
-                    {children}
                 </div>
             </div>
         </div>
