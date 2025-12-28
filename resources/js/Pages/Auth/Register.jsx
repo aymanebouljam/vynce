@@ -24,7 +24,10 @@ export default function Register() {
             <Head title="Create account" />
 
             <div className="mb-8">
-                <h1 className="text-3xl font-semibold">Create your account</h1>
+                <div className="app-text-muted mb-3 text-xs font-semibold uppercase tracking-[0.22em]">
+                    Register
+                </div>
+                <h1 className="text-3xl font-semibold sm:text-4xl">Create your account</h1>
                 <p className="app-text-muted mt-2 text-sm leading-7">
                     Start with a clean identity, then finish your profile in a short onboarding
                     flow.

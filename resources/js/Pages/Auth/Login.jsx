@@ -22,7 +22,10 @@ export default function Login({ status, canResetPassword }) {
             <Head title="Log in" />
 
             <div className="mb-8">
-                <h1 className="text-3xl font-semibold">Welcome back</h1>
+                <div className="app-text-muted mb-3 text-xs font-semibold uppercase tracking-[0.22em]">
+                    Login
+                </div>
+                <h1 className="text-3xl font-semibold sm:text-4xl">Welcome back</h1>
                 <p className="app-text-muted mt-2 text-sm leading-7">
                     Log in to publish, follow, and shape your Vynce feed.
                 </p>
@@ -79,7 +82,7 @@ export default function Login({ status, canResetPassword }) {
                     <button
                         type="submit"
                         disabled={processing}
-                        className="app-button-primary rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                        className="app-button-primary w-full rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                     >
                         Log in
                     </button>
