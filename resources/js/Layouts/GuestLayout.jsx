@@ -30,15 +30,18 @@ export default function GuestLayout({ children }) {
                     <div className="auth-ambient auth-ambient--two" />
                     <div className="auth-grid-pattern" />
 
-                    <div className="relative z-10 flex min-h-screen w-full flex-col px-10 py-10 xl:px-16">
-                        <Link href="/" className="inline-flex items-center gap-0 self-start">
+                    <div className="relative z-10 flex min-h-screen w-full flex-col px-10 pb-6 pt-4 xl:px-16 xl:pb-8 xl:pt-5">
+                        <Link
+                            href="/"
+                            className="auth-brand-lockup inline-flex items-center gap-0 self-start"
+                        >
                             <ApplicationLogo className="auth-wordmark-icon h-12 w-12 fill-current" />
                             <div>
                                 <div className="auth-wordmark text-3xl font-semibold">ynce</div>
                             </div>
                         </Link>
 
-                        <div className="relative mt-12 flex-1">
+                        <div className="relative mt-5 flex-1">
                             <div className="auth-app-stage">
                                 <div className="auth-app-window">
                                     <div className="auth-app-window__topbar">
@@ -60,8 +63,15 @@ export default function GuestLayout({ children }) {
                                             />
                                             <div className="auth-composer-body">
                                                 <div className="auth-composer-pill">
-                                                    Sharing a new photo set from tonight&apos;s
-                                                    meetup...
+                                                    <span
+                                                        className="auth-composer-typing"
+                                                        data-text="Sharing a new photo set from tonight's meetup..."
+                                                        style={{ '--auth-composer-chars': 48 }}
+                                                        aria-label="Sharing a new photo set from tonight's meetup..."
+                                                    >
+                                                        Sharing a new photo set from tonight&apos;s
+                                                        meetup...
+                                                    </span>
                                                 </div>
                                                 <div className="auth-composer-actions">
                                                     <div className="auth-composer-action">
@@ -191,7 +201,10 @@ export default function GuestLayout({ children }) {
                 <div className="auth-form-panel flex min-h-screen items-center justify-center px-4 py-8 sm:px-6 lg:rounded-none lg:px-10 xl:px-14">
                     <div className="w-full max-w-xl">
                         <div className="mb-8 lg:hidden">
-                            <Link href="/" className="inline-flex items-center gap-0">
+                            <Link
+                                href="/"
+                                className="auth-brand-lockup auth-brand-lockup--mobile inline-flex items-center gap-0"
+                            >
                                 <ApplicationLogo className="auth-wordmark-icon auth-wordmark-icon--mobile h-10 w-10 fill-current" />
                                 <div>
                                     <div className="auth-wordmark auth-wordmark--mobile text-2xl font-semibold">

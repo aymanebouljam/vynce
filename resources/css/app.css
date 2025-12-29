@@ -400,6 +400,14 @@
         box-shadow: 0 18px 44px rgba(120, 88, 166, 0.34);
     }
 
+    .auth-brand-lockup {
+        transform: translateY(-0.2rem);
+    }
+
+    .auth-brand-lockup--mobile {
+        transform: none;
+    }
+
     .auth-wordmark-icon {
         color: var(--vynce-text);
         filter: drop-shadow(0 18px 30px rgba(120, 88, 166, 0.28));
@@ -493,7 +501,7 @@
     .auth-app-stage {
         position: relative;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: center;
         min-height: 27rem;
     }
@@ -639,12 +647,35 @@
         padding: 0.9rem 1rem;
         border-radius: 1rem;
         background: rgba(17, 11, 28, 0.46);
-        color: rgba(241, 235, 251, 0.84);
         font-size: 0.92rem;
-        animation: authTypingReveal 4.8s steps(22) infinite;
+        overflow: hidden;
+        min-height: 3rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .auth-composer-typing {
+        --auth-composer-chars: 48;
+        position: relative;
+        display: inline-block;
+        color: transparent;
+        white-space: nowrap;
+    }
+
+    .auth-composer-typing::before {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        color: rgba(241, 235, 251, 0.84);
         white-space: nowrap;
         overflow: hidden;
-        width: 0;
+        width: 0ch;
+        border-right: 2px solid rgba(241, 235, 251, 0.72);
+        padding-right: 0.15rem;
+        animation:
+            authTypingReveal 6.8s steps(48) infinite,
+            authCaretState 6.8s step-end infinite;
     }
 
     .auth-composer-actions {
@@ -951,17 +982,83 @@
 
 @keyframes authTypingReveal {
     0%,
-    10% {
-        width: 0;
+    8% {
+        width: 0ch;
+        visibility: hidden;
     }
 
-    45%,
-    80% {
-        width: 100%;
+    9% {
+        width: 0ch;
+        visibility: visible;
     }
 
+    60% {
+        width: calc(var(--auth-composer-chars) * 1ch);
+        visibility: visible;
+    }
+
+    74% {
+        width: calc(var(--auth-composer-chars) * 1ch);
+        visibility: visible;
+    }
+
+    88% {
+        width: 0ch;
+        visibility: visible;
+    }
+
+    89%,
     100% {
-        width: 0;
+        width: 0ch;
+        visibility: hidden;
+    }
+}
+
+@keyframes authCaretState {
+    0%,
+    8% {
+        border-right-color: transparent;
+    }
+
+    9%,
+    16%,
+    23%,
+    30%,
+    37%,
+    44%,
+    51%,
+    58% {
+        border-right-color: rgba(241, 235, 251, 0.72);
+    }
+
+    12.5%,
+    19.5%,
+    26.5%,
+    33.5%,
+    40.5%,
+    47.5%,
+    54.5% {
+        border-right-color: transparent;
+    }
+
+    60%,
+    74% {
+        border-right-color: rgba(241, 235, 251, 0.72);
+    }
+
+    76%,
+    80%,
+    84%,
+    88% {
+        border-right-color: rgba(241, 235, 251, 0.72);
+    }
+
+    78%,
+    82%,
+    86%,
+    89%,
+    100% {
+        border-right-color: transparent;
     }
 }
 
