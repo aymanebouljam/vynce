@@ -36,51 +36,49 @@ export default function Register() {
 
             <form onSubmit={submit} className="space-y-5">
                 <div>
-                    <label className="app-text-high mb-2 block text-sm">Name</label>
                     <input
                         value={data.name}
                         onChange={(event) => setData('name', event.target.value)}
                         className="field w-full"
+                        placeholder="Name"
                     />
                     <InputError message={errors.name} className="mt-2" />
                 </div>
 
                 <div>
-                    <label className="app-text-high mb-2 block text-sm">Username</label>
                     <input
                         value={data.username}
                         onChange={(event) => setData('username', event.target.value.toLowerCase())}
                         className="field w-full"
-                        placeholder="your-name"
+                        placeholder="Username"
                     />
                     <InputError message={errors.username} className="mt-2" />
                 </div>
 
                 <div>
-                    <label className="app-text-high mb-2 block text-sm">Email</label>
                     <input
                         type="email"
                         value={data.email}
                         onChange={(event) => setData('email', event.target.value)}
                         className="field w-full"
+                        placeholder="Email"
                     />
                     <InputError message={errors.email} className="mt-2" />
                 </div>
 
                 <div className="grid gap-5 md:grid-cols-2">
                     <div>
-                        <label className="app-text-high mb-2 block text-sm">Password</label>
                         <input
                             type="password"
                             value={data.password}
                             onChange={(event) => setData('password', event.target.value)}
                             className="field w-full"
+                            placeholder="Password"
                         />
                         <InputError message={errors.password} className="mt-2" />
                     </div>
 
                     <div>
-                        <label className="app-text-high mb-2 block text-sm">Confirm password</label>
                         <input
                             type="password"
                             value={data.password_confirmation}
@@ -88,6 +86,7 @@ export default function Register() {
                                 setData('password_confirmation', event.target.value)
                             }
                             className="field w-full"
+                            placeholder="Confirm password"
                         />
                     </div>
                 </div>

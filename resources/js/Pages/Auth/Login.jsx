@@ -22,20 +22,15 @@ export default function Login({ status, canResetPassword }) {
             <Head title="Log in" />
 
             <div className="mb-8">
-                <div className="app-text-muted mb-3 text-xs font-semibold uppercase tracking-[0.22em]">
-                    Login
-                </div>
-                <h1 className="text-3xl font-semibold sm:text-4xl">Welcome back</h1>
-                <p className="app-text-muted mt-2 text-sm leading-7">
-                    Log in to publish, follow, and shape your Vynce feed.
-                </p>
+                <h1 className="text-lg font-semibold tracking-[0.08em] sm:text-xl">
+                    Login to Vynce
+                </h1>
             </div>
 
             {status && <div className="app-flash mb-4 rounded-2xl px-4 py-3 text-sm">{status}</div>}
 
             <form onSubmit={submit} className="space-y-5">
                 <div>
-                    <label className="app-text-high mb-2 block text-sm">Email</label>
                     <input
                         type="email"
                         value={data.email}
@@ -43,18 +38,19 @@ export default function Login({ status, canResetPassword }) {
                         autoComplete="username"
                         onChange={(event) => setData('email', event.target.value)}
                         className="field w-full"
+                        placeholder="Email"
                     />
                     <InputError message={errors.email} className="mt-2" />
                 </div>
 
                 <div>
-                    <label className="app-text-high mb-2 block text-sm">Password</label>
                     <input
                         type="password"
                         value={data.password}
                         autoComplete="current-password"
                         onChange={(event) => setData('password', event.target.value)}
                         className="field w-full"
+                        placeholder="Password"
                     />
                     <InputError message={errors.password} className="mt-2" />
                 </div>
@@ -69,23 +65,23 @@ export default function Login({ status, canResetPassword }) {
                     Remember me
                 </label>
 
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-3">
+                    <button
+                        type="submit"
+                        disabled={processing}
+                        className="app-button-primary w-full rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                        Log in
+                    </button>
+
                     {canResetPassword && (
                         <Link
                             href={route('password.request')}
-                            className="app-link app-text-muted text-sm"
+                            className="app-link app-text-muted block text-center text-sm"
                         >
                             Forgot your password?
                         </Link>
                     )}
-
-                    <button
-                        type="submit"
-                        disabled={processing}
-                        className="app-button-primary w-full rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-                    >
-                        Log in
-                    </button>
                 </div>
             </form>
 
