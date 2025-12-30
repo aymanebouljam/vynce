@@ -66,7 +66,6 @@ export default function GuestLayout({ children }) {
                                                     <span
                                                         className="auth-composer-typing"
                                                         data-text="Sharing a new photo set from tonight's meetup..."
-                                                        style={{ '--auth-composer-chars': 48 }}
                                                         aria-label="Sharing a new photo set from tonight's meetup..."
                                                     >
                                                         Sharing a new photo set from tonight&apos;s
@@ -80,7 +79,7 @@ export default function GuestLayout({ children }) {
                                                     </div>
                                                     <div className="auth-composer-action">
                                                         <MessageCircle className="h-4 w-4" />
-                                                        Poll
+                                                        Thread
                                                     </div>
                                                     <div className="auth-composer-send">
                                                         <SendHorizontal className="h-4 w-4" />
@@ -198,7 +197,7 @@ export default function GuestLayout({ children }) {
                     </div>
                 </div>
 
-                <div className="auth-form-panel flex min-h-screen items-center justify-center px-4 py-8 sm:px-6 lg:rounded-none lg:px-10 xl:px-14">
+                <div className="auth-form-panel flex min-h-screen items-start justify-center px-4 pb-8 pt-8 sm:px-6 lg:rounded-none lg:px-10 lg:pt-40 xl:px-14">
                     <div className="w-full max-w-xl">
                         <div className="mb-8 lg:hidden">
                             <Link
@@ -214,9 +213,7 @@ export default function GuestLayout({ children }) {
                             </Link>
                         </div>
 
-                        <div className="app-panel auth-form-surface rounded-[32px] px-6 py-8 backdrop-blur sm:px-8 sm:py-10">
-                            {children}
-                        </div>
+                        {children}
                     </div>
                 </div>
             </div>
