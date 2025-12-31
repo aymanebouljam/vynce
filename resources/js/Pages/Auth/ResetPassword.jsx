@@ -1,5 +1,4 @@
 import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
@@ -27,15 +26,15 @@ export default function ResetPassword({ token, email }) {
 
             <form onSubmit={submit}>
                 <div>
-                    <InputLabel htmlFor="email" value="Email" />
-
                     <TextInput
                         id="email"
                         type="email"
                         name="email"
                         value={data.email}
-                        className="mt-1 block w-full"
+                        className="block w-full"
                         autoComplete="username"
+                        placeholder="Email"
+                        aria-label="Email"
                         onChange={(e) => setData('email', e.target.value)}
                     />
 
@@ -43,16 +42,16 @@ export default function ResetPassword({ token, email }) {
                 </div>
 
                 <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
-
                     <TextInput
                         id="password"
                         type="password"
                         name="password"
                         value={data.password}
-                        className="mt-1 block w-full"
+                        className="block w-full"
                         autoComplete="new-password"
                         isFocused={true}
+                        placeholder="New password"
+                        aria-label="New password"
                         onChange={(e) => setData('password', e.target.value)}
                     />
 
@@ -60,15 +59,15 @@ export default function ResetPassword({ token, email }) {
                 </div>
 
                 <div className="mt-4">
-                    <InputLabel htmlFor="password_confirmation" value="Confirm Password" />
-
                     <TextInput
                         type="password"
                         id="password_confirmation"
                         name="password_confirmation"
                         value={data.password_confirmation}
-                        className="mt-1 block w-full"
+                        className="block w-full"
                         autoComplete="new-password"
+                        placeholder="Confirm new password"
+                        aria-label="Confirm new password"
                         onChange={(e) => setData('password_confirmation', e.target.value)}
                     />
 

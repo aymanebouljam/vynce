@@ -23,14 +23,12 @@ export default function Register() {
         <GuestLayout>
             <Head title="Create account" />
 
-            <div className="mb-8">
-                <div className="app-text-muted mb-3 text-xs font-semibold uppercase tracking-[0.22em]">
-                    Register
+            <div className="mb-7">
+                <div className="app-text-muted text-[0.7rem] font-semibold uppercase tracking-[0.28em]">
+                    Join Vynce
                 </div>
-                <h1 className="text-3xl font-semibold sm:text-4xl">Create your account</h1>
-                <p className="app-text-muted mt-2 text-sm leading-7">
-                    Start with a clean identity, then finish your profile in a short onboarding
-                    flow.
+                <p className="mt-3 text-xl font-medium leading-8 text-[rgba(241,235,251,0.9)]">
+                    Set up your profile and step into the feed.
                 </p>
             </div>
 
