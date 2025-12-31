@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { useForm } from '@inertiajs/react';
+import { cloneElement } from 'react';
 
 export default function Onboarding({ profile }) {
     const { data, setData, post, processing, errors } = useForm({
@@ -38,14 +39,14 @@ export default function Onboarding({ profile }) {
                 </div>
 
                 <form onSubmit={submit} className="grid gap-5 md:grid-cols-2">
-                    <Field label="Display name" error={errors.name}>
+                    <Field placeholder="Display name" error={errors.name}>
                         <input
                             value={data.name}
                             onChange={(event) => setData('name', event.target.value)}
                             className="field"
                         />
                     </Field>
-                    <Field label="Username" error={errors.username}>
+                    <Field placeholder="Username" error={errors.username}>
                         <input
                             value={data.username}
                             onChange={(event) =>
@@ -54,29 +55,32 @@ export default function Onboarding({ profile }) {
                             className="field"
                         />
                     </Field>
-                    <Field label="Location" error={errors.location}>
+                    <Field placeholder="Location" error={errors.location}>
                         <input
                             value={data.location}
                             onChange={(event) => setData('location', event.target.value)}
                             className="field"
                         />
                     </Field>
-                    <Field label="Website" error={errors.website_url}>
+                    <Field placeholder="Website" error={errors.website_url}>
                         <input
                             value={data.website_url}
                             onChange={(event) => setData('website_url', event.target.value)}
                             className="field"
                         />
                     </Field>
-                    <Field label="Bio" error={errors.bio} className="md:col-span-2">
+                    <Field
+                        placeholder="Tell people what you’re building, exploring, or sharing."
+                        error={errors.bio}
+                        className="md:col-span-2"
+                    >
                         <textarea
                             value={data.bio}
                             onChange={(event) => setData('bio', event.target.value)}
                             className="field min-h-32 resize-none"
-                            placeholder="Tell people what you’re building, exploring, or sharing."
                         />
                     </Field>
-                    <Field label="Avatar" error={errors.avatar}>
+                    <Field placeholder="Avatar" hint="Avatar" error={errors.avatar}>
                         <input
                             type="file"
                             accept="image/*"
@@ -84,7 +88,7 @@ export default function Onboarding({ profile }) {
                             className="field app-file-input"
                         />
                     </Field>
-                    <Field label="Cover image" error={errors.cover}>
+                    <Field placeholder="Cover image" hint="Cover image" error={errors.cover}>
                         <input
                             type="file"
                             accept="image/*"
@@ -118,11 +122,21 @@ export default function Onboarding({ profile }) {
     );
 }
 
-function Field({ label, error, className = '', children }) {
+function Field({ placeholder, hint, error, className = '', children }) {
+    const childProps = children.props ?? {};
+    const enhancedProps = {
+        ...childProps,
+        placeholder:
+            childProps.type === 'file'
+                ? childProps.placeholder
+                : (childProps.placeholder ?? placeholder),
+        'aria-label': childProps['aria-label'] ?? placeholder,
+    };
+
     return (
         <div className={className}>
-            <label className="app-text-high mb-2 block text-sm">{label}</label>
-            {children}
+            {hint && <div className="app-text-muted mb-2 text-xs font-medium">{hint}</div>}
+            {cloneElement(children, enhancedProps)}
             {error && <div className="mt-2 text-sm text-rose-300">{error}</div>}
         </div>
     );
