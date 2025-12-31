@@ -1,6 +1,5 @@
 import DangerButton from '@/Components/DangerButton';
 import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
 import Modal from '@/Components/Modal';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
@@ -72,8 +71,6 @@ export default function DeleteUserForm({ className = '' }) {
                     </p>
 
                     <div className="mt-6">
-                        <InputLabel htmlFor="password" value="Password" className="sr-only" />
-
                         <TextInput
                             id="password"
                             type="password"
@@ -84,6 +81,7 @@ export default function DeleteUserForm({ className = '' }) {
                             className="mt-1 block w-full sm:w-3/4"
                             isFocused
                             placeholder="Password"
+                            aria-label="Password"
                         />
 
                         <InputError message={errors.password} className="mt-2" />
