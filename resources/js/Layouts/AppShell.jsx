@@ -1,37 +1,56 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import FlashBanner from '@/Components/App/FlashBanner';
-import { Head, Link } from '@inertiajs/react';
-import { Compass, House, LogOut, MessageCircle, Search, Settings, Users } from 'lucide-react';
-
-const navigation = [
-    {
-        label: 'Home',
-        route: 'feed.home',
-        icon: House,
-    },
-    {
-        label: 'Contacts',
-        route: 'contacts.index',
-        icon: Users,
-    },
-    {
-        label: 'Discover',
-        route: 'feed.discover',
-        icon: Compass,
-    },
-    {
-        label: 'Messages',
-        route: 'messages.index',
-        icon: MessageCircle,
-    },
-    {
-        label: 'Settings',
-        route: 'settings',
-        icon: Settings,
-    },
-];
+import { Head, Link, usePage } from '@inertiajs/react';
+import { Compass, House, LogOut, MessageCircle, Search, Settings, User, Users } from 'lucide-react';
 
 export default function AppShell({ children, title, sidebar }) {
+    const { auth } = usePage().props;
+    const showSearch =
+        !route().current('users.show') &&
+        !route().current('users.friends') &&
+        !route().current('users.followers') &&
+        !route().current('users.following') &&
+        !route().current('settings') &&
+        !route().current('profile.edit');
+    const navigation = [
+        {
+            label: 'Home',
+            href: route('feed.home'),
+            active: route().current('feed.home'),
+            icon: House,
+        },
+        {
+            label: 'Profile',
+            href: route('users.show', auth.user.username),
+            active: route().current('users.show') && route().params.user === auth.user.username,
+            icon: User,
+        },
+        {
+            label: 'Contacts',
+            href: route('contacts.index'),
+            active: route().current('contacts.index'),
+            icon: Users,
+        },
+        {
+            label: 'Discover',
+            href: route('feed.discover'),
+            active: route().current('feed.discover'),
+            icon: Compass,
+        },
+        {
+            label: 'Messages',
+            href: route('messages.index'),
+            active: route().current('messages.index') || route().current('messages.show'),
+            icon: MessageCircle,
+        },
+        {
+            label: 'Settings',
+            href: route('settings'),
+            active: route().current('settings') || route().current('profile.edit'),
+            icon: Settings,
+        },
+    ];
+
     return (
         <>
             <Head title={title} />
@@ -41,14 +60,14 @@ export default function AppShell({ children, title, sidebar }) {
                     <aside className="min-[1246px]:sticky min-[1246px]:top-6 min-[1246px]:h-[calc(100vh-3rem)] min-[1246px]:w-72">
                         <div className="app-panel-strong flex h-full flex-col justify-between rounded-[32px] p-5 backdrop-blur">
                             <div className="space-y-6">
-                                <Link href={route('feed.home')} className="flex items-center gap-3">
-                                    <div className="app-logo-tile rounded-2xl p-2">
-                                        <ApplicationLogo className="h-8 w-8 fill-current" />
-                                    </div>
+                                <Link
+                                    href={route('feed.home')}
+                                    className="auth-brand-lockup inline-flex items-center gap-0 self-start"
+                                >
+                                    <ApplicationLogo className="auth-wordmark-icon h-11 w-11 fill-current" />
                                     <div>
-                                        <div className="text-lg font-semibold">Vynce</div>
-                                        <div className="app-text-muted text-xs">
-                                            Your people, your pace
+                                        <div className="auth-wordmark text-[1.7rem] font-semibold">
+                                            ynce
                                         </div>
                                     </div>
                                 </Link>
@@ -56,12 +75,10 @@ export default function AppShell({ children, title, sidebar }) {
                                 <nav className="space-y-2">
                                     {navigation.map((item) => (
                                         <Link
-                                            key={item.route}
-                                            href={route(item.route)}
+                                            key={item.label}
+                                            href={item.href}
                                             className={`app-nav-link flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium ${
-                                                route().current(item.route)
-                                                    ? 'app-nav-link-active'
-                                                    : ''
+                                                item.active ? 'app-nav-link-active' : ''
                                             }`}
                                         >
                                             <item.icon
@@ -89,14 +106,19 @@ export default function AppShell({ children, title, sidebar }) {
                     </aside>
 
                     <main className="min-w-0 flex-1 space-y-6">
-                        <label className="app-search flex items-center gap-3 rounded-[24px] px-4 py-3 backdrop-blur transition">
-                            <Search className="app-text-muted h-5 w-5 shrink-0" strokeWidth={1.8} />
-                            <input
-                                type="search"
-                                placeholder="Search people, posts, or topics"
-                                className="app-search-input w-full bg-transparent text-sm focus:outline-none"
-                            />
-                        </label>
+                        {showSearch && (
+                            <label className="app-search flex items-center gap-3 rounded-[24px] px-4 py-3 backdrop-blur transition">
+                                <Search
+                                    className="app-text-muted h-5 w-5 shrink-0"
+                                    strokeWidth={1.8}
+                                />
+                                <input
+                                    type="search"
+                                    placeholder="Search people, posts, or topics"
+                                    className="app-search-input w-full bg-transparent text-sm focus:outline-none"
+                                />
+                            </label>
+                        )}
 
                         <FlashBanner />
                         {children}

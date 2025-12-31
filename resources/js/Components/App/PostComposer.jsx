@@ -99,13 +99,19 @@ export default function PostComposer() {
                         )}
                     </div>
 
-                    <input
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        onChange={(event) => setData('media', Array.from(event.target.files))}
-                        className="app-file-input block text-xs"
-                    />
+                    <div className="space-y-1">
+                        <div className="app-text-muted text-[11px] font-medium uppercase tracking-[0.16em]">
+                            Add images
+                        </div>
+                        <input
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            onChange={(event) => setData('media', Array.from(event.target.files))}
+                            className="app-file-input block text-xs"
+                            aria-label="Add images"
+                        />
+                    </div>
                 </div>
 
                 <button

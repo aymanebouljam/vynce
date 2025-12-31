@@ -40,9 +40,17 @@ export default function Show({ profile, relationship, feed }) {
                 <div className="p-6">
                     <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
                         <div>
-                            <div className="app-panel-inset -mt-16 mb-4 flex h-24 w-24 items-center justify-center rounded-[28px] border-4 border-[var(--vynce-bg)] text-2xl font-bold">
-                                {profile.name?.charAt(0)}
-                            </div>
+                            {profile.avatar_url ? (
+                                <img
+                                    src={profile.avatar_url}
+                                    alt={profile.name}
+                                    className="-mt-16 mb-4 h-24 w-24 rounded-[28px] border-4 border-[var(--vynce-bg)] object-cover"
+                                />
+                            ) : (
+                                <div className="app-panel-inset -mt-16 mb-4 flex h-24 w-24 items-center justify-center rounded-[28px] border-4 border-[var(--vynce-bg)] text-2xl font-bold">
+                                    {profile.name?.charAt(0)}
+                                </div>
+                            )}
                             <h1 className="text-3xl font-semibold">{profile.name}</h1>
                             <div className="app-text-muted mt-1 text-sm">@{profile.username}</div>
                             <div
