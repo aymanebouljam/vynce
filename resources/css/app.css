@@ -130,14 +130,27 @@
 
     .app-link {
         color: var(--vynce-text);
+        text-decoration: underline;
+        text-decoration-color: transparent;
+        text-underline-offset: 0.22em;
         transition:
             color 150ms ease,
             background-color 150ms ease,
-            border-color 150ms ease;
+            border-color 150ms ease,
+            opacity 150ms ease,
+            text-decoration-color 150ms ease,
+            text-shadow 150ms ease;
     }
 
     .app-link:hover {
-        color: var(--vynce-text);
+        color: rgba(255, 255, 255, 0.98);
+        text-decoration-color: currentColor;
+        text-shadow: 0 0 14px rgba(241, 235, 251, 0.24);
+    }
+
+    .app-link.app-text-muted:hover {
+        color: var(--vynce-text-high);
+        text-decoration-color: currentColor;
     }
 
     .app-logo-tile {

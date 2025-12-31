@@ -197,7 +197,7 @@ export default function GuestLayout({ children }) {
                     </div>
                 </div>
 
-                <div className="auth-form-panel flex min-h-screen items-start justify-center px-4 pb-8 pt-8 sm:px-6 lg:rounded-none lg:px-10 lg:pt-40 xl:px-14">
+                <div className="auth-form-panel flex min-h-screen items-start justify-center px-4 pb-8 pt-8 sm:px-6 lg:rounded-none lg:px-10 lg:pt-14 xl:px-14 xl:pt-[4.5rem] 2xl:pt-32">
                     <div className="w-full max-w-xl">
                         <div className="mb-8 lg:hidden">
                             <Link

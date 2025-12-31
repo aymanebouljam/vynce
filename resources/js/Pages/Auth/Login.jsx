@@ -21,10 +21,13 @@ export default function Login({ status, canResetPassword }) {
         <GuestLayout>
             <Head title="Log in" />
 
-            <div className="mb-8">
-                <h1 className="text-lg font-semibold tracking-[0.08em] sm:text-xl">
-                    Login to Vynce
-                </h1>
+            <div className="mb-7">
+                <div className="app-text-muted text-[0.7rem] font-semibold uppercase tracking-[0.28em]">
+                    Welcome back
+                </div>
+                <p className="mt-3 text-xl font-medium leading-8 text-[rgba(241,235,251,0.9)]">
+                    Login to Vynce and pick up where you left off.
+                </p>
             </div>
 
             {status && <div className="app-flash mb-4 rounded-2xl px-4 py-3 text-sm">{status}</div>}
