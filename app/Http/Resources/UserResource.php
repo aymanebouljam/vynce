@@ -4,7 +4,6 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 class UserResource extends JsonResource
 {
@@ -20,8 +19,8 @@ class UserResource extends JsonResource
             'location' => $this->location,
             'is_private' => $this->is_private,
             'role' => $this->role?->value ?? $this->role,
-            'avatar_url' => $this->avatar_path ? Storage::disk('public')->url($this->avatar_path) : null,
-            'cover_url' => $this->cover_path ? Storage::disk('public')->url($this->cover_path) : null,
+            'avatar_url' => $this->avatar_path ? route('media.public', ['path' => $this->avatar_path]) : null,
+            'cover_url' => $this->cover_path ? route('media.public', ['path' => $this->cover_path]) : null,
             'onboarding_completed_at' => $this->onboarding_completed_at,
             'friends_count' => $this->when(isset($this->friends_count), $this->friends_count),
             'followers_count' => $this->whenCounted('acceptedFollowers', $this->accepted_followers_count ?? $this->followers_count),

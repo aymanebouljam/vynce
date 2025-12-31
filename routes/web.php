@@ -4,6 +4,7 @@ use App\Http\Controllers\Feed\FeedController;
 use App\Http\Controllers\Messaging\ConversationController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\Posts\PostController;
+use App\Http\Controllers\PublicMediaController;
 use App\Http\Controllers\SocialGraph\ConnectionController;
 use App\Http\Controllers\SocialGraph\FollowController;
 use App\Http\Controllers\SocialGraph\RelationshipController;
@@ -15,6 +16,10 @@ Route::get('/', function () {
         ? redirect()->route('feed.home')
         : redirect()->route('login');
 })->name('home');
+
+Route::get('/media/{path}', PublicMediaController::class)
+    ->where('path', '.*')
+    ->name('media.public');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/app', fn () => redirect()->route('feed.home'))->name('dashboard');
