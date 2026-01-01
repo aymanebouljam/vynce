@@ -38,6 +38,12 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar.update');
+    Route::post('/profile/cover', [ProfileController::class, 'updateCover'])->name('profile.cover.update');
+    Route::patch('/profile/avatar/transform', [ProfileController::class, 'updateAvatarTransform'])->name('profile.avatar.transform.update');
+    Route::patch('/profile/cover/transform', [ProfileController::class, 'updateCoverTransform'])->name('profile.cover.transform.update');
+    Route::delete('/profile/avatar', [ProfileController::class, 'destroyAvatar'])->name('profile.avatar.destroy');
+    Route::delete('/profile/cover', [ProfileController::class, 'destroyCover'])->name('profile.cover.destroy');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::post('/posts', [PostController::class, 'store'])->middleware('throttle:30,1')->name('posts.store');
