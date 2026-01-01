@@ -1,11 +1,18 @@
+import DangerButton from '@/Components/DangerButton';
+import Modal from '@/Components/Modal';
 import PostCard from '@/Components/App/PostCard';
+import SecondaryButton from '@/Components/SecondaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Camera, Eye, ImagePlus, Move, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { Link, useForm, usePage } from '@inertiajs/react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function Show({ profile, relationship, feed }) {
-    const { auth } = usePage().props;
+    const { auth, errors } = usePage().props;
     const followForm = useForm({});
     const isOwnProfile = auth.user.id === profile.id;
+    const [avatarManagerOpen, setAvatarManagerOpen] = useState(false);
+    const [coverManagerOpen, setCoverManagerOpen] = useState(false);
 
     const submitFollow = () => {
         if (relationship.is_following || relationship.has_pending_request) {
@@ -29,28 +36,100 @@ export default function Show({ profile, relationship, feed }) {
     return (
         <AuthenticatedLayout title={`${profile.name}`}>
             <section className="app-panel overflow-hidden rounded-[32px]">
-                <div
-                    className="h-44 bg-cover bg-center"
-                    style={{
-                        backgroundImage: profile.cover_url
-                            ? `url(${profile.cover_url})`
-                            : 'var(--vynce-cover-gradient)',
-                    }}
-                />
+                <div className="relative h-44 overflow-hidden">
+                    {profile.cover_url ? (
+                        <img
+                            src={profile.cover_url}
+                            alt={`${profile.name} cover`}
+                            className="absolute inset-0 h-full w-full object-cover"
+                            style={imageTransformStyle({
+                                x: profile.cover_position_x,
+                                y: profile.cover_position_y,
+                                zoom: profile.cover_zoom,
+                            })}
+                        />
+                    ) : (
+                        <div
+                            className="absolute inset-0"
+                            style={{ background: 'var(--vynce-cover-gradient)' }}
+                        />
+                    )}
+
+                    {isOwnProfile && (
+                        <button
+                            type="button"
+                            onClick={() => setCoverManagerOpen(true)}
+                            className="app-button-secondary absolute right-4 top-4 inline-flex h-11 w-11 items-center justify-center rounded-full backdrop-blur"
+                            aria-label="Manage cover image"
+                        >
+                            <Camera className="h-4 w-4" strokeWidth={1.9} />
+                        </button>
+                    )}
+                </div>
+
                 <div className="p-6">
                     <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
                         <div>
-                            {profile.avatar_url ? (
-                                <img
-                                    src={profile.avatar_url}
-                                    alt={profile.name}
-                                    className="-mt-16 mb-4 h-24 w-24 rounded-[28px] border-4 border-[var(--vynce-bg)] object-cover"
-                                />
-                            ) : (
-                                <div className="app-panel-inset -mt-16 mb-4 flex h-24 w-24 items-center justify-center rounded-[28px] border-4 border-[var(--vynce-bg)] text-2xl font-bold">
-                                    {profile.name?.charAt(0)}
+                            <div className="relative -mt-16 mb-4 w-fit">
+                                {profile.avatar_url ? (
+                                    <div className="h-24 w-24 overflow-hidden rounded-[28px] border-4 border-[var(--vynce-bg)]">
+                                        <img
+                                            src={profile.avatar_url}
+                                            alt={profile.name}
+                                            className="h-full w-full object-cover"
+                                            style={imageTransformStyle({
+                                                x: profile.avatar_position_x,
+                                                y: profile.avatar_position_y,
+                                                zoom: profile.avatar_zoom,
+                                            })}
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="app-panel-inset flex h-24 w-24 items-center justify-center rounded-[28px] border-4 border-[var(--vynce-bg)] text-2xl font-bold">
+                                        {profile.name?.charAt(0)}
+                                    </div>
+                                )}
+
+                                {isOwnProfile && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setAvatarManagerOpen(true)}
+                                        className="app-button-primary absolute -bottom-2 -right-2 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--vynce-bg)]"
+                                        aria-label="Manage profile photo"
+                                    >
+                                        <Camera className="h-4 w-4" strokeWidth={1.9} />
+                                    </button>
+                                )}
+                            </div>
+
+                            {(errors.avatar ||
+                                errors.cover ||
+                                errors.zoom ||
+                                errors.position_x ||
+                                errors.position_y) && (
+                                <div className="mb-3 space-y-1">
+                                    {errors.avatar && (
+                                        <div className="text-sm text-rose-300">{errors.avatar}</div>
+                                    )}
+                                    {errors.cover && (
+                                        <div className="text-sm text-rose-300">{errors.cover}</div>
+                                    )}
+                                    {errors.zoom && (
+                                        <div className="text-sm text-rose-300">{errors.zoom}</div>
+                                    )}
+                                    {errors.position_x && (
+                                        <div className="text-sm text-rose-300">
+                                            {errors.position_x}
+                                        </div>
+                                    )}
+                                    {errors.position_y && (
+                                        <div className="text-sm text-rose-300">
+                                            {errors.position_y}
+                                        </div>
+                                    )}
                                 </div>
                             )}
+
                             <h1 className="text-3xl font-semibold">{profile.name}</h1>
                             <div className="app-text-muted mt-1 text-sm">@{profile.username}</div>
                             <div
@@ -134,6 +213,31 @@ export default function Show({ profile, relationship, feed }) {
                 </div>
             </section>
 
+            {isOwnProfile && (
+                <>
+                    <ProfileImageManagerModal
+                        kind="avatar"
+                        title="Profile photo"
+                        show={avatarManagerOpen}
+                        onClose={() => setAvatarManagerOpen(false)}
+                        imageUrl={profile.avatar_url}
+                        zoom={profile.avatar_zoom}
+                        positionX={profile.avatar_position_x}
+                        positionY={profile.avatar_position_y}
+                    />
+                    <ProfileImageManagerModal
+                        kind="cover"
+                        title="Cover image"
+                        show={coverManagerOpen}
+                        onClose={() => setCoverManagerOpen(false)}
+                        imageUrl={profile.cover_url}
+                        zoom={profile.cover_zoom}
+                        positionX={profile.cover_position_x}
+                        positionY={profile.cover_position_y}
+                    />
+                </>
+            )}
+
             <section className="mt-6 space-y-4">
                 {feed.data.length === 0 ? (
                     <div className="app-dashed-panel app-text-muted rounded-[28px] p-8 text-sm">
@@ -148,4 +252,243 @@ export default function Show({ profile, relationship, feed }) {
             </section>
         </AuthenticatedLayout>
     );
+}
+
+function ProfileImageManagerModal({
+    kind,
+    title,
+    show,
+    onClose,
+    imageUrl,
+    zoom,
+    positionX,
+    positionY,
+}) {
+    const uploadKey = kind;
+    const uploadRoute =
+        kind === 'avatar' ? route('profile.avatar.update') : route('profile.cover.update');
+    const transformRoute =
+        kind === 'avatar'
+            ? route('profile.avatar.transform.update')
+            : route('profile.cover.transform.update');
+    const deleteRoute =
+        kind === 'avatar' ? route('profile.avatar.destroy') : route('profile.cover.destroy');
+
+    const uploadForm = useForm({ [uploadKey]: null });
+    const transformForm = useForm({
+        zoom,
+        position_x: positionX,
+        position_y: positionY,
+    });
+    const deleteForm = useForm({});
+    const fileInputRef = useRef(null);
+
+    useEffect(() => {
+        if (!show) {
+            return;
+        }
+
+        transformForm.setData({
+            zoom,
+            position_x: positionX,
+            position_y: positionY,
+        });
+    }, [show, zoom, positionX, positionY]);
+
+    const submitUpload = (file) => {
+        if (!file) {
+            return;
+        }
+
+        uploadForm.setData(uploadKey, file);
+        uploadForm.post(uploadRoute, {
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => onClose(),
+        });
+    };
+
+    const saveAdjustments = (event) => {
+        event.preventDefault();
+
+        transformForm.patch(transformRoute, {
+            preserveScroll: true,
+            onSuccess: () => onClose(),
+        });
+    };
+
+    const destroyImage = () => {
+        deleteForm.delete(deleteRoute, {
+            preserveScroll: true,
+            onSuccess: () => onClose(),
+        });
+    };
+
+    const previewStyle = imageTransformStyle({
+        x: transformForm.data.position_x,
+        y: transformForm.data.position_y,
+        zoom: transformForm.data.zoom,
+    });
+
+    return (
+        <Modal show={show} onClose={onClose} maxWidth="2xl">
+            <div className="space-y-6 p-6">
+                <div className="flex items-start justify-between gap-4">
+                    <div>
+                        <div className="flex items-center gap-2 text-lg font-semibold">
+                            <Eye className="h-5 w-5" strokeWidth={1.9} />
+                            {title}
+                        </div>
+                        <p className="app-text-soft mt-2 text-sm leading-6">
+                            Upload a new image, preview it at full size, fine-tune the framing, or
+                            remove it completely.
+                        </p>
+                    </div>
+                </div>
+
+                <div
+                    className={`app-panel-inset relative overflow-hidden ${
+                        kind === 'avatar'
+                            ? 'mx-auto h-72 w-72 rounded-[36px]'
+                            : 'h-64 rounded-[28px]'
+                    }`}
+                >
+                    {imageUrl ? (
+                        <img
+                            src={imageUrl}
+                            alt={title}
+                            className="h-full w-full object-cover"
+                            style={previewStyle}
+                        />
+                    ) : (
+                        <div className="app-text-soft flex h-full items-center justify-center px-6 text-center text-sm leading-7">
+                            No {kind === 'avatar' ? 'profile photo' : 'cover image'} yet. Add one
+                            here and it will appear right away on your profile.
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(event) => {
+                            submitUpload(event.target.files?.[0] ?? null);
+                            event.target.value = '';
+                        }}
+                    />
+                    <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="app-button-primary inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold"
+                        disabled={uploadForm.processing}
+                    >
+                        <ImagePlus className="h-4 w-4" strokeWidth={1.9} />
+                        {imageUrl ? 'Replace image' : 'Add image'}
+                    </button>
+
+                    {imageUrl && (
+                        <DangerButton
+                            type="button"
+                            onClick={destroyImage}
+                            className="rounded-full px-4 py-2 text-sm normal-case tracking-normal"
+                            disabled={deleteForm.processing}
+                        >
+                            <Trash2 className="mr-2 h-4 w-4" strokeWidth={1.9} />
+                            Delete image
+                        </DangerButton>
+                    )}
+                </div>
+
+                {imageUrl && (
+                    <form onSubmit={saveAdjustments} className="space-y-5">
+                        <div className="grid gap-4 md:grid-cols-3">
+                            <RangeField
+                                icon={SlidersHorizontal}
+                                label="Zoom"
+                                value={transformForm.data.zoom}
+                                min={1}
+                                max={3}
+                                step={0.05}
+                                displayValue={`${Number(transformForm.data.zoom).toFixed(2)}x`}
+                                onChange={(value) => transformForm.setData('zoom', value)}
+                            />
+                            <RangeField
+                                icon={Move}
+                                label="Horizontal"
+                                value={transformForm.data.position_x}
+                                min={0}
+                                max={100}
+                                step={1}
+                                displayValue={`${transformForm.data.position_x}%`}
+                                onChange={(value) => transformForm.setData('position_x', value)}
+                            />
+                            <RangeField
+                                icon={Move}
+                                label="Vertical"
+                                value={transformForm.data.position_y}
+                                min={0}
+                                max={100}
+                                step={1}
+                                displayValue={`${transformForm.data.position_y}%`}
+                                onChange={(value) => transformForm.setData('position_y', value)}
+                            />
+                        </div>
+
+                        <div className="flex flex-wrap justify-end gap-3">
+                            <SecondaryButton
+                                type="button"
+                                onClick={onClose}
+                                className="rounded-full px-4 py-2 text-sm normal-case tracking-normal"
+                            >
+                                Cancel
+                            </SecondaryButton>
+                            <button
+                                type="submit"
+                                className="app-button-primary inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold"
+                                disabled={transformForm.processing}
+                            >
+                                <Camera className="h-4 w-4" strokeWidth={1.9} />
+                                Save framing
+                            </button>
+                        </div>
+                    </form>
+                )}
+            </div>
+        </Modal>
+    );
+}
+
+function RangeField({ icon: Icon, label, value, min, max, step, displayValue, onChange }) {
+    return (
+        <div className="app-panel-inset rounded-2xl p-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                    <Icon className="h-4 w-4" strokeWidth={1.9} />
+                    {label}
+                </div>
+                <div className="app-text-soft text-xs">{displayValue}</div>
+            </div>
+
+            <input
+                type="range"
+                min={min}
+                max={max}
+                step={step}
+                value={value}
+                onChange={(event) => onChange(Number(event.target.value))}
+                className="w-full accent-[var(--vynce-accent)]"
+            />
+        </div>
+    );
+}
+
+function imageTransformStyle({ x, y, zoom }) {
+    return {
+        objectPosition: `${x}% ${y}%`,
+        transform: `scale(${zoom})`,
+        transformOrigin: `${x}% ${y}%`,
+    };
 }

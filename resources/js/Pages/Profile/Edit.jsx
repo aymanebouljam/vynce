@@ -14,8 +14,6 @@ export default function Edit({ profile }) {
         website_url: profile.website_url ?? '',
         location: profile.location ?? '',
         is_private: profile.is_private ?? false,
-        avatar: null,
-        cover: null,
     });
 
     const submit = (event) => {
@@ -89,27 +87,6 @@ export default function Edit({ profile }) {
                                 className="field min-h-28 resize-none"
                             />
                         </Field>
-                        <Field placeholder="Avatar" hint="Avatar" error={errors.avatar}>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(event) =>
-                                    setData('avatar', event.target.files[0] ?? null)
-                                }
-                                className="field app-file-input app-file-input-compact"
-                            />
-                        </Field>
-                        <Field placeholder="Cover image" hint="Cover image" error={errors.cover}>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(event) =>
-                                    setData('cover', event.target.files[0] ?? null)
-                                }
-                                className="field app-file-input app-file-input-compact"
-                            />
-                        </Field>
-
                         <label className="app-panel-inset app-text-high flex items-center gap-3 rounded-2xl px-4 py-4 text-sm md:col-span-2">
                             <input
                                 type="checkbox"
