@@ -26,7 +26,7 @@ export default function Modal({
             <Dialog
                 as="div"
                 id="modal"
-                className="fixed inset-0 z-50 flex transform items-center overflow-y-auto px-4 py-6 transition-all sm:px-0"
+                className="fixed inset-0 z-50 flex transform items-start overflow-y-auto px-4 py-4 transition-all sm:items-center sm:px-0 sm:py-6"
                 onClose={close}
             >
                 <TransitionChild
@@ -49,7 +49,7 @@ export default function Modal({
                     leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                 >
                     <DialogPanel
-                        className={`app-panel mb-6 transform overflow-hidden rounded-[28px] transition-all sm:mx-auto sm:w-full ${maxWidthClass}`}
+                        className={`app-panel app-scrollbar-hidden mb-6 max-h-[calc(100vh-2rem)] transform overflow-y-auto rounded-[28px] transition-all sm:mx-auto sm:max-h-[calc(100vh-3rem)] sm:w-full ${maxWidthClass}`}
                     >
                         {children}
                     </DialogPanel>

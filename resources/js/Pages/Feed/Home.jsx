@@ -23,11 +23,18 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
             <div className="app-panel rounded-[28px] p-5">
                 <div className="flex items-center gap-3">
                     {auth.user.avatar_url ? (
-                        <img
-                            src={auth.user.avatar_url}
-                            alt={auth.user.name}
-                            className="h-14 w-14 rounded-2xl object-cover"
-                        />
+                        <div className="h-14 w-14 overflow-hidden rounded-2xl">
+                            <img
+                                src={auth.user.avatar_url}
+                                alt={auth.user.name}
+                                className="h-full w-full object-cover"
+                                style={{
+                                    objectPosition: `${auth.user.avatar_position_x}% ${auth.user.avatar_position_y}%`,
+                                    transform: `scale(${auth.user.avatar_zoom})`,
+                                    transformOrigin: `${auth.user.avatar_position_x}% ${auth.user.avatar_position_y}%`,
+                                }}
+                            />
+                        </div>
                     ) : (
                         <div className="app-avatar-fallback flex h-14 w-14 items-center justify-center rounded-2xl text-sm font-semibold">
                             {initials}

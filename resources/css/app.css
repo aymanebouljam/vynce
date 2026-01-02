@@ -281,6 +281,15 @@
         -webkit-appearance: none;
     }
 
+    .app-scrollbar-hidden {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .app-scrollbar-hidden::-webkit-scrollbar {
+        display: none;
+    }
+
     .app-tab-list {
         border: 1px solid var(--vynce-border-soft);
         background: rgba(29, 38, 125, 0.46);
