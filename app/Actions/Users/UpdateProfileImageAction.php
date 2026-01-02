@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Storage;
 
 class UpdateProfileImageAction
 {
-    public function replace(User $user, string $type, UploadedFile $file): User
+    public function replace(User $user, string $type, UploadedFile $file, array $transform = []): User
     {
         $config = $this->config($type);
 
@@ -18,9 +18,9 @@ class UpdateProfileImageAction
 
         $user->forceFill([
             $config['path'] => $file->store($config['directory'], 'public'),
-            $config['zoom'] => 1,
-            $config['x'] => 50,
-            $config['y'] => 50,
+            $config['zoom'] => $transform['zoom'] ?? 1,
+            $config['x'] => $transform['position_x'] ?? 50,
+            $config['y'] => $transform['position_y'] ?? 50,
         ])->save();
 
         return $user->refresh();

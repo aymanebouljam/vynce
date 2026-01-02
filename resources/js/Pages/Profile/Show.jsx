@@ -4,7 +4,7 @@ import PostCard from '@/Components/App/PostCard';
 import SecondaryButton from '@/Components/SecondaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Camera, Eye, ImagePlus, Move, SlidersHorizontal, Trash2 } from 'lucide-react';
-import { Link, useForm, usePage } from '@inertiajs/react';
+import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 
 export default function Show({ profile, relationship, feed }) {
@@ -264,6 +264,9 @@ function ProfileImageManagerModal({
     positionX,
     positionY,
 }) {
+    const [pendingFile, setPendingFile] = useState(null);
+    const [previewUrl, setPreviewUrl] = useState(imageUrl);
+    const [confirmingDelete, setConfirmingDelete] = useState(false);
     const uploadKey = kind;
     const uploadRoute =
         kind === 'avatar' ? route('profile.avatar.update') : route('profile.cover.update');
@@ -274,7 +277,6 @@ function ProfileImageManagerModal({
     const deleteRoute =
         kind === 'avatar' ? route('profile.avatar.destroy') : route('profile.cover.destroy');
 
-    const uploadForm = useForm({ [uploadKey]: null });
     const transformForm = useForm({
         zoom,
         position_x: positionX,
@@ -288,28 +290,64 @@ function ProfileImageManagerModal({
             return;
         }
 
+        setPendingFile(null);
+        setPreviewUrl(imageUrl);
         transformForm.setData({
             zoom,
             position_x: positionX,
             position_y: positionY,
         });
+        setConfirmingDelete(false);
     }, [show, zoom, positionX, positionY]);
 
-    const submitUpload = (file) => {
+    useEffect(() => {
+        return () => {
+            if (previewUrl?.startsWith('blob:')) {
+                URL.revokeObjectURL(previewUrl);
+            }
+        };
+    }, [previewUrl]);
+
+    const handleFileSelected = (file) => {
         if (!file) {
             return;
         }
 
-        uploadForm.setData(uploadKey, file);
-        uploadForm.post(uploadRoute, {
-            forceFormData: true,
-            preserveScroll: true,
-            onSuccess: () => onClose(),
+        if (previewUrl?.startsWith('blob:')) {
+            URL.revokeObjectURL(previewUrl);
+        }
+
+        setPendingFile(file);
+        setPreviewUrl(URL.createObjectURL(file));
+        transformForm.setData({
+            zoom: 1,
+            position_x: 50,
+            position_y: 50,
         });
+        setConfirmingDelete(false);
     };
 
     const saveAdjustments = (event) => {
         event.preventDefault();
+
+        if (pendingFile) {
+            router.post(
+                uploadRoute,
+                {
+                    [uploadKey]: pendingFile,
+                    zoom: transformForm.data.zoom,
+                    position_x: transformForm.data.position_x,
+                    position_y: transformForm.data.position_y,
+                },
+                {
+                    forceFormData: true,
+                    preserveScroll: true,
+                    onSuccess: () => onClose(),
+                },
+            );
+
+            return;
+        }
 
         transformForm.patch(transformRoute, {
             preserveScroll: true,
@@ -353,9 +391,9 @@ function ProfileImageManagerModal({
                             : 'h-64 rounded-[28px]'
                     }`}
                 >
-                    {imageUrl ? (
+                    {previewUrl ? (
                         <img
-                            src={imageUrl}
+                            src={previewUrl}
                             alt={title}
                             className="h-full w-full object-cover"
                             style={previewStyle}
@@ -375,7 +413,7 @@ function ProfileImageManagerModal({
                         accept="image/*"
                         className="hidden"
                         onChange={(event) => {
-                            submitUpload(event.target.files?.[0] ?? null);
+                            handleFileSelected(event.target.files?.[0] ?? null);
                             event.target.value = '';
                         }}
                     />
@@ -383,16 +421,16 @@ function ProfileImageManagerModal({
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         className="app-button-primary inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold"
-                        disabled={uploadForm.processing}
+                        disabled={transformForm.processing || deleteForm.processing}
                     >
                         <ImagePlus className="h-4 w-4" strokeWidth={1.9} />
-                        {imageUrl ? 'Replace image' : 'Add image'}
+                        {previewUrl ? 'Replace image' : 'Add image'}
                     </button>
 
-                    {imageUrl && (
+                    {imageUrl && !pendingFile && (
                         <DangerButton
                             type="button"
-                            onClick={destroyImage}
+                            onClick={() => setConfirmingDelete(true)}
                             className="rounded-full px-4 py-2 text-sm normal-case tracking-normal"
                             disabled={deleteForm.processing}
                         >
@@ -402,7 +440,38 @@ function ProfileImageManagerModal({
                     )}
                 </div>
 
-                {imageUrl && (
+                {confirmingDelete && imageUrl && !pendingFile && (
+                    <div className="app-panel-inset space-y-4 rounded-2xl p-4">
+                        <div>
+                            <div className="text-sm font-semibold">Delete this image?</div>
+                            <p className="app-text-soft mt-1 text-sm leading-6">
+                                This will remove the current{' '}
+                                {kind === 'avatar' ? 'profile photo' : 'cover image'} from your
+                                profile.
+                            </p>
+                        </div>
+
+                        <div className="flex flex-wrap justify-end gap-3">
+                            <SecondaryButton
+                                type="button"
+                                onClick={() => setConfirmingDelete(false)}
+                                className="rounded-full px-4 py-2 text-sm normal-case tracking-normal"
+                            >
+                                Cancel
+                            </SecondaryButton>
+                            <DangerButton
+                                type="button"
+                                onClick={destroyImage}
+                                className="rounded-full px-4 py-2 text-sm normal-case tracking-normal"
+                                disabled={deleteForm.processing}
+                            >
+                                Confirm delete
+                            </DangerButton>
+                        </div>
+                    </div>
+                )}
+
+                {previewUrl && (
                     <form onSubmit={saveAdjustments} className="space-y-5">
                         <div className="grid gap-4 md:grid-cols-3">
                             <RangeField
@@ -451,7 +520,7 @@ function ProfileImageManagerModal({
                                 disabled={transformForm.processing}
                             >
                                 <Camera className="h-4 w-4" strokeWidth={1.9} />
-                                Save framing
+                                {pendingFile ? 'Save image' : 'Save framing'}
                             </button>
                         </div>
                     </form>

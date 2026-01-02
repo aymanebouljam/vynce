@@ -40,10 +40,13 @@ class ProfileController extends Controller
     ): RedirectResponse {
         $data = $request->validate([
             'avatar' => ['required', 'image', 'max:4096'],
+            'zoom' => ['nullable', 'numeric', 'between:1,3'],
+            'position_x' => ['nullable', 'integer', 'between:0,100'],
+            'position_y' => ['nullable', 'integer', 'between:0,100'],
         ]);
 
         if ($data['avatar'] instanceof UploadedFile) {
-            $updateProfileImageAction->replace($request->user(), 'avatar', $data['avatar']);
+            $updateProfileImageAction->replace($request->user(), 'avatar', $data['avatar'], $data);
         }
 
         return Redirect::route('users.show', $request->user()->username)
@@ -56,10 +59,13 @@ class ProfileController extends Controller
     ): RedirectResponse {
         $data = $request->validate([
             'cover' => ['required', 'image', 'max:6144'],
+            'zoom' => ['nullable', 'numeric', 'between:1,3'],
+            'position_x' => ['nullable', 'integer', 'between:0,100'],
+            'position_y' => ['nullable', 'integer', 'between:0,100'],
         ]);
 
         if ($data['cover'] instanceof UploadedFile) {
-            $updateProfileImageAction->replace($request->user(), 'cover', $data['cover']);
+            $updateProfileImageAction->replace($request->user(), 'cover', $data['cover'], $data);
         }
 
         return Redirect::route('users.show', $request->user()->username)
