@@ -4,6 +4,7 @@ namespace App\Http\Requests\Posts;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StorePostRequest extends FormRequest
 {
@@ -15,10 +16,22 @@ class StorePostRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'body' => ['required', 'string', 'max:2000'],
+            'body' => ['nullable', 'string', 'max:2000'],
             'visibility' => ['required', Rule::in(['public', 'followers', 'private'])],
             'media' => ['nullable', 'array', 'max:4'],
             'media.*' => ['image', 'max:8192'],
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            $body = trim((string) $this->input('body', ''));
+            $media = $this->file('media', []);
+
+            if ($body === '' && count($media) === 0) {
+                $validator->errors()->add('body', 'Write something or attach at least one image.');
+            }
+        });
     }
 }

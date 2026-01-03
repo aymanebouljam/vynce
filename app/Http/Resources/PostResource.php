@@ -4,7 +4,6 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 class PostResource extends JsonResource
 {
@@ -25,7 +24,7 @@ class PostResource extends JsonResource
             'user' => $user,
             'media' => $this->media->map(fn ($media) => [
                 'id' => $media->id,
-                'url' => Storage::disk($media->disk)->url($media->path),
+                'url' => route('media.public', ['path' => $media->path]),
                 'mime_type' => $media->mime_type,
                 'position' => $media->position,
             ])->values(),

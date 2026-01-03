@@ -12,11 +12,13 @@ class CreatePostAction
     public function execute(User $user, array $data): Post
     {
         return DB::transaction(function () use ($user, $data) {
+            $body = (string) ($data['body'] ?? '');
+
             $post = $user->posts()->create([
-                'body' => $data['body'],
+                'body' => $body,
                 'visibility' => $data['visibility'],
-                'hashtags' => $this->extractHashtags($data['body']),
-                'mentions' => $this->extractMentions($data['body']),
+                'hashtags' => $this->extractHashtags($body),
+                'mentions' => $this->extractMentions($body),
                 'published_at' => now(),
             ]);
 
