@@ -3,7 +3,7 @@ import Modal from '@/Components/Modal';
 import PostCard from '@/Components/App/PostCard';
 import SecondaryButton from '@/Components/SecondaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Camera, Eye, ImagePlus, Move, SlidersHorizontal, Trash2 } from 'lucide-react';
+import { Camera, Eye, ImagePlus, Move, Pencil, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -170,19 +170,15 @@ export default function Show({ profile, relationship, feed }) {
                                 </Link>
                                 <span>{profile.posts_count ?? 0} posts</span>
                             </div>
-                            <div className="app-text-soft mt-4 max-w-2xl text-sm leading-7">
-                                A profile on Vynce is part timeline, part identity card. The
-                                strongest accounts make it easy to understand what they share and
-                                why people follow them.
-                            </div>
                         </div>
 
                         <div className="flex gap-3">
                             {isOwnProfile ? (
                                 <Link
                                     href={route('profile.edit')}
-                                    className="app-button-secondary rounded-full px-5 py-3 text-sm"
+                                    className="app-button-secondary inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm"
                                 >
+                                    <Pencil className="h-4 w-4" strokeWidth={1.9} />
                                     Edit profile
                                 </Link>
                             ) : (
