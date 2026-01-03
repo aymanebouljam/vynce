@@ -115,26 +115,44 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
                     ) : (
                         suggestions.map((person) => (
                             <div key={person.id} className="app-card-inset rounded-2xl p-3">
-                                <div className="flex items-start justify-between gap-3">
-                                    <div className="min-w-0">
-                                        <div className="truncate text-sm font-medium">
-                                            {person.name}
-                                        </div>
-                                        <div className="app-text-muted truncate text-xs">
-                                            @{person.username}
-                                        </div>
-                                        <div className="app-text-soft mt-2 text-xs leading-6">
-                                            {person.bio || 'See what they’re sharing on Vynce.'}
+                                <div className="space-y-4">
+                                    <div className="flex items-start gap-3">
+                                        {person.avatar_url ? (
+                                            <img
+                                                src={person.avatar_url}
+                                                alt={person.name}
+                                                className="h-12 w-12 rounded-2xl object-cover"
+                                            />
+                                        ) : (
+                                            <div className="app-avatar-fallback flex h-12 w-12 items-center justify-center rounded-2xl text-xs font-semibold">
+                                                {initialsFor(person.name)}
+                                            </div>
+                                        )}
+
+                                        <div className="min-w-0 flex-1">
+                                            <div className="text-sm font-medium leading-6">
+                                                {person.name}
+                                            </div>
+                                            <div className="app-text-muted mt-0.5 text-xs">
+                                                @{person.username}
+                                            </div>
                                         </div>
                                     </div>
-                                    <Link
-                                        href={route('users.follow', person.id)}
-                                        method="post"
-                                        as="button"
-                                        className="app-button-primary shrink-0 rounded-full px-3 py-2 text-xs font-semibold"
-                                    >
-                                        {person.is_private ? 'Add' : 'Follow'}
-                                    </Link>
+
+                                    <div className="app-text-soft text-xs leading-6">
+                                        {person.bio || 'See what they’re sharing on Vynce.'}
+                                    </div>
+
+                                    <div>
+                                        <Link
+                                            href={route('users.follow', person.id)}
+                                            method="post"
+                                            as="button"
+                                            className="app-button-primary w-full rounded-full px-3 py-2 text-xs font-semibold"
+                                        >
+                                            {person.is_private ? 'Add' : 'Follow'}
+                                        </Link>
+                                    </div>
                                 </div>
                             </div>
                         ))
@@ -179,5 +197,16 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
                 )}
             </section>
         </AuthenticatedLayout>
+    );
+}
+
+function initialsFor(name) {
+    return (
+        name
+            ?.split(' ')
+            .map((part) => part[0])
+            .join('')
+            .slice(0, 2)
+            .toUpperCase() ?? 'U'
     );
 }
