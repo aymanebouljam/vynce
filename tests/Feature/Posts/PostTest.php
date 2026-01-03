@@ -34,6 +34,26 @@ class PostTest extends TestCase
         $this->assertCount(1, $post->media);
     }
 
+    public function test_authenticated_users_can_create_image_only_posts(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post('/posts', [
+            'body' => '',
+            'visibility' => 'public',
+            'media' => [UploadedFile::fake()->image('photo.png')],
+        ]);
+
+        $response->assertRedirect();
+
+        $post = Post::query()->first();
+
+        $this->assertSame('', $post->body);
+        $this->assertCount(1, $post->media);
+    }
+
     public function test_users_cannot_delete_other_users_posts(): void
     {
         $owner = User::factory()->create();
