@@ -4,6 +4,7 @@ use App\Http\Controllers\Feed\FeedController;
 use App\Http\Controllers\Messaging\ConversationController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\Posts\PostController;
+use App\Http\Controllers\Posts\PostEngagementController;
 use App\Http\Controllers\PublicMediaController;
 use App\Http\Controllers\SocialGraph\ConnectionController;
 use App\Http\Controllers\SocialGraph\FollowController;
@@ -49,6 +50,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/posts', [PostController::class, 'store'])->middleware('throttle:30,1')->name('posts.store');
     Route::patch('/posts/{post}', [PostController::class, 'update'])->middleware('throttle:30,1')->name('posts.update');
     Route::delete('/posts/{post}', [PostController::class, 'destroy'])->middleware('throttle:30,1')->name('posts.destroy');
+    Route::post('/posts/{post}/likes/toggle', [PostEngagementController::class, 'toggleLike'])->middleware('throttle:60,1')->name('posts.likes.toggle');
+    Route::post('/posts/{post}/reposts/toggle', [PostEngagementController::class, 'toggleRepost'])->middleware('throttle:60,1')->name('posts.reposts.toggle');
+    Route::post('/posts/{post}/comments', [PostEngagementController::class, 'storeComment'])->middleware('throttle:60,1')->name('posts.comments.store');
 
     Route::post('/users/{user}/follow', [FollowController::class, 'store'])->middleware('throttle:60,1')->name('users.follow');
     Route::delete('/users/{user}/follow', [FollowController::class, 'destroy'])->middleware('throttle:60,1')->name('users.unfollow');

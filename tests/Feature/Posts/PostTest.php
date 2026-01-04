@@ -64,4 +64,39 @@ class PostTest extends TestCase
             ->delete(route('posts.destroy', $post))
             ->assertForbidden();
     }
+
+    public function test_users_can_like_repost_and_comment_on_visible_posts(): void
+    {
+        $author = User::factory()->create();
+        $viewer = User::factory()->create();
+        $post = Post::factory()->for($author)->create([
+            'visibility' => 'public',
+            'likes_count' => 0,
+            'reposts_count' => 0,
+            'comments_count' => 0,
+        ]);
+
+        $this->actingAs($viewer)
+            ->post(route('posts.likes.toggle', $post))
+            ->assertRedirect();
+
+        $this->actingAs($viewer)
+            ->post(route('posts.reposts.toggle', $post))
+            ->assertRedirect();
+
+        $this->actingAs($viewer)
+            ->post(route('posts.comments.store', $post), [
+                'body' => 'This is a strong take.',
+            ])
+            ->assertRedirect();
+
+        $post->refresh();
+
+        $this->assertSame(1, $post->likes_count);
+        $this->assertSame(1, $post->reposts_count);
+        $this->assertSame(1, $post->comments_count);
+        $this->assertCount(1, $post->likes);
+        $this->assertCount(1, $post->reposts);
+        $this->assertCount(1, $post->comments);
+    }
 }
