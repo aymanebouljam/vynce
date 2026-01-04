@@ -19,6 +19,11 @@ class PostResource extends JsonResource
             'visibility' => $this->visibility?->value ?? $this->visibility,
             'hashtags' => $this->hashtags ?? [],
             'mentions' => $this->mentions ?? [],
+            'likes_count' => $this->likes_count,
+            'comments_count' => $this->comments_count,
+            'reposts_count' => $this->reposts_count,
+            'is_liked' => $request->user() ? $this->likes->contains('user_id', $request->user()->id) : false,
+            'is_reposted' => $request->user() ? $this->reposts->contains('user_id', $request->user()->id) : false,
             'published_at' => optional($this->published_at)->toIso8601String(),
             'created_at' => optional($this->created_at)->toIso8601String(),
             'user' => $user,
@@ -27,6 +32,14 @@ class PostResource extends JsonResource
                 'url' => route('media.public', ['path' => $media->path]),
                 'mime_type' => $media->mime_type,
                 'position' => $media->position,
+            ])->values(),
+            'comments' => $this->comments->take(5)->map(fn ($comment) => [
+                'id' => $comment->id,
+                'body' => $comment->body,
+                'created_at' => optional($comment->created_at)->toIso8601String(),
+                'user' => $comment->relationLoaded('user') && $comment->user
+                    ? UserResource::make($comment->user)->resolve($request)
+                    : null,
             ])->values(),
         ];
     }

@@ -58,7 +58,7 @@ class FeedService
         abort_unless($this->socialGraphService->canViewProfile($viewer, $profileUser), 403);
 
         return Post::query()
-            ->with(['user', 'media'])
+            ->with(['user', 'media', 'comments.user', 'likes', 'reposts'])
             ->where('user_id', $profileUser->id)
             ->when(
                 ! $viewer || ! $viewer->is($profileUser),
@@ -71,7 +71,7 @@ class FeedService
     private function baseQuery(User $user): Builder
     {
         return Post::query()
-            ->with(['user', 'media'])
+            ->with(['user', 'media', 'comments.user', 'likes', 'reposts'])
             ->whereNull('deleted_at')
             ->whereNotExists(function ($query) use ($user) {
                 $query->selectRaw('1')

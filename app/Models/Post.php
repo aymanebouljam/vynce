@@ -20,6 +20,9 @@ class Post extends Model
         'visibility',
         'hashtags',
         'mentions',
+        'likes_count',
+        'comments_count',
+        'reposts_count',
         'published_at',
     ];
 
@@ -41,5 +44,20 @@ class Post extends Model
     public function media(): HasMany
     {
         return $this->hasMany(PostMedia::class)->orderBy('position');
+    }
+
+    public function likes(): HasMany
+    {
+        return $this->hasMany(PostLike::class);
+    }
+
+    public function reposts(): HasMany
+    {
+        return $this->hasMany(PostRepost::class);
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(PostComment::class)->latest();
     }
 }
