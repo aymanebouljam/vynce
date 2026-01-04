@@ -25,7 +25,7 @@ export default function Login({ status, canResetPassword }) {
                 <div className="app-text-muted text-[0.7rem] font-semibold uppercase tracking-[0.28em]">
                     Welcome back
                 </div>
-                <p className="mt-3 text-xl font-medium leading-8 text-[rgba(241,235,251,0.9)]">
+                <p className="mt-3 text-sm font-medium leading-6 text-[rgba(241,235,251,0.9)] lg:text-[0.95rem] lg:leading-6 xl:text-lg xl:leading-7">
                     Login to Vynce and pick up where you left off.
                 </p>
             </div>

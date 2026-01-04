@@ -27,7 +27,7 @@ export default function Register() {
                 <div className="app-text-muted text-[0.7rem] font-semibold uppercase tracking-[0.28em]">
                     Join Vynce
                 </div>
-                <p className="mt-3 text-xl font-medium leading-8 text-[rgba(241,235,251,0.9)]">
+                <p className="mt-3 text-sm font-medium leading-6 text-[rgba(241,235,251,0.9)] lg:text-[0.95rem] lg:leading-6 xl:text-lg xl:leading-7">
                     Set up your profile and step into the feed.
                 </p>
             </div>
