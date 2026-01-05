@@ -247,7 +247,10 @@ export default function Show({ profile, relationship, feed }) {
                             post={post}
                             canManage={isOwnProfile}
                             profileUsername={profile.username}
-                            showProfileRepostLabel={!isOwnProfile}
+                            showProfileRepostLabel
+                            profileRepostLabel={
+                                isOwnProfile ? 'Reposted' : `Reposted by @${profile.username}`
+                            }
                         />
                     ))
                 )}
