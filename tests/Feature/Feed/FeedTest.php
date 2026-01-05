@@ -5,8 +5,10 @@ namespace Tests\Feature\Feed;
 use App\Enums\FollowStatus;
 use App\Models\Follow;
 use App\Models\Post;
+use App\Models\PostRepost;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class FeedTest extends TestCase
@@ -49,5 +51,31 @@ class FeedTest extends TestCase
         $response->assertOk();
         $response->assertSee($publicPost->body);
         $response->assertDontSee($ownPost->body);
+    }
+
+    public function test_profile_feed_includes_reposted_posts(): void
+    {
+        $viewer = User::factory()->create();
+        $profileUser = User::factory()->create([
+            'username' => 'profile-user',
+        ]);
+        $author = User::factory()->create();
+        $repostedPost = Post::factory()->for($author)->create([
+            'body' => 'A reposted post',
+            'visibility' => 'public',
+        ]);
+
+        PostRepost::query()->create([
+            'post_id' => $repostedPost->id,
+            'user_id' => $profileUser->id,
+        ]);
+
+        $response = $this->actingAs($viewer)->get(route('users.show', $profileUser->username));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Profile/Show')
+            ->where('feed.data.0.body', $repostedPost->body)
+            ->where('feed.data.0.profile_reposted_at', fn ($value) => filled($value)));
     }
 }

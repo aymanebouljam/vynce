@@ -242,7 +242,13 @@ export default function Show({ profile, relationship, feed }) {
                     </div>
                 ) : (
                     feed.data.map((post) => (
-                        <PostCard key={post.id} post={post} canManage={isOwnProfile} />
+                        <PostCard
+                            key={post.id}
+                            post={post}
+                            canManage={isOwnProfile}
+                            profileUsername={profile.username}
+                            showProfileRepostLabel={!isOwnProfile}
+                        />
                     ))
                 )}
             </section>

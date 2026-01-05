@@ -1,13 +1,16 @@
 import { Heart, MessageCircle, Repeat2, SendHorizontal } from 'lucide-react';
 import { Link, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-export default function PostCard({ post }) {
+export default function PostCard({ post, profileUsername = null, showProfileRepostLabel = true }) {
     const authorName = post.user?.name ?? 'Unknown user';
     const authorUsername = post.user?.username ?? null;
     const authorHref = authorUsername ? route('users.show', authorUsername) : null;
     const publishedAt = new Date(post.published_at || post.created_at).toLocaleString();
     const [commentsOpen, setCommentsOpen] = useState(false);
+    const [isLiked, setIsLiked] = useState(post.is_liked);
+    const [likesCount, setLikesCount] = useState(post.likes_count ?? 0);
+    const [liking, setLiking] = useState(false);
     const commentForm = useForm({ body: '' });
     const initials = authorName
         .split(' ')
@@ -15,6 +18,17 @@ export default function PostCard({ post }) {
         .join('')
         .slice(0, 2)
         .toUpperCase();
+    const isProfileRepost =
+        Boolean(post.profile_reposted_at) &&
+        showProfileRepostLabel &&
+        profileUsername &&
+        authorUsername &&
+        authorUsername !== profileUsername;
+
+    useEffect(() => {
+        setIsLiked(post.is_liked);
+        setLikesCount(post.likes_count ?? 0);
+    }, [post.id, post.is_liked, post.likes_count]);
 
     const submitComment = (event) => {
         event.preventDefault();
@@ -26,6 +40,36 @@ export default function PostCard({ post }) {
                 setCommentsOpen(true);
             },
         });
+    };
+
+    const toggleLike = async () => {
+        if (liking) {
+            return;
+        }
+
+        const previousLiked = isLiked;
+        const previousCount = likesCount;
+        const nextLiked = !previousLiked;
+
+        setLiking(true);
+        setIsLiked(nextLiked);
+        setLikesCount((count) => Math.max(0, count + (nextLiked ? 1 : -1)));
+
+        try {
+            const response = await window.axios.post(route('posts.likes.toggle', post.id), null, {
+                headers: {
+                    Accept: 'application/json',
+                },
+            });
+
+            setIsLiked(response.data.liked);
+            setLikesCount(response.data.likes_count);
+        } catch (error) {
+            setIsLiked(previousLiked);
+            setLikesCount(previousCount);
+        } finally {
+            setLiking(false);
+        }
     };
 
     return (
@@ -52,6 +96,13 @@ export default function PostCard({ post }) {
                     )}
 
                     <div className="min-w-0 flex-1">
+                        {isProfileRepost && (
+                            <div className="app-text-soft mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em]">
+                                <Repeat2 className="h-3.5 w-3.5" strokeWidth={1.9} />
+                                Reposted by @{profileUsername}
+                            </div>
+                        )}
+
                         <div className="flex items-start justify-between gap-4">
                             <div className="min-w-0">
                                 {authorHref ? (
@@ -122,22 +173,19 @@ export default function PostCard({ post }) {
                         )}
 
                         <div className="mt-4 flex flex-wrap items-center gap-2">
-                            <Link
-                                href={route('posts.likes.toggle', post.id)}
-                                method="post"
-                                as="button"
+                            <button
+                                type="button"
+                                onClick={toggleLike}
                                 className={`app-button-secondary inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm ${
-                                    post.is_liked
-                                        ? 'border-rose-400/30 bg-rose-500/15 text-rose-200'
-                                        : ''
-                                }`}
+                                    isLiked ? 'border-rose-400/30 bg-rose-500/15 text-rose-200' : ''
+                                } ${liking ? 'opacity-70' : ''}`}
                             >
                                 <Heart
-                                    className={`h-4 w-4 ${post.is_liked ? 'fill-current text-rose-400' : ''}`}
+                                    className={`h-4 w-4 ${isLiked ? 'fill-current text-rose-400' : ''}`}
                                     strokeWidth={1.9}
                                 />
-                                {post.likes_count ?? 0}
-                            </Link>
+                                {likesCount}
+                            </button>
 
                             <button
                                 type="button"
