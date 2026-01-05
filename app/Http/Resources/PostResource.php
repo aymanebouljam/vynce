@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Carbon;
 
 class PostResource extends JsonResource
 {
@@ -24,6 +25,9 @@ class PostResource extends JsonResource
             'reposts_count' => $this->reposts_count,
             'is_liked' => $request->user() ? $this->likes->contains('user_id', $request->user()->id) : false,
             'is_reposted' => $request->user() ? $this->reposts->contains('user_id', $request->user()->id) : false,
+            'profile_reposted_at' => $this->profile_reposted_at
+                ? Carbon::parse($this->profile_reposted_at)->toIso8601String()
+                : null,
             'published_at' => optional($this->published_at)->toIso8601String(),
             'created_at' => optional($this->created_at)->toIso8601String(),
             'user' => $user,

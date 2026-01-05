@@ -57,14 +57,30 @@ class FeedService
     {
         abort_unless($this->socialGraphService->canViewProfile($viewer, $profileUser), 403);
 
-        return Post::query()
-            ->with(['user', 'media', 'comments.user', 'likes', 'reposts'])
-            ->where('user_id', $profileUser->id)
-            ->when(
-                ! $viewer || ! $viewer->is($profileUser),
-                fn (Builder $query) => $query->whereNot('visibility', 'private'),
+        $repostedAtSubquery = function ($query) use ($profileUser) {
+            $query->from('post_reposts')
+                ->select('created_at')
+                ->whereColumn('post_reposts.post_id', 'posts.id')
+                ->where('post_reposts.user_id', $profileUser->id)
+                ->limit(1);
+        };
+
+        return $this->baseQuery($viewer ?? $profileUser)
+            ->select('posts.*')
+            ->selectSub($repostedAtSubquery, 'profile_reposted_at')
+            ->where(function (Builder $query) use ($profileUser) {
+                $query->where('posts.user_id', $profileUser->id)
+                    ->orWhereExists(function ($subQuery) use ($profileUser) {
+                        $subQuery->selectRaw('1')
+                            ->from('post_reposts')
+                            ->whereColumn('post_reposts.post_id', 'posts.id')
+                            ->where('post_reposts.user_id', $profileUser->id);
+                    });
+            })
+            ->orderByRaw(
+                'COALESCE((select "created_at" from "post_reposts" where "post_reposts"."post_id" = "posts"."id" and "post_reposts"."user_id" = ? limit 1), "posts"."published_at") desc',
+                [$profileUser->id],
             )
-            ->latest('published_at')
             ->paginate($perPage);
     }
 
