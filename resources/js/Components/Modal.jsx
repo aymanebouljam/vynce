@@ -1,4 +1,4 @@
-import { Dialog, DialogPanel, Transition, TransitionChild } from '@headlessui/react';
+import { Dialog, DialogPanel, Portal, Transition, TransitionChild } from '@headlessui/react';
 
 export default function Modal({
     children,
@@ -23,38 +23,39 @@ export default function Modal({
 
     return (
         <Transition show={show} leave="duration-200">
-            <Dialog
-                as="div"
-                id="modal"
-                className="fixed inset-0 z-50 flex transform items-start overflow-y-auto px-4 py-4 transition-all sm:items-center sm:px-0 sm:py-6"
-                onClose={close}
-            >
-                <TransitionChild
-                    enter="ease-out duration-300"
-                    enterFrom="opacity-0"
-                    enterTo="opacity-100"
-                    leave="ease-in duration-200"
-                    leaveFrom="opacity-100"
-                    leaveTo="opacity-0"
-                >
-                    <div className="absolute inset-0 bg-[rgba(3,7,12,0.62)] backdrop-blur-sm" />
-                </TransitionChild>
-
-                <TransitionChild
-                    enter="ease-out duration-300"
-                    enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                    enterTo="opacity-100 translate-y-0 sm:scale-100"
-                    leave="ease-in duration-200"
-                    leaveFrom="opacity-100 translate-y-0 sm:scale-100"
-                    leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                >
-                    <DialogPanel
-                        className={`app-panel app-scrollbar-hidden mb-6 max-h-[calc(100vh-2rem)] transform overflow-y-auto rounded-[28px] transition-all sm:mx-auto sm:max-h-[calc(100vh-3rem)] sm:w-full ${maxWidthClass}`}
+            <Portal>
+                <Dialog as="div" id="modal" className="relative z-50" onClose={close}>
+                    <TransitionChild
+                        enter="ease-out duration-300"
+                        enterFrom="opacity-0"
+                        enterTo="opacity-100"
+                        leave="ease-in duration-200"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
                     >
-                        {children}
-                    </DialogPanel>
-                </TransitionChild>
-            </Dialog>
+                        <div className="fixed inset-0 bg-[rgba(3,7,12,0.62)] backdrop-blur-sm" />
+                    </TransitionChild>
+
+                    <div className="fixed inset-0 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
+                        <div className="flex min-h-full items-start justify-center sm:items-center">
+                            <TransitionChild
+                                enter="ease-out duration-300"
+                                enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                                enterTo="opacity-100 translate-y-0 sm:scale-100"
+                                leave="ease-in duration-200"
+                                leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+                                leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                            >
+                                <DialogPanel
+                                    className={`app-panel app-scrollbar-hidden my-auto max-h-[min(92vh,48rem)] w-full overflow-y-auto rounded-[28px] transition-all ${maxWidthClass}`}
+                                >
+                                    {children}
+                                </DialogPanel>
+                            </TransitionChild>
+                        </div>
+                    </div>
+                </Dialog>
+            </Portal>
         </Transition>
     );
 }
