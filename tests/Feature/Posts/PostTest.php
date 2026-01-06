@@ -65,6 +65,43 @@ class PostTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_users_can_update_their_own_posts_and_adjust_visibility(): void
+    {
+        $user = User::factory()->create();
+        $post = Post::factory()->for($user)->create([
+            'body' => 'Original thought',
+            'visibility' => 'public',
+            'hashtags' => [],
+            'mentions' => [],
+        ]);
+
+        $this->actingAs($user)
+            ->patch(route('posts.update', $post), [
+                'body' => 'Updated #Vynce note for @julia',
+                'visibility' => 'followers',
+            ])
+            ->assertRedirect();
+
+        $post->refresh();
+
+        $this->assertSame('Updated #Vynce note for @julia', $post->body);
+        $this->assertSame('followers', $post->visibility->value);
+        $this->assertSame(['vynce'], $post->hashtags);
+        $this->assertSame(['julia'], $post->mentions);
+    }
+
+    public function test_users_can_delete_their_own_posts(): void
+    {
+        $user = User::factory()->create();
+        $post = Post::factory()->for($user)->create();
+
+        $this->actingAs($user)
+            ->delete(route('posts.destroy', $post))
+            ->assertRedirect();
+
+        $this->assertSoftDeleted('posts', ['id' => $post->id]);
+    }
+
     public function test_users_can_like_repost_and_comment_on_visible_posts(): void
     {
         $author = User::factory()->create();

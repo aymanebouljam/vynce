@@ -17,7 +17,7 @@ class StorePostRequest extends FormRequest
     {
         return [
             'body' => ['nullable', 'string', 'max:2000'],
-            'visibility' => ['required', Rule::in(['public', 'followers', 'private'])],
+            'visibility' => ['required', Rule::in(['public', 'followers'])],
             'media' => ['nullable', 'array', 'max:4'],
             'media.*' => ['image', 'max:8192'],
         ];
