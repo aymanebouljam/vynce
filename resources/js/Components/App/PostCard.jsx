@@ -58,7 +58,7 @@ export default function PostCard({
             body: post.body ?? '',
             visibility: post.visibility,
         });
-    }, [post.id, post.body, post.visibility]);
+    }, [editForm, post.id, post.body, post.visibility]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -108,7 +108,7 @@ export default function PostCard({
 
             setIsLiked(response.data.liked);
             setLikesCount(response.data.likes_count);
-        } catch (error) {
+        } catch {
             setIsLiked(previousLiked);
             setLikesCount(previousCount);
         } finally {

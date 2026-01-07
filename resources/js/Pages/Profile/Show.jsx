@@ -303,7 +303,7 @@ function ProfileImageManagerModal({
             position_y: positionY,
         });
         setConfirmingDelete(false);
-    }, [show, zoom, positionX, positionY]);
+    }, [show, imageUrl, zoom, positionX, positionY, transformForm]);
 
     useEffect(() => {
         return () => {
