@@ -411,6 +411,29 @@
             radial-gradient(circle at top left, rgba(255, 255, 255, 0.06), transparent 28%);
     }
 
+    .auth-form-floating {
+        width: 100%;
+    }
+
+    @media (min-width: 1024px) {
+        .auth-form-floating {
+            position: fixed;
+            top: 3.5rem;
+            right: clamp(2.5rem, 4vw, 3.5rem);
+            width: min(32rem, calc(40vw - 7rem));
+            max-width: calc(100vw - 7rem);
+            max-height: calc(100vh - 7rem);
+            overflow-y: auto;
+        }
+    }
+
+    @media (min-width: 1536px) {
+        .auth-form-floating {
+            top: 8rem;
+            max-height: calc(100vh - 10rem);
+        }
+    }
+
     .auth-form-surface {
         background:
             linear-gradient(180deg, rgba(34, 17, 56, 0.94), rgba(49, 24, 78, 0.9)),
@@ -663,6 +686,7 @@
 
     .auth-composer-body {
         flex: 1;
+        min-width: 0;
     }
 
     .auth-composer-pill {
@@ -678,9 +702,13 @@
 
     .auth-composer-typing {
         position: relative;
-        display: inline-block;
+        display: block;
+        width: 100%;
+        min-width: 0;
+        min-height: 1.4em;
         color: transparent;
         white-space: nowrap;
+        overflow: hidden;
     }
 
     .auth-composer-typing::before {
@@ -688,22 +716,16 @@
         position: absolute;
         top: 0;
         left: 0;
+        display: block;
+        width: 0;
+        max-width: 100%;
+        overflow: hidden;
         color: rgba(241, 235, 251, 0.84);
         white-space: nowrap;
-    }
-
-    .auth-composer-typing::after {
-        content: '';
-        position: absolute;
-        top: -0.15rem;
-        right: -0.2rem;
-        bottom: -0.15rem;
-        left: 0;
-        background: rgba(17, 11, 28, 0.46);
-        border-left: 2px solid rgba(241, 235, 251, 0.72);
         animation:
-            authTypingMask 6.8s infinite,
-            authCaretState 6.8s step-end infinite;
+            authTypewriter 6.8s steps(48, end) infinite,
+            authCaretBlink 0.9s step-end infinite;
+        border-right: 2px solid rgba(241, 235, 251, 0.72);
     }
 
     .auth-composer-actions {
@@ -1168,85 +1190,31 @@
     }
 }
 
-@keyframes authTypingMask {
+@keyframes authTypewriter {
     0%,
-    8% {
-        left: 0;
-        visibility: hidden;
+    10% {
+        width: 0;
     }
 
-    9% {
-        left: 0;
-        visibility: visible;
+    52%,
+    72% {
+        width: 76%;
     }
 
-    60% {
-        left: 100%;
-        visibility: visible;
-    }
-
-    74% {
-        left: 100%;
-        visibility: visible;
-    }
-
-    88% {
-        left: 0;
-        visibility: visible;
-    }
-
-    89%,
     100% {
-        left: 0;
-        visibility: hidden;
+        width: 0;
     }
 }
 
-@keyframes authCaretState {
+@keyframes authCaretBlink {
     0%,
-    8% {
-        border-left-color: transparent;
+    49% {
+        border-right-color: rgba(241, 235, 251, 0.72);
     }
 
-    9%,
-    16%,
-    23%,
-    30%,
-    37%,
-    44%,
-    51%,
-    58% {
-        border-left-color: rgba(241, 235, 251, 0.72);
-    }
-
-    12.5%,
-    19.5%,
-    26.5%,
-    33.5%,
-    40.5%,
-    47.5%,
-    54.5% {
-        border-left-color: transparent;
-    }
-
-    60%,
-    74% {
-        border-left-color: rgba(241, 235, 251, 0.72);
-    }
-
-    76%,
-    80%,
-    84%,
-    88% {
-        border-left-color: rgba(241, 235, 251, 0.72);
-    }
-
-    78%,
-    82%,
-    86%,
-    89%,
+    50%,
     100% {
-        border-left-color: transparent;
+        border-right-color: transparent;
     }
 }
 

@@ -23,7 +23,7 @@ const quickSignals = [
 
 export default function GuestLayout({ children }) {
     return (
-        <div className="app-page-shell app-page-shell--guest min-h-screen overflow-hidden">
+        <div className="app-page-shell app-page-shell--guest min-h-screen overflow-x-hidden">
             <div className="grid min-h-screen lg:grid-cols-[minmax(0,1.2fr)_minmax(420px,0.8fr)]">
                 <div className="relative hidden overflow-hidden lg:flex">
                     <div className="auth-ambient auth-ambient--one" />
@@ -67,10 +67,7 @@ export default function GuestLayout({ children }) {
                                                         className="auth-composer-typing"
                                                         data-text="Sharing a new photo set from tonight's meetup..."
                                                         aria-label="Sharing a new photo set from tonight's meetup..."
-                                                    >
-                                                        Sharing a new photo set from tonight&apos;s
-                                                        meetup...
-                                                    </span>
+                                                    />
                                                 </div>
                                                 <div className="auth-composer-actions">
                                                     <div className="auth-composer-action">
@@ -198,7 +195,7 @@ export default function GuestLayout({ children }) {
                 </div>
 
                 <div className="auth-form-panel flex min-h-screen items-start justify-center px-4 pb-8 pt-8 sm:px-6 lg:rounded-none lg:px-10 lg:pt-14 xl:px-14 xl:pt-[4.5rem] 2xl:pt-32">
-                    <div className="w-full max-w-xl">
+                    <div className="auth-form-floating max-w-xl">
                         <div className="mb-8 lg:hidden">
                             <Link
                                 href="/"
