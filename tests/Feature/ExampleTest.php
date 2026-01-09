@@ -10,9 +10,6 @@ class ExampleTest extends TestCase
 {
     use RefreshDatabase;
 
-    /**
-     * A basic test example.
-     */
     public function test_guests_are_redirected_to_login_from_the_root(): void
     {
         $response = $this->get('/');

@@ -57,9 +57,6 @@ class UpdateProfileImageAction
         return $user->refresh();
     }
 
-    /**
-     * @return array{path:string, zoom:string, x:string, y:string, directory:string}
-     */
     private function config(string $type): array
     {
         return match ($type) {

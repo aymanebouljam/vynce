@@ -218,6 +218,11 @@
         background: var(--vynce-accent-soft);
     }
 
+    .app-button-secondary--static:hover {
+        background: var(--vynce-accent-soft);
+        color: var(--vynce-text);
+    }
+
     .app-button-secondary--logout:hover {
         background: var(--vynce-accent);
         color: var(--vynce-text);
@@ -237,6 +242,8 @@
 
     .app-nav-link-active {
         background: var(--vynce-accent);
+        border-color: var(--vynce-accent);
+        box-shadow: inset 0 0 0 1px rgba(241, 235, 251, 0.08);
         color: var(--vynce-text);
     }
 
@@ -859,7 +866,7 @@
     .feed-post-card__inner {
         padding: 1.25rem;
         border-radius: inherit;
-        overflow: hidden;
+        overflow: visible;
         background:
             linear-gradient(180deg, rgba(44, 21, 71, 0.78), rgba(34, 17, 56, 0.88)),
             rgba(44, 21, 71, 0.78);

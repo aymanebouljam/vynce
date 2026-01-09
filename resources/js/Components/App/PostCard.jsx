@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 export default function PostCard({
     post,
@@ -32,13 +33,17 @@ export default function PostCard({
     const [menuOpen, setMenuOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
-    const menuRef = useRef(null);
+    const [selectedVisibility, setSelectedVisibility] = useState(post.visibility);
+    const menuButtonRef = useRef(null);
+    const menuPanelRef = useRef(null);
+    const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
     const commentForm = useForm({ body: '' });
     const editForm = useForm({
         body: post.body ?? '',
         visibility: post.visibility,
     });
     const deleteForm = useForm({});
+    const currentVisibility = selectedVisibility ?? post.visibility;
     const initials = authorName
         .split(' ')
         .map((part) => part[0])
@@ -58,11 +63,15 @@ export default function PostCard({
             body: post.body ?? '',
             visibility: post.visibility,
         });
+        setSelectedVisibility(post.visibility);
     }, [editForm, post.id, post.body, post.visibility]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (!menuRef.current?.contains(event.target)) {
+            const clickedButton = menuButtonRef.current?.contains(event.target);
+            const clickedPanel = menuPanelRef.current?.contains(event.target);
+
+            if (!clickedButton && !clickedPanel) {
                 setMenuOpen(false);
             }
         };
@@ -73,6 +82,35 @@ export default function PostCard({
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
+
+    useEffect(() => {
+        if (!menuOpen) {
+            return undefined;
+        }
+
+        const updateMenuPosition = () => {
+            const rect = menuButtonRef.current?.getBoundingClientRect();
+
+            if (!rect) {
+                return;
+            }
+
+            setMenuPosition({
+                top: rect.bottom + 8,
+                left: rect.right - 176,
+            });
+        };
+
+        updateMenuPosition();
+
+        window.addEventListener('resize', updateMenuPosition);
+        window.addEventListener('scroll', updateMenuPosition, true);
+
+        return () => {
+            window.removeEventListener('resize', updateMenuPosition);
+            window.removeEventListener('scroll', updateMenuPosition, true);
+        };
+    }, [menuOpen]);
 
     const submitComment = (event) => {
         event.preventDefault();
@@ -129,9 +167,13 @@ export default function PostCard({
     };
 
     const updateVisibility = (visibility) => {
-        if (editForm.processing || editForm.data.visibility === visibility) {
+        if (editForm.processing || currentVisibility === visibility) {
             return;
         }
+
+        const previousVisibility = currentVisibility;
+        setSelectedVisibility(visibility);
+        editForm.setData('visibility', visibility);
 
         editForm
             .transform((data) => ({
@@ -142,6 +184,10 @@ export default function PostCard({
                 preserveScroll: true,
                 onSuccess: () => {
                     setMenuOpen(false);
+                },
+                onError: () => {
+                    setSelectedVisibility(previousVisibility);
+                    editForm.setData('visibility', previousVisibility);
                 },
                 onFinish: () => {
                     editForm.transform((data) => data);
@@ -211,11 +257,12 @@ export default function PostCard({
 
                                 <div className="flex items-center gap-2">
                                     <span className="feed-post-card__visibility">
-                                        {post.visibility}
+                                        {currentVisibility}
                                     </span>
                                     {canManage && (
-                                        <div ref={menuRef} className="relative">
+                                        <div className="relative">
                                             <button
+                                                ref={menuButtonRef}
                                                 type="button"
                                                 onClick={() => setMenuOpen((open) => !open)}
                                                 className="app-button-secondary inline-flex h-9 w-9 items-center justify-center rounded-full"
@@ -223,65 +270,6 @@ export default function PostCard({
                                             >
                                                 <Ellipsis className="h-4 w-4" strokeWidth={1.9} />
                                             </button>
-
-                                            {menuOpen && (
-                                                <div className="app-panel-inset absolute right-0 top-[calc(100%+0.5rem)] z-20 w-44 rounded-2xl p-2 shadow-[var(--vynce-shadow-md)]">
-                                                    <div className="app-text-muted px-3 pb-2 pt-1 text-[11px] font-medium uppercase tracking-[0.18em]">
-                                                        Visibility
-                                                    </div>
-                                                    {['public', 'followers'].map((option) => (
-                                                        <button
-                                                            key={option}
-                                                            type="button"
-                                                            onClick={() => updateVisibility(option)}
-                                                            className={`app-nav-link flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm ${
-                                                                post.visibility === option
-                                                                    ? 'app-nav-link-active'
-                                                                    : ''
-                                                            }`}
-                                                        >
-                                                            <span>
-                                                                {option.charAt(0).toUpperCase() +
-                                                                    option.slice(1)}
-                                                            </span>
-                                                            {post.visibility === option ? (
-                                                                <span className="app-text-soft text-xs">
-                                                                    Current
-                                                                </span>
-                                                            ) : null}
-                                                        </button>
-                                                    ))}
-                                                    <div className="my-2 h-px bg-white/10" />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            setEditOpen(true);
-                                                            setMenuOpen(false);
-                                                        }}
-                                                        className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm"
-                                                    >
-                                                        <Pencil
-                                                            className="h-4 w-4"
-                                                            strokeWidth={1.9}
-                                                        />
-                                                        Edit post
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            setDeleteOpen(true);
-                                                            setMenuOpen(false);
-                                                        }}
-                                                        className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-rose-200"
-                                                    >
-                                                        <Trash2
-                                                            className="h-4 w-4"
-                                                            strokeWidth={1.9}
-                                                        />
-                                                        Delete post
-                                                    </button>
-                                                </div>
-                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -439,6 +427,63 @@ export default function PostCard({
                     </div>
                 </div>
             </article>
+            {menuOpen &&
+                typeof document !== 'undefined' &&
+                createPortal(
+                    <div
+                        ref={menuPanelRef}
+                        className="app-panel-inset fixed z-[220] w-44 rounded-2xl p-2 shadow-[var(--vynce-shadow-md)]"
+                        style={{
+                            top: `${menuPosition.top}px`,
+                            left: `${Math.max(16, menuPosition.left)}px`,
+                        }}
+                    >
+                        <div className="app-text-muted px-3 pb-2 pt-1 text-[11px] font-medium uppercase tracking-[0.18em]">
+                            Visibility
+                        </div>
+                        <div className="space-y-1">
+                            {['public', 'followers'].map((option) => (
+                                <button
+                                    key={option}
+                                    type="button"
+                                    onClick={() => updateVisibility(option)}
+                                    className={`app-nav-link flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm ${
+                                        currentVisibility === option ? 'app-nav-link-active' : ''
+                                    }`}
+                                >
+                                    <span>{option.charAt(0).toUpperCase() + option.slice(1)}</span>
+                                    {currentVisibility === option ? (
+                                        <span className="app-text-soft text-xs">Current</span>
+                                    ) : null}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="my-2 h-px bg-white/10" />
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setEditOpen(true);
+                                setMenuOpen(false);
+                            }}
+                            className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm"
+                        >
+                            <Pencil className="h-4 w-4" strokeWidth={1.9} />
+                            Edit post
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setDeleteOpen(true);
+                                setMenuOpen(false);
+                            }}
+                            className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-rose-200"
+                        >
+                            <Trash2 className="h-4 w-4" strokeWidth={1.9} />
+                            Delete post
+                        </button>
+                    </div>,
+                    document.body,
+                )}
             {canManage && (
                 <>
                     <Modal show={editOpen} onClose={() => setEditOpen(false)} maxWidth="xl">
@@ -470,9 +515,12 @@ export default function PostCard({
                                         <button
                                             key={option}
                                             type="button"
-                                            onClick={() => editForm.setData('visibility', option)}
-                                            className={`app-button-secondary rounded-full px-4 py-2 text-sm ${
-                                                editForm.data.visibility === option
+                                            onClick={() => {
+                                                setSelectedVisibility(option);
+                                                editForm.setData('visibility', option);
+                                            }}
+                                            className={`app-button-secondary app-button-secondary--static rounded-full px-4 py-2 text-sm ${
+                                                selectedVisibility === option
                                                     ? 'app-nav-link-active'
                                                     : ''
                                             }`}
