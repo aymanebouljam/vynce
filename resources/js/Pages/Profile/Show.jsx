@@ -1,5 +1,6 @@
 import DangerButton from '@/Components/DangerButton';
 import Modal from '@/Components/Modal';
+import PostComposer from '@/Components/App/PostComposer';
 import PostCard from '@/Components/App/PostCard';
 import SecondaryButton from '@/Components/SecondaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
@@ -11,6 +12,7 @@ export default function Show({ profile, relationship, feed }) {
     const { auth, errors } = usePage().props;
     const followForm = useForm({});
     const isOwnProfile = auth.user.id === profile.id;
+    const [composerOpen, setComposerOpen] = useState(false);
     const [avatarManagerOpen, setAvatarManagerOpen] = useState(false);
     const [coverManagerOpen, setCoverManagerOpen] = useState(false);
 
@@ -174,13 +176,22 @@ export default function Show({ profile, relationship, feed }) {
 
                         <div className="flex gap-3">
                             {isOwnProfile ? (
-                                <Link
-                                    href={route('profile.edit')}
-                                    className="app-button-secondary inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm"
-                                >
-                                    <Pencil className="h-4 w-4" strokeWidth={1.9} />
-                                    Edit profile
-                                </Link>
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={() => setComposerOpen(true)}
+                                        className="app-button-primary rounded-full px-5 py-3 text-sm font-semibold"
+                                    >
+                                        Create post
+                                    </button>
+                                    <Link
+                                        href={route('profile.edit')}
+                                        className="app-button-secondary inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm"
+                                    >
+                                        <Pencil className="h-4 w-4" strokeWidth={1.9} />
+                                        Edit profile
+                                    </Link>
+                                </>
                             ) : (
                                 <>
                                     {relationship.can_follow && (
@@ -211,6 +222,14 @@ export default function Show({ profile, relationship, feed }) {
 
             {isOwnProfile && (
                 <>
+                    <Modal
+                        show={composerOpen}
+                        onClose={() => setComposerOpen(false)}
+                        maxWidth="3xl"
+                        centered
+                    >
+                        <PostComposer onSuccess={() => setComposerOpen(false)} />
+                    </Modal>
                     <ProfileImageManagerModal
                         kind="avatar"
                         title="Profile photo"

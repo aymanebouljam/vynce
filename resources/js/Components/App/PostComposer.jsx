@@ -8,7 +8,7 @@ const visibilityOptions = [
     { value: 'followers', label: 'Followers' },
 ];
 
-export default function PostComposer() {
+export default function PostComposer({ onSuccess = () => {} }) {
     const { auth } = usePage().props;
     const { data, setData, post, processing, errors, reset } = useForm({
         body: '',
@@ -93,6 +93,8 @@ export default function PostComposer() {
                 if (mediaInputRef.current) {
                     mediaInputRef.current.value = '';
                 }
+
+                onSuccess();
             },
         });
     };
@@ -104,7 +106,7 @@ export default function PostComposer() {
     return (
         <form
             onSubmit={submit}
-            className="app-panel feed-composer-shell rounded-[28px] p-5 backdrop-blur"
+            className="app-panel feed-composer-shell w-full rounded-[28px] p-5 backdrop-blur"
         >
             <div className="feed-composer-card">
                 {auth.user.avatar_url ? (
@@ -131,7 +133,7 @@ export default function PostComposer() {
                         <textarea
                             value={data.body}
                             onChange={(event) => setData('body', event.target.value)}
-                            className="feed-composer-textarea"
+                            className="feed-composer-textarea feed-composer-textarea--profile-modal"
                             placeholder="Share something sharp, useful, or memorable."
                         />
                     </div>
