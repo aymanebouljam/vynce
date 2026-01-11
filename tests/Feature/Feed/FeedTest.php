@@ -40,6 +40,20 @@ class FeedTest extends TestCase
         $response->assertDontSee($outsiderPost->body);
     }
 
+    public function test_home_feed_keeps_own_followers_only_posts_visible(): void
+    {
+        $viewer = User::factory()->create();
+        $ownFollowersPost = Post::factory()->for($viewer)->create([
+            'body' => 'Visible to me after editing',
+            'visibility' => 'followers',
+        ]);
+
+        $response = $this->actingAs($viewer)->get(route('feed.home'));
+
+        $response->assertOk();
+        $response->assertSee($ownFollowersPost->body);
+    }
+
     public function test_discover_feed_shows_public_non_self_posts(): void
     {
         $viewer = User::factory()->create();

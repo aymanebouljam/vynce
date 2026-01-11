@@ -102,7 +102,8 @@ class FeedService
                     });
             })
             ->where(function (Builder $query) use ($user) {
-                $query->where('posts.visibility', 'public')
+                $query->where('posts.user_id', $user->id)
+                    ->orWhere('posts.visibility', 'public')
                     ->orWhere(function (Builder $followersQuery) use ($user) {
                         $followersQuery->where('posts.visibility', 'followers')
                             ->whereIn('posts.user_id', function ($subQuery) use ($user) {

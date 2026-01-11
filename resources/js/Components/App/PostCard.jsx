@@ -59,12 +59,8 @@ export default function PostCard({
     }, [post.id, post.is_liked, post.likes_count]);
 
     useEffect(() => {
-        editForm.setData({
-            body: post.body ?? '',
-            visibility: post.visibility,
-        });
         setSelectedVisibility(post.visibility);
-    }, [editForm, post.id, post.body, post.visibility]);
+    }, [post.id, post.visibility]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -164,6 +160,15 @@ export default function PostCard({
                 setMenuOpen(false);
             },
         });
+    };
+
+    const openEditModal = () => {
+        editForm.setData({
+            body: post.body ?? '',
+            visibility: post.visibility,
+        });
+        setSelectedVisibility(post.visibility);
+        setEditOpen(true);
     };
 
     const updateVisibility = (visibility) => {
@@ -462,7 +467,7 @@ export default function PostCard({
                         <button
                             type="button"
                             onClick={() => {
-                                setEditOpen(true);
+                                openEditModal();
                                 setMenuOpen(false);
                             }}
                             className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm"
