@@ -368,14 +368,22 @@
         border: 1px solid var(--vynce-border);
         background: var(--vynce-surface-inset);
         color: var(--vynce-text);
+        caret-color: var(--vynce-text);
     }
 
     .field::placeholder {
         color: var(--vynce-text-subtle);
     }
 
-    .field:focus {
+    .field:focus,
+    .field:focus-visible {
         border-color: var(--vynce-accent);
+        outline: none;
+        box-shadow: none;
+    }
+
+    textarea.field {
+        line-height: 1.7;
     }
 
     .field.app-select {

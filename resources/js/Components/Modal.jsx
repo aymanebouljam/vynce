@@ -1,5 +1,4 @@
-import { Dialog, DialogPanel, Transition, TransitionChild } from '@headlessui/react';
-import { createPortal } from 'react-dom';
+import { Dialog, DialogPanel, Portal, Transition, TransitionChild } from '@headlessui/react';
 
 export default function Modal({
     children,
@@ -25,57 +24,60 @@ export default function Modal({
         '3xl': 'sm:max-w-3xl',
     }[maxWidth];
 
-    const modalContent = (
+    return (
         <Transition show={show} leave="duration-200">
-            <Dialog as="div" id="modal" className="fixed inset-0 isolate z-[240]" onClose={close}>
-                <TransitionChild
-                    enter="ease-out duration-300"
-                    enterFrom="opacity-0"
-                    enterTo="opacity-100"
-                    leave="ease-in duration-200"
-                    leaveFrom="opacity-100"
-                    leaveTo="opacity-0"
+            <Portal>
+                <Dialog
+                    as="div"
+                    id="modal"
+                    className="fixed inset-0 isolate z-[240]"
+                    onClose={close}
                 >
-                    <div className="fixed inset-0 bg-[rgba(3,7,12,0.62)] backdrop-blur-sm" />
-                </TransitionChild>
-
-                <div className="fixed inset-0 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
-                    <div
-                        className={`flex min-h-full justify-center ${
-                            centered ? 'items-center' : 'items-start'
-                        }`}
+                    <TransitionChild
+                        enter="ease-out duration-300"
+                        enterFrom="opacity-0"
+                        enterTo="opacity-100"
+                        leave="ease-in duration-200"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
                     >
-                        <TransitionChild
-                            enter="ease-out duration-300"
-                            enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                            enterTo="opacity-100 translate-y-0 sm:scale-100"
-                            leave="ease-in duration-200"
-                            leaveFrom="opacity-100 translate-y-0 sm:scale-100"
-                            leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                        <div className="fixed inset-0 bg-[rgba(3,7,12,0.62)] backdrop-blur-sm" />
+                    </TransitionChild>
+
+                    <div className="fixed inset-0 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
+                        <div
+                            className={`flex min-h-full justify-center ${
+                                centered ? 'items-center' : 'items-start'
+                            }`}
                         >
-                            {panel ? (
-                                <DialogPanel
-                                    className={`app-panel w-full overflow-visible rounded-[28px] transition-all ${
-                                        centered ? '' : 'my-auto sm:my-8'
-                                    } ${maxWidthClass}`}
-                                >
-                                    {children}
-                                </DialogPanel>
-                            ) : (
-                                <DialogPanel className={`w-full transition-all ${maxWidthClass}`}>
-                                    {children}
-                                </DialogPanel>
-                            )}
-                        </TransitionChild>
+                            <TransitionChild
+                                enter="ease-out duration-300"
+                                enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                                enterTo="opacity-100 translate-y-0 sm:scale-100"
+                                leave="ease-in duration-200"
+                                leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+                                leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                            >
+                                {panel ? (
+                                    <DialogPanel
+                                        className={`app-panel w-full overflow-visible rounded-[28px] transition-all ${
+                                            centered ? '' : 'my-auto sm:my-8'
+                                        } ${maxWidthClass}`}
+                                    >
+                                        {children}
+                                    </DialogPanel>
+                                ) : (
+                                    <DialogPanel
+                                        className={`w-full transition-all ${maxWidthClass}`}
+                                    >
+                                        {children}
+                                    </DialogPanel>
+                                )}
+                            </TransitionChild>
+                        </div>
                     </div>
-                </div>
-            </Dialog>
+                </Dialog>
+            </Portal>
         </Transition>
     );
-
-    if (typeof document === 'undefined') {
-        return null;
-    }
-
-    return createPortal(modalContent, document.body);
 }
