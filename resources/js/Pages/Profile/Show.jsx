@@ -9,9 +9,10 @@ import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 
 export default function Show({ profile, relationship, feed }) {
-    const { auth, errors } = usePage().props;
+    const { auth, errors, flash } = usePage().props;
     const followForm = useForm({});
     const isOwnProfile = auth.user.id === profile.id;
+    const newPostId = flash?.new_post_id;
     const [composerOpen, setComposerOpen] = useState(false);
     const [avatarManagerOpen, setAvatarManagerOpen] = useState(false);
     const [coverManagerOpen, setCoverManagerOpen] = useState(false);
@@ -264,9 +265,9 @@ export default function Show({ profile, relationship, feed }) {
                         <PostCard
                             key={post.id}
                             post={post}
-                            canManage={isOwnProfile}
                             profileUsername={profile.username}
                             showProfileRepostLabel
+                            highlighted={Number(newPostId) === post.id}
                             profileRepostLabel={
                                 isOwnProfile ? 'Reposted' : `Reposted by @${profile.username}`
                             }

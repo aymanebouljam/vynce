@@ -19,6 +19,7 @@ export default function PostCard({
     profileUsername = null,
     showProfileRepostLabel = true,
     profileRepostLabel = null,
+    highlighted = false,
 }) {
     const { auth } = usePage().props;
     const authorName = post.user?.name ?? 'Unknown user';
@@ -212,7 +213,9 @@ export default function PostCard({
 
     return (
         <>
-            <article className="feed-post-card">
+            <article
+                className={`feed-post-card ${highlighted ? 'feed-post-card--highlighted' : ''}`}
+            >
                 <div className="feed-post-card__inner">
                     <div className="flex items-start gap-3">
                         {post.user?.avatar_url ? (
@@ -281,7 +284,7 @@ export default function PostCard({
                             </div>
 
                             {post.body ? (
-                                <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-[rgba(241,235,251,0.9)]">
+                                <p className="mt-4 whitespace-pre-wrap break-words text-sm leading-7 text-[rgba(241,235,251,0.9)]">
                                     {post.body}
                                 </p>
                             ) : null}
@@ -415,7 +418,7 @@ export default function PostCard({
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6">
+                                                    <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6">
                                                         {comment.body}
                                                     </p>
                                                 </div>

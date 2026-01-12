@@ -810,6 +810,7 @@
         width: 100%;
         min-height: 4.5rem;
         resize: none;
+        overflow-y: auto;
         border: 0;
         background: transparent;
         color: rgba(241, 235, 251, 0.92);
@@ -817,6 +818,12 @@
         line-height: 1.75;
         outline: none;
         box-shadow: none;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .feed-composer-textarea::-webkit-scrollbar {
+        display: none;
     }
 
     .feed-composer-textarea--profile-modal {
@@ -896,6 +903,15 @@
         background: rgba(91, 75, 138, 0.28);
         box-shadow: 0 20px 48px rgba(7, 7, 19, 0.18);
         overflow: visible;
+    }
+
+    .feed-post-card--highlighted {
+        border-color: rgba(241, 235, 251, 0.22);
+        box-shadow:
+            0 0 0 1px rgba(241, 235, 251, 0.08),
+            0 0 0 10px rgba(120, 88, 166, 0.12),
+            0 24px 54px rgba(10, 12, 16, 0.24);
+        animation: feedPostHighlight 1.6s ease-out;
     }
 
     .feed-post-card__inner {
@@ -1303,5 +1319,23 @@
     50% {
         transform: scale(1.25);
         opacity: 1;
+    }
+}
+
+@keyframes feedPostHighlight {
+    0% {
+        transform: translateY(10px);
+        box-shadow:
+            0 0 0 1px rgba(241, 235, 251, 0.08),
+            0 0 0 18px rgba(120, 88, 166, 0.18),
+            0 28px 64px rgba(10, 12, 16, 0.28);
+    }
+
+    100% {
+        transform: translateY(0);
+        box-shadow:
+            0 0 0 1px rgba(241, 235, 251, 0.08),
+            0 0 0 10px rgba(120, 88, 166, 0.12),
+            0 24px 54px rgba(10, 12, 16, 0.24);
     }
 }
