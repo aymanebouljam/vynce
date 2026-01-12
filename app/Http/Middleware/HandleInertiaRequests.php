@@ -24,6 +24,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
+                'new_post_id' => fn () => $request->session()->get('new_post_id'),
             ],
         ];
     }

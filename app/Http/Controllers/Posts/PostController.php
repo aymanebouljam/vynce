@@ -18,9 +18,9 @@ class PostController extends Controller
     ): RedirectResponse {
         $this->authorize('create', Post::class);
 
-        $createPostAction->execute($request->user(), $request->validated());
+        $post = $createPostAction->execute($request->user(), $request->validated());
 
-        return back()->with('success', 'Post published.');
+        return back()->with('new_post_id', $post->id);
     }
 
     public function update(UpdatePostRequest $request, Post $post): RedirectResponse
