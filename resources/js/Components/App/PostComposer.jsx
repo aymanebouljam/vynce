@@ -8,7 +8,7 @@ const visibilityOptions = [
     { value: 'followers', label: 'Followers' },
 ];
 
-export default function PostComposer({ onSuccess = () => {} }) {
+export default function PostComposer({ onSuccess = () => {}, compact = false }) {
     const { auth } = usePage().props;
     const { data, setData, post, processing, errors, reset } = useForm({
         body: '',
@@ -133,7 +133,9 @@ export default function PostComposer({ onSuccess = () => {} }) {
                         <textarea
                             value={data.body}
                             onChange={(event) => setData('body', event.target.value)}
-                            className="feed-composer-textarea feed-composer-textarea--profile-modal"
+                            className={`feed-composer-textarea ${
+                                compact ? '' : 'feed-composer-textarea--profile-modal'
+                            }`}
                             placeholder="Share something sharp, useful, or memorable."
                         />
                     </div>

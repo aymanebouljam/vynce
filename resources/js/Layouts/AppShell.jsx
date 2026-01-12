@@ -1,10 +1,16 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import FlashBanner from '@/Components/App/FlashBanner';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { Compass, House, LogOut, MessageCircle, Search, Settings, User, Users } from 'lucide-react';
+import { Compass, House, LogOut, MessageCircle, Search, Settings, Users } from 'lucide-react';
 
 export default function AppShell({ children, title, sidebar }) {
     const { auth } = usePage().props;
+    const initials = auth.user.name
+        ?.split(' ')
+        .map((part) => part[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase();
     const showSearch =
         !route().current('users.show') &&
         !route().current('users.friends') &&
@@ -18,12 +24,6 @@ export default function AppShell({ children, title, sidebar }) {
             href: route('feed.home'),
             active: route().current('feed.home'),
             icon: House,
-        },
-        {
-            label: 'Profile',
-            href: route('users.show', auth.user.username),
-            active: route().current('users.show') && route().params.user === auth.user.username,
-            icon: User,
         },
         {
             label: 'Contacts',
@@ -71,6 +71,36 @@ export default function AppShell({ children, title, sidebar }) {
                                         </div>
                                     </div>
                                 </Link>
+
+                                <div className="app-panel-inset flex items-center gap-3 rounded-[24px] px-4 py-3">
+                                    {auth.user.avatar_url ? (
+                                        <div className="h-12 w-12 overflow-hidden rounded-2xl">
+                                            <img
+                                                src={auth.user.avatar_url}
+                                                alt={auth.user.name}
+                                                className="h-full w-full object-cover"
+                                                style={{
+                                                    objectPosition: `${auth.user.avatar_position_x}% ${auth.user.avatar_position_y}%`,
+                                                    transform: `scale(${auth.user.avatar_zoom})`,
+                                                    transformOrigin: `${auth.user.avatar_position_x}% ${auth.user.avatar_position_y}%`,
+                                                }}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="app-avatar-fallback flex h-12 w-12 items-center justify-center rounded-2xl text-sm font-semibold">
+                                            {initials}
+                                        </div>
+                                    )}
+
+                                    <div className="min-w-0">
+                                        <div className="truncate text-sm font-semibold">
+                                            {auth.user.name}
+                                        </div>
+                                        <div className="app-text-muted truncate text-xs">
+                                            @{auth.user.username}
+                                        </div>
+                                    </div>
+                                </div>
 
                                 <nav className="space-y-2">
                                     {navigation.map((item) => (

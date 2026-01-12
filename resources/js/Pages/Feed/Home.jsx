@@ -1,6 +1,7 @@
 import PostCard from '@/Components/App/PostCard';
 import PostComposer from '@/Components/App/PostComposer';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { UserPlus } from 'lucide-react';
 import { Link, usePage } from '@inertiajs/react';
 
 const trends = [
@@ -10,51 +11,11 @@ const trends = [
 ];
 
 export default function Home({ feed, activeTab, pendingRequests = [], suggestions = [] }) {
-    const { auth } = usePage().props;
-    const initials = auth.user.name
-        ?.split(' ')
-        .map((part) => part[0])
-        .join('')
-        .slice(0, 2)
-        .toUpperCase();
+    const { auth, flash } = usePage().props;
+    const newPostId = flash?.new_post_id;
 
     const sidebar = (
         <div className="space-y-4">
-            <div className="app-panel rounded-[28px] p-5">
-                <div className="flex items-center gap-3">
-                    {auth.user.avatar_url ? (
-                        <div className="h-14 w-14 overflow-hidden rounded-2xl">
-                            <img
-                                src={auth.user.avatar_url}
-                                alt={auth.user.name}
-                                className="h-full w-full object-cover"
-                                style={{
-                                    objectPosition: `${auth.user.avatar_position_x}% ${auth.user.avatar_position_y}%`,
-                                    transform: `scale(${auth.user.avatar_zoom})`,
-                                    transformOrigin: `${auth.user.avatar_position_x}% ${auth.user.avatar_position_y}%`,
-                                }}
-                            />
-                        </div>
-                    ) : (
-                        <div className="app-avatar-fallback flex h-14 w-14 items-center justify-center rounded-2xl text-sm font-semibold">
-                            {initials}
-                        </div>
-                    )}
-
-                    <div className="min-w-0">
-                        <div className="truncate text-base font-semibold">{auth.user.name}</div>
-                        <div className="app-text-muted truncate text-sm">@{auth.user.username}</div>
-                    </div>
-                </div>
-
-                <Link
-                    href={route('users.show', auth.user.username)}
-                    className="app-button-secondary mt-4 inline-flex rounded-full px-4 py-2 text-sm"
-                >
-                    View profile
-                </Link>
-            </div>
-
             <div className="app-panel rounded-[28px] p-5">
                 <div className="text-sm font-semibold">Trending now</div>
                 <div className="mt-4 space-y-4">
@@ -115,8 +76,8 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
                     ) : (
                         suggestions.map((person) => (
                             <div key={person.id} className="app-card-inset rounded-2xl p-3">
-                                <div className="space-y-4">
-                                    <div className="flex items-start gap-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex min-w-0 flex-1 items-start gap-3">
                                         {person.avatar_url ? (
                                             <img
                                                 src={person.avatar_url}
@@ -130,29 +91,28 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
                                         )}
 
                                         <div className="min-w-0 flex-1">
-                                            <div className="text-sm font-medium leading-6">
+                                            <div className="truncate text-sm font-medium leading-6">
                                                 {person.name}
                                             </div>
-                                            <div className="app-text-muted mt-0.5 text-xs">
+                                            <div className="app-text-muted mt-0.5 truncate text-xs">
                                                 @{person.username}
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="app-text-soft text-xs leading-6">
-                                        {person.bio || 'See what they’re sharing on Vynce.'}
-                                    </div>
-
-                                    <div>
-                                        <Link
-                                            href={route('users.follow', person.id)}
-                                            method="post"
-                                            as="button"
-                                            className="app-button-primary w-full rounded-full px-3 py-2 text-xs font-semibold"
-                                        >
-                                            {person.is_private ? 'Add' : 'Follow'}
-                                        </Link>
-                                    </div>
+                                    <Link
+                                        href={route('users.follow', person.id)}
+                                        method="post"
+                                        as="button"
+                                        className="app-button-primary inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                                        aria-label={
+                                            person.is_private
+                                                ? `Add ${person.name}`
+                                                : `Follow ${person.name}`
+                                        }
+                                    >
+                                        <UserPlus className="h-4 w-4" strokeWidth={2} />
+                                    </Link>
                                 </div>
                             </div>
                         ))
@@ -165,7 +125,7 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
     return (
         <AuthenticatedLayout title="Feed" sidebar={sidebar}>
             <section className="space-y-6">
-                <PostComposer />
+                <PostComposer compact />
 
                 <div className="space-y-4">
                     {feed.data.length === 0 ? (
@@ -174,7 +134,13 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
                             switch to Discover to find voices worth bringing into your feed.
                         </div>
                     ) : (
-                        feed.data.map((post) => <PostCard key={post.id} post={post} />)
+                        feed.data.map((post) => (
+                            <PostCard
+                                key={post.id}
+                                post={post}
+                                highlighted={Number(newPostId) === post.id}
+                            />
+                        ))
                     )}
                 </div>
 
