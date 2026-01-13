@@ -121,7 +121,9 @@ export default function Index({ conversations, activeConversation, messages }) {
                                                     own ? 'app-button-primary' : 'app-panel-inset'
                                                 }`}
                                             >
-                                                <div>{message.body}</div>
+                                                <div className="whitespace-pre-wrap break-all">
+                                                    {message.body}
+                                                </div>
                                                 <div className="app-text-soft mt-2 text-xs">
                                                     {new Date(message.created_at).toLocaleString()}
                                                 </div>
@@ -138,7 +140,7 @@ export default function Index({ conversations, activeConversation, messages }) {
                                 <textarea
                                     value={form.data.body}
                                     onChange={(event) => form.setData('body', event.target.value)}
-                                    className="field min-h-24 flex-1 resize-none text-sm"
+                                    className="field app-scrollbar-hidden min-h-24 flex-1 resize-none overflow-y-auto text-sm"
                                     placeholder={`Message ${activeConversation.participant?.name}...`}
                                 />
                                 <button
