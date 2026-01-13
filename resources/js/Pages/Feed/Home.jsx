@@ -1,8 +1,9 @@
 import PostCard from '@/Components/App/PostCard';
 import PostComposer from '@/Components/App/PostComposer';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { UserPlus } from 'lucide-react';
-import { Link, usePage } from '@inertiajs/react';
+import { Check, UserPlus } from 'lucide-react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 
 const trends = [
     { label: 'Design systems', posts: '1,284 posts today' },
@@ -11,8 +12,69 @@ const trends = [
 ];
 
 export default function Home({ feed, activeTab, pendingRequests = [], suggestions = [] }) {
-    const { auth, flash } = usePage().props;
+    const { flash } = usePage().props;
     const newPostId = flash?.new_post_id;
+    const [visibleSuggestions, setVisibleSuggestions] = useState(suggestions);
+    const [processingSuggestionIds, setProcessingSuggestionIds] = useState([]);
+    const [confirmedSuggestionIds, setConfirmedSuggestionIds] = useState([]);
+    const [exitingSuggestionIds, setExitingSuggestionIds] = useState([]);
+
+    useEffect(() => {
+        setVisibleSuggestions(
+            suggestions.filter(
+                (person) =>
+                    !confirmedSuggestionIds.includes(person.id) &&
+                    !exitingSuggestionIds.includes(person.id),
+            ),
+        );
+    }, [suggestions, confirmedSuggestionIds, exitingSuggestionIds]);
+
+    const addSuggestion = (person) => {
+        if (processingSuggestionIds.includes(person.id)) {
+            return;
+        }
+
+        setProcessingSuggestionIds((current) => [...current, person.id]);
+
+        router.post(
+            route('users.follow', person.id),
+            {},
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => {
+                    setConfirmedSuggestionIds((current) => [...current, person.id]);
+
+                    window.setTimeout(() => {
+                        setExitingSuggestionIds((current) => [...current, person.id]);
+                    }, 180);
+
+                    window.setTimeout(() => {
+                        setVisibleSuggestions((current) =>
+                            current.filter((suggestion) => suggestion.id !== person.id),
+                        );
+                        setConfirmedSuggestionIds((current) =>
+                            current.filter((id) => id !== person.id),
+                        );
+                        setExitingSuggestionIds((current) =>
+                            current.filter((id) => id !== person.id),
+                        );
+
+                        router.reload({
+                            only: ['suggestions', 'pendingRequests'],
+                            preserveScroll: true,
+                            preserveState: true,
+                        });
+                    }, 560);
+                },
+                onFinish: () => {
+                    setProcessingSuggestionIds((current) =>
+                        current.filter((id) => id !== person.id),
+                    );
+                },
+            },
+        );
+    };
 
     const sidebar = (
         <div className="space-y-4">
@@ -68,54 +130,75 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
             <div className="app-panel rounded-[28px] p-5">
                 <div className="text-sm font-semibold">Add people</div>
                 <div className="mt-4 space-y-4">
-                    {suggestions.length === 0 ? (
+                    {visibleSuggestions.length === 0 ? (
                         <div className="app-text-soft text-sm leading-6">
                             You’re caught up for now. As more people join your orbit, they’ll show
                             up here.
                         </div>
                     ) : (
-                        suggestions.map((person) => (
-                            <div key={person.id} className="app-card-inset rounded-2xl p-3">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex min-w-0 flex-1 items-start gap-3">
-                                        {person.avatar_url ? (
-                                            <img
-                                                src={person.avatar_url}
-                                                alt={person.name}
-                                                className="h-12 w-12 rounded-2xl object-cover"
-                                            />
-                                        ) : (
-                                            <div className="app-avatar-fallback flex h-12 w-12 items-center justify-center rounded-2xl text-xs font-semibold">
-                                                {initialsFor(person.name)}
-                                            </div>
-                                        )}
+                        visibleSuggestions.map((person) => {
+                            const isProcessing = processingSuggestionIds.includes(person.id);
+                            const isConfirmed = confirmedSuggestionIds.includes(person.id);
+                            const isExiting = exitingSuggestionIds.includes(person.id);
 
-                                        <div className="min-w-0 flex-1">
-                                            <div className="truncate text-sm font-medium leading-6">
-                                                {person.name}
-                                            </div>
-                                            <div className="app-text-muted mt-0.5 truncate text-xs">
-                                                @{person.username}
+                            return (
+                                <div
+                                    key={person.id}
+                                    className={`app-card-inset rounded-2xl p-3 transition-all duration-500 ${
+                                        isExiting
+                                            ? 'translate-y-2 scale-[0.98] opacity-0'
+                                            : 'translate-y-0 scale-100 opacity-100'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex min-w-0 flex-1 items-start gap-3">
+                                            {person.avatar_url ? (
+                                                <img
+                                                    src={person.avatar_url}
+                                                    alt={person.name}
+                                                    className="h-12 w-12 rounded-2xl object-cover"
+                                                />
+                                            ) : (
+                                                <div className="app-avatar-fallback flex h-12 w-12 items-center justify-center rounded-2xl text-xs font-semibold">
+                                                    {initialsFor(person.name)}
+                                                </div>
+                                            )}
+
+                                            <div className="min-w-0 flex-1">
+                                                <div className="truncate text-sm font-medium leading-6">
+                                                    {person.name}
+                                                </div>
+                                                <div className="app-text-muted mt-0.5 truncate text-xs">
+                                                    @{person.username}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <Link
-                                        href={route('users.follow', person.id)}
-                                        method="post"
-                                        as="button"
-                                        className="app-button-primary inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-                                        aria-label={
-                                            person.is_private
-                                                ? `Add ${person.name}`
-                                                : `Follow ${person.name}`
-                                        }
-                                    >
-                                        <UserPlus className="h-4 w-4" strokeWidth={2} />
-                                    </Link>
+                                        <button
+                                            type="button"
+                                            onClick={() => addSuggestion(person)}
+                                            disabled={isProcessing || isConfirmed}
+                                            className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all duration-200 ${
+                                                isConfirmed
+                                                    ? 'app-panel-inset text-emerald-200'
+                                                    : 'app-button-primary'
+                                            } disabled:cursor-not-allowed disabled:opacity-100`}
+                                            aria-label={
+                                                person.is_private
+                                                    ? `Add ${person.name}`
+                                                    : `Follow ${person.name}`
+                                            }
+                                        >
+                                            {isConfirmed ? (
+                                                <Check className="h-4 w-4" strokeWidth={2.2} />
+                                            ) : (
+                                                <UserPlus className="h-4 w-4" strokeWidth={2} />
+                                            )}
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        ))
+                            );
+                        })
                     )}
                 </div>
             </div>
