@@ -31,7 +31,7 @@ class ProfileController extends Controller
     ): RedirectResponse {
         $upsertProfileAction->execute($request->user(), $request->validated());
 
-        return Redirect::route('profile.edit')->with('success', 'Profile updated.');
+        return Redirect::route('profile.edit');
     }
 
     public function updateAvatar(
@@ -49,8 +49,7 @@ class ProfileController extends Controller
             $updateProfileImageAction->replace($request->user(), 'avatar', $data['avatar'], $data);
         }
 
-        return Redirect::route('users.show', $request->user()->username)
-            ->with('success', 'Profile photo updated.');
+        return Redirect::route('users.show', $request->user()->username);
     }
 
     public function updateCover(
@@ -68,8 +67,7 @@ class ProfileController extends Controller
             $updateProfileImageAction->replace($request->user(), 'cover', $data['cover'], $data);
         }
 
-        return Redirect::route('users.show', $request->user()->username)
-            ->with('success', 'Cover image updated.');
+        return Redirect::route('users.show', $request->user()->username);
     }
 
     public function updateAvatarTransform(
@@ -84,8 +82,7 @@ class ProfileController extends Controller
 
         $updateProfileImageAction->updateTransform($request->user(), 'avatar', $data);
 
-        return Redirect::route('users.show', $request->user()->username)
-            ->with('success', 'Profile photo adjusted.');
+        return Redirect::route('users.show', $request->user()->username);
     }
 
     public function updateCoverTransform(
@@ -100,8 +97,7 @@ class ProfileController extends Controller
 
         $updateProfileImageAction->updateTransform($request->user(), 'cover', $data);
 
-        return Redirect::route('users.show', $request->user()->username)
-            ->with('success', 'Cover image adjusted.');
+        return Redirect::route('users.show', $request->user()->username);
     }
 
     public function destroyAvatar(
@@ -110,8 +106,7 @@ class ProfileController extends Controller
     ): RedirectResponse {
         $updateProfileImageAction->remove($request->user(), 'avatar');
 
-        return Redirect::route('users.show', $request->user()->username)
-            ->with('success', 'Profile photo removed.');
+        return Redirect::route('users.show', $request->user()->username);
     }
 
     public function destroyCover(
@@ -120,8 +115,7 @@ class ProfileController extends Controller
     ): RedirectResponse {
         $updateProfileImageAction->remove($request->user(), 'cover');
 
-        return Redirect::route('users.show', $request->user()->username)
-            ->with('success', 'Cover image removed.');
+        return Redirect::route('users.show', $request->user()->username);
     }
 
     public function destroy(Request $request): RedirectResponse

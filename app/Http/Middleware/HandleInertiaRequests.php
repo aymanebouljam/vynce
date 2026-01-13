@@ -23,7 +23,6 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user() ? UserResource::make($request->user())->resolve() : null,
             ],
             'flash' => [
-                'success' => fn () => $request->session()->get('success'),
                 'new_post_id' => fn () => $request->session()->get('new_post_id'),
             ],
         ];
