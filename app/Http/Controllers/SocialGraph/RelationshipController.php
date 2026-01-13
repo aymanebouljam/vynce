@@ -16,14 +16,14 @@ class RelationshipController extends Controller
 
         $socialGraphService->block($request->user(), $user);
 
-        return back()->with('success', 'User blocked.');
+        return back();
     }
 
     public function unblock(Request $request, User $user, SocialGraphService $socialGraphService): RedirectResponse
     {
         $socialGraphService->unblock($request->user(), $user);
 
-        return back()->with('success', 'User unblocked.');
+        return back();
     }
 
     public function mute(Request $request, User $user, SocialGraphService $socialGraphService): RedirectResponse
@@ -32,13 +32,13 @@ class RelationshipController extends Controller
 
         $socialGraphService->mute($request->user(), $user);
 
-        return back()->with('success', 'User muted.');
+        return back();
     }
 
     public function unmute(Request $request, User $user, SocialGraphService $socialGraphService): RedirectResponse
     {
         $socialGraphService->unmute($request->user(), $user);
 
-        return back()->with('success', 'User unmuted.');
+        return back();
     }
 }

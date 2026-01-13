@@ -37,7 +37,7 @@ class PostController extends Controller
             'mentions' => array_values(array_unique(array_map('strtolower', $mentions[1] ?? []))),
         ]);
 
-        return back()->with('success', 'Post updated.');
+        return back();
     }
 
     public function destroy(Post $post): RedirectResponse
@@ -49,6 +49,6 @@ class PostController extends Controller
             $post->delete();
         });
 
-        return back()->with('success', 'Post deleted.');
+        return back();
     }
 }

@@ -17,12 +17,9 @@ class FollowController extends Controller
     ): RedirectResponse {
         $this->authorize('follow', $user);
 
-        $follow = $socialGraphService->follow($request->user(), $user);
+        $socialGraphService->follow($request->user(), $user);
 
-        return back()->with(
-            'success',
-            $follow->status->value === 'accepted' ? 'User followed.' : 'Follow request sent.',
-        );
+        return back();
     }
 
     public function destroy(
@@ -32,7 +29,7 @@ class FollowController extends Controller
     ): RedirectResponse {
         $socialGraphService->unfollow($request->user(), $user);
 
-        return back()->with('success', 'Follow removed.');
+        return back();
     }
 
     public function accept(
@@ -44,7 +41,7 @@ class FollowController extends Controller
 
         $socialGraphService->acceptRequest($request->user(), $user);
 
-        return back()->with('success', 'Follow request accepted.');
+        return back();
     }
 
     public function reject(
@@ -56,6 +53,6 @@ class FollowController extends Controller
 
         $socialGraphService->rejectRequest($request->user(), $user);
 
-        return back()->with('success', 'Follow request refused.');
+        return back();
     }
 }
