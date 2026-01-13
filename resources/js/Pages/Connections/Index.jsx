@@ -1,7 +1,10 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 
 export default function Index({ profile, connections, type, title, emptyState }) {
+    const { auth } = usePage().props;
+    const canUnfollow = type === 'following' && auth.user.username === profile.username;
+
     return (
         <AuthenticatedLayout title={`${profile.name} ${title}`}>
             <section className="app-panel rounded-[32px] p-6">
@@ -86,12 +89,27 @@ export default function Index({ profile, connections, type, title, emptyState })
                                     </div>
                                 </div>
 
-                                <Link
-                                    href={route('users.show', person.username)}
-                                    className="app-button-secondary shrink-0 rounded-full px-4 py-2 text-sm"
-                                >
-                                    View profile
-                                </Link>
+                                <div className="flex shrink-0 gap-2">
+                                    {canUnfollow && (
+                                        <Link
+                                            href={route('users.unfollow', person.id)}
+                                            method="delete"
+                                            as="button"
+                                            onBefore={() =>
+                                                window.confirm(`Unfollow ${person.name}?`)
+                                            }
+                                            className="app-button-secondary rounded-full px-4 py-2 text-sm"
+                                        >
+                                            Unfollow
+                                        </Link>
+                                    )}
+                                    <Link
+                                        href={route('users.show', person.username)}
+                                        className="app-button-secondary rounded-full px-4 py-2 text-sm"
+                                    >
+                                        View profile
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                     ))

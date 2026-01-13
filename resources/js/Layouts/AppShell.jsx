@@ -1,10 +1,11 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
-import FlashBanner from '@/Components/App/FlashBanner';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { Compass, House, LogOut, MessageCircle, Search, Settings, Users } from 'lucide-react';
 
 export default function AppShell({ children, title, sidebar }) {
     const { auth } = usePage().props;
+    const ownProfileActive =
+        route().current('users.show') && route().params.user === auth.user.username;
     const initials = auth.user.name
         ?.split(' ')
         .map((part) => part[0])
@@ -72,7 +73,12 @@ export default function AppShell({ children, title, sidebar }) {
                                     </div>
                                 </Link>
 
-                                <div className="app-panel-inset flex items-center gap-3 rounded-[24px] px-4 py-3">
+                                <Link
+                                    href={route('users.show', auth.user.username)}
+                                    className={`app-panel-inset app-sidebar-user-link flex items-center gap-3 rounded-[24px] px-4 py-3 ${
+                                        ownProfileActive ? 'app-sidebar-user-link-active' : ''
+                                    }`}
+                                >
                                     {auth.user.avatar_url ? (
                                         <div className="h-12 w-12 overflow-hidden rounded-2xl">
                                             <img
@@ -100,7 +106,7 @@ export default function AppShell({ children, title, sidebar }) {
                                             @{auth.user.username}
                                         </div>
                                     </div>
-                                </div>
+                                </Link>
 
                                 <nav className="space-y-2">
                                     {navigation.map((item) => (
@@ -149,8 +155,6 @@ export default function AppShell({ children, title, sidebar }) {
                                 />
                             </label>
                         )}
-
-                        <FlashBanner />
                         {children}
                     </main>
 
