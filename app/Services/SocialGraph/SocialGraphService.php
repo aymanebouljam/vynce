@@ -210,6 +210,7 @@ class SocialGraphService
     public function suggestions(User $user, int $limit = 3): Collection
     {
         return User::query()
+            ->withCount(['acceptedFollowers', 'posts'])
             ->whereKeyNot($user->id)
             ->whereNotIn('users.id', function ($query) use ($user) {
                 $query->select('followed_id')
