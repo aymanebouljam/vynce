@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
+import { ArrowLeft } from 'lucide-react';
 import { cloneElement } from 'react';
 import DeleteUserForm from './Partials/DeleteUserForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
@@ -15,6 +16,14 @@ export default function Edit({ profile }) {
         location: profile.location ?? '',
         is_private: profile.is_private ?? false,
     });
+    const goBack = () => {
+        if (window.history.length > 1) {
+            window.history.back();
+            return;
+        }
+
+        router.visit(route('feed.home'));
+    };
 
     const submit = (event) => {
         event.preventDefault();
@@ -31,7 +40,15 @@ export default function Edit({ profile }) {
             <div className="space-y-6">
                 <section className="app-panel rounded-[32px] p-6">
                     <div className="mb-6">
-                        <h1 className="text-2xl font-semibold">Edit profile</h1>
+                        <button
+                            type="button"
+                            onClick={goBack}
+                            className="app-button-secondary inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm"
+                        >
+                            <ArrowLeft className="h-4 w-4" strokeWidth={1.9} />
+                            Back
+                        </button>
+                        <h1 className="mt-4 text-2xl font-semibold">Edit profile</h1>
                         <p className="app-text-soft mt-2 text-sm leading-7">
                             Keep identity fields clean and update your public-facing details here.
                         </p>

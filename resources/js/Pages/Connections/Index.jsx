@@ -1,16 +1,33 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { ArrowLeft } from 'lucide-react';
 
 export default function Index({ profile, connections, type, title, emptyState }) {
     const { auth } = usePage().props;
     const canUnfollow = type === 'following' && auth.user.username === profile.username;
+    const goBack = () => {
+        if (window.history.length > 1) {
+            window.history.back();
+            return;
+        }
+
+        router.visit(route('feed.home'));
+    };
 
     return (
         <AuthenticatedLayout title={`${profile.name} ${title}`}>
             <section className="app-panel rounded-[32px] p-6">
                 <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                     <div>
-                        <div className="app-text-soft text-sm">
+                        <button
+                            type="button"
+                            onClick={goBack}
+                            className="app-button-secondary inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm"
+                        >
+                            <ArrowLeft className="h-4 w-4" strokeWidth={1.9} />
+                            Back
+                        </button>
+                        <div className="app-text-soft mt-4 text-sm">
                             <Link href={route('users.show', profile.username)} className="app-link">
                                 @{profile.username}
                             </Link>

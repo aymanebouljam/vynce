@@ -1,11 +1,20 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Link, useForm, usePage } from '@inertiajs/react';
+import { Link, router, useForm, usePage } from '@inertiajs/react';
+import { ArrowLeft } from 'lucide-react';
 
 export default function Index({ conversations, activeConversation, messages }) {
     const { auth } = usePage().props;
     const form = useForm({
         body: '',
     });
+    const goBack = () => {
+        if (window.history.length > 1) {
+            window.history.back();
+            return;
+        }
+
+        router.visit(route('feed.home'));
+    };
 
     const submit = (event) => {
         event.preventDefault();
@@ -25,7 +34,15 @@ export default function Index({ conversations, activeConversation, messages }) {
             <div className="grid gap-6 xl:grid-cols-[320px,1fr]">
                 <section className="app-panel rounded-[32px] p-5">
                     <div className="mb-4">
-                        <h1 className="text-xl font-semibold">Messages</h1>
+                        <button
+                            type="button"
+                            onClick={goBack}
+                            className="app-button-secondary inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm"
+                        >
+                            <ArrowLeft className="h-4 w-4" strokeWidth={1.9} />
+                            Back
+                        </button>
+                        <h1 className="mt-4 text-xl font-semibold">Messages</h1>
                         <p className="app-text-soft mt-2 text-sm leading-6">
                             Start from someone’s profile, then keep the conversation going here.
                         </p>
