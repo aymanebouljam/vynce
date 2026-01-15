@@ -12,13 +12,7 @@ export default function AppShell({ children, title, sidebar }) {
         .join('')
         .slice(0, 2)
         .toUpperCase();
-    const showSearch =
-        !route().current('users.show') &&
-        !route().current('users.friends') &&
-        !route().current('users.followers') &&
-        !route().current('users.following') &&
-        !route().current('settings') &&
-        !route().current('profile.edit');
+    const showSearch = route().current('feed.home') || route().current('feed.following');
     const navigation = [
         {
             label: 'Home',
