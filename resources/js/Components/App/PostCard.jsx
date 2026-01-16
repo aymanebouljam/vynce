@@ -3,12 +3,14 @@ import Modal from '@/Components/Modal';
 import SecondaryButton from '@/Components/SecondaryButton';
 import {
     Ellipsis,
+    Globe,
     Heart,
     MessageCircle,
     Pencil,
     Repeat2,
     SendHorizontal,
     Trash2,
+    Users,
 } from 'lucide-react';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
@@ -32,12 +34,16 @@ export default function PostCard({
     const [likesCount, setLikesCount] = useState(post.likes_count ?? 0);
     const [liking, setLiking] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
+    const [visibilityMenuOpen, setVisibilityMenuOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [selectedVisibility, setSelectedVisibility] = useState(post.visibility);
     const menuButtonRef = useRef(null);
     const menuPanelRef = useRef(null);
     const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+    const visibilityButtonRef = useRef(null);
+    const visibilityPanelRef = useRef(null);
+    const [visibilityMenuPosition, setVisibilityMenuPosition] = useState({ top: 0, left: 0 });
     const commentForm = useForm({ body: '' });
     const editForm = useForm({
         body: post.body ?? '',
@@ -53,6 +59,12 @@ export default function PostCard({
         .toUpperCase();
     const isProfileRepost =
         Boolean(post.profile_reposted_at) && showProfileRepostLabel && profileUsername;
+    const visibilityIcon =
+        currentVisibility === 'followers' ? (
+            <Users className="h-3.5 w-3.5" strokeWidth={1.9} />
+        ) : (
+            <Globe className="h-3.5 w-3.5" strokeWidth={1.9} />
+        );
 
     useEffect(() => {
         setIsLiked(post.is_liked);
@@ -67,9 +79,15 @@ export default function PostCard({
         const handleClickOutside = (event) => {
             const clickedButton = menuButtonRef.current?.contains(event.target);
             const clickedPanel = menuPanelRef.current?.contains(event.target);
+            const clickedVisibilityButton = visibilityButtonRef.current?.contains(event.target);
+            const clickedVisibilityPanel = visibilityPanelRef.current?.contains(event.target);
 
             if (!clickedButton && !clickedPanel) {
                 setMenuOpen(false);
+            }
+
+            if (!clickedVisibilityButton && !clickedVisibilityPanel) {
+                setVisibilityMenuOpen(false);
             }
         };
 
@@ -108,6 +126,35 @@ export default function PostCard({
             window.removeEventListener('scroll', updateMenuPosition, true);
         };
     }, [menuOpen]);
+
+    useEffect(() => {
+        if (!visibilityMenuOpen) {
+            return undefined;
+        }
+
+        const updateVisibilityMenuPosition = () => {
+            const rect = visibilityButtonRef.current?.getBoundingClientRect();
+
+            if (!rect) {
+                return;
+            }
+
+            setVisibilityMenuPosition({
+                top: rect.bottom + 12,
+                left: rect.right - 176,
+            });
+        };
+
+        updateVisibilityMenuPosition();
+
+        window.addEventListener('resize', updateVisibilityMenuPosition);
+        window.addEventListener('scroll', updateVisibilityMenuPosition, true);
+
+        return () => {
+            window.removeEventListener('resize', updateVisibilityMenuPosition);
+            window.removeEventListener('scroll', updateVisibilityMenuPosition, true);
+        };
+    }, [visibilityMenuOpen]);
 
     const submitComment = (event) => {
         event.preventDefault();
@@ -178,6 +225,7 @@ export default function PostCard({
         }
 
         const previousVisibility = currentVisibility;
+        setVisibilityMenuOpen(false);
         setSelectedVisibility(visibility);
         editForm.setData('visibility', visibility);
 
@@ -189,7 +237,7 @@ export default function PostCard({
             .patch(route('posts.update', post.id), {
                 preserveScroll: true,
                 onSuccess: () => {
-                    setMenuOpen(false);
+                    setVisibilityMenuOpen(false);
                 },
                 onError: () => {
                     setSelectedVisibility(previousVisibility);
@@ -264,9 +312,18 @@ export default function PostCard({
                                 </div>
 
                                 <div className="flex items-center gap-2">
-                                    <span className="feed-post-card__visibility">
-                                        {currentVisibility}
-                                    </span>
+                                    <button
+                                        ref={visibilityButtonRef}
+                                        type="button"
+                                        onClick={() =>
+                                            canManage && setVisibilityMenuOpen((open) => !open)
+                                        }
+                                        className="feed-post-card__visibility"
+                                        title={currentVisibility}
+                                        aria-label={currentVisibility}
+                                    >
+                                        {visibilityIcon}
+                                    </button>
                                     {canManage && (
                                         <div className="relative">
                                             <button
@@ -446,27 +503,6 @@ export default function PostCard({
                             left: `${Math.max(16, menuPosition.left)}px`,
                         }}
                     >
-                        <div className="app-text-muted px-3 pb-2 pt-1 text-[11px] font-medium uppercase tracking-[0.18em]">
-                            Visibility
-                        </div>
-                        <div className="space-y-1">
-                            {['public', 'followers'].map((option) => (
-                                <button
-                                    key={option}
-                                    type="button"
-                                    onClick={() => updateVisibility(option)}
-                                    className={`app-nav-link flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm ${
-                                        currentVisibility === option ? 'app-nav-link-active' : ''
-                                    }`}
-                                >
-                                    <span>{option.charAt(0).toUpperCase() + option.slice(1)}</span>
-                                    {currentVisibility === option ? (
-                                        <span className="app-text-soft text-xs">Current</span>
-                                    ) : null}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="my-2 h-px bg-white/10" />
                         <button
                             type="button"
                             onClick={() => {
@@ -492,6 +528,48 @@ export default function PostCard({
                     </div>,
                     document.body,
                 )}
+            {visibilityMenuOpen &&
+                typeof document !== 'undefined' &&
+                createPortal(
+                    <div
+                        ref={visibilityPanelRef}
+                        className="app-panel-inset fixed z-[220] w-44 rounded-2xl p-2 shadow-[var(--vynce-shadow-md)]"
+                        style={{
+                            top: `${visibilityMenuPosition.top}px`,
+                            left: `${Math.max(16, visibilityMenuPosition.left)}px`,
+                        }}
+                    >
+                        <div className="app-text-muted px-3 pb-2 pt-1 text-[11px] font-medium uppercase tracking-[0.18em]">
+                            Visibility
+                        </div>
+                        <div className="space-y-1">
+                            {[
+                                { key: 'public', label: 'Public', icon: Globe },
+                                { key: 'followers', label: 'Followers', icon: Users },
+                            ].map((option) => (
+                                <button
+                                    key={option.key}
+                                    type="button"
+                                    onClick={() => updateVisibility(option.key)}
+                                    className={`app-nav-link flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm ${
+                                        currentVisibility === option.key
+                                            ? 'app-nav-link-active'
+                                            : ''
+                                    }`}
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <option.icon className="h-4 w-4" strokeWidth={1.9} />
+                                        {option.label}
+                                    </span>
+                                    {currentVisibility === option.key ? (
+                                        <span className="app-text-soft text-xs">Current</span>
+                                    ) : null}
+                                </button>
+                            ))}
+                        </div>
+                    </div>,
+                    document.body,
+                )}
             {canManage && (
                 <>
                     <Modal show={editOpen} onClose={() => setEditOpen(false)} maxWidth="xl">
@@ -513,31 +591,6 @@ export default function PostCard({
                             {editForm.errors.body && (
                                 <div className="text-sm text-rose-300">{editForm.errors.body}</div>
                             )}
-
-                            <div className="space-y-3">
-                                <div className="app-text-muted text-xs font-medium uppercase tracking-[0.18em]">
-                                    Visibility
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                    {['public', 'followers'].map((option) => (
-                                        <button
-                                            key={option}
-                                            type="button"
-                                            onClick={() => {
-                                                setSelectedVisibility(option);
-                                                editForm.setData('visibility', option);
-                                            }}
-                                            className={`app-button-secondary app-button-secondary--static rounded-full px-4 py-2 text-sm ${
-                                                selectedVisibility === option
-                                                    ? 'app-nav-link-active'
-                                                    : ''
-                                            }`}
-                                        >
-                                            {option.charAt(0).toUpperCase() + option.slice(1)}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
 
                             <div className="flex justify-end gap-3">
                                 <SecondaryButton
