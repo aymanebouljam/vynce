@@ -19,62 +19,51 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
     const [processingSuggestionIds, setProcessingSuggestionIds] = useState([]);
     const [confirmedSuggestionIds, setConfirmedSuggestionIds] = useState([]);
     const [exitingSuggestionIds, setExitingSuggestionIds] = useState([]);
+    const [removedSuggestionIds, setRemovedSuggestionIds] = useState([]);
 
     useEffect(() => {
         setVisibleSuggestions(
-            suggestions.filter(
-                (person) =>
-                    !confirmedSuggestionIds.includes(person.id) &&
-                    !exitingSuggestionIds.includes(person.id),
-            ),
+            suggestions.filter((person) => !removedSuggestionIds.includes(person.id)),
         );
-    }, [suggestions, confirmedSuggestionIds, exitingSuggestionIds]);
+    }, [suggestions, removedSuggestionIds]);
 
-    const addSuggestion = (person) => {
+    const addSuggestion = async (person) => {
         if (processingSuggestionIds.includes(person.id)) {
             return;
         }
 
         setProcessingSuggestionIds((current) => [...current, person.id]);
 
-        router.post(
-            route('users.follow', person.id),
-            {},
-            {
-                preserveScroll: true,
-                preserveState: true,
-                onSuccess: () => {
-                    setConfirmedSuggestionIds((current) => [...current, person.id]);
-
-                    window.setTimeout(() => {
-                        setExitingSuggestionIds((current) => [...current, person.id]);
-                    }, 180);
-
-                    window.setTimeout(() => {
-                        setVisibleSuggestions((current) =>
-                            current.filter((suggestion) => suggestion.id !== person.id),
-                        );
-                        setConfirmedSuggestionIds((current) =>
-                            current.filter((id) => id !== person.id),
-                        );
-                        setExitingSuggestionIds((current) =>
-                            current.filter((id) => id !== person.id),
-                        );
-
-                        router.reload({
-                            only: ['suggestions', 'pendingRequests'],
-                            preserveScroll: true,
-                            preserveState: true,
-                        });
-                    }, 560);
+        try {
+            await window.axios.post(route('users.follow', person.id), null, {
+                headers: {
+                    Accept: 'application/json',
                 },
-                onFinish: () => {
-                    setProcessingSuggestionIds((current) =>
-                        current.filter((id) => id !== person.id),
-                    );
-                },
-            },
-        );
+            });
+
+            setConfirmedSuggestionIds((current) => [...current, person.id]);
+
+            window.setTimeout(() => {
+                setExitingSuggestionIds((current) => [...current, person.id]);
+            }, 180);
+
+            window.setTimeout(() => {
+                setVisibleSuggestions((current) =>
+                    current.filter((suggestion) => suggestion.id !== person.id),
+                );
+                setRemovedSuggestionIds((current) => [...current, person.id]);
+                setConfirmedSuggestionIds((current) => current.filter((id) => id !== person.id));
+                setExitingSuggestionIds((current) => current.filter((id) => id !== person.id));
+
+                router.reload({
+                    only: ['suggestions', 'pendingRequests'],
+                    preserveScroll: true,
+                    preserveState: true,
+                });
+            }, 560);
+        } finally {
+            setProcessingSuggestionIds((current) => current.filter((id) => id !== person.id));
+        }
     };
 
     const sidebar = (
@@ -192,7 +181,7 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
                                                     isConfirmed
                                                         ? 'app-panel-inset text-emerald-200'
                                                         : 'app-button-primary'
-                                                } disabled:cursor-not-allowed disabled:opacity-100`}
+                                                } disabled:cursor-default disabled:opacity-100`}
                                                 aria-label={
                                                     person.is_private
                                                         ? `Add ${person.name}`
