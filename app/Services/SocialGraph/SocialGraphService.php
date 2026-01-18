@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\UserBlock;
 use App\Models\UserMute;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -158,27 +159,29 @@ class SocialGraphService
         return $this->follows($viewer, $target);
     }
 
-    public function followers(User $user, int $perPage = 20): LengthAwarePaginator
+    public function followers(User $user, int $perPage = 20, ?string $search = null): LengthAwarePaginator
     {
         return User::query()
             ->select('users.*')
             ->join('follows', 'users.id', '=', 'follows.follower_id')
             ->where('follows.followed_id', $user->id)
             ->where('follows.status', FollowStatus::Accepted)
+            ->when($search, fn (Builder $query) => $this->applyUserSearch($query, $search))
             ->paginate($perPage);
     }
 
-    public function following(User $user, int $perPage = 20): LengthAwarePaginator
+    public function following(User $user, int $perPage = 20, ?string $search = null): LengthAwarePaginator
     {
         return User::query()
             ->select('users.*')
             ->join('follows', 'users.id', '=', 'follows.followed_id')
             ->where('follows.follower_id', $user->id)
             ->where('follows.status', FollowStatus::Accepted)
+            ->when($search, fn (Builder $query) => $this->applyUserSearch($query, $search))
             ->paginate($perPage);
     }
 
-    public function friends(User $user, int $perPage = 20): LengthAwarePaginator
+    public function friends(User $user, int $perPage = 20, ?string $search = null): LengthAwarePaginator
     {
         return User::query()
             ->select('users.*')
@@ -192,7 +195,19 @@ class SocialGraphService
                     ->where('inbound_follows.followed_id', $user->id)
                     ->where('inbound_follows.status', FollowStatus::Accepted);
             })
+            ->when($search, fn (Builder $query) => $this->applyUserSearch($query, $search))
             ->paginate($perPage);
+    }
+
+    protected function applyUserSearch(Builder $query, string $search): Builder
+    {
+        $term = trim($search);
+
+        return $query->where(function (Builder $builder) use ($term) {
+            $builder
+                ->where('users.name', 'like', "%{$term}%")
+                ->orWhere('users.username', 'like', "%{$term}%");
+        });
     }
 
     public function pendingRequests(User $user): Collection

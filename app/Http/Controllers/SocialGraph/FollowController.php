@@ -7,6 +7,7 @@ use App\Http\Requests\SocialGraph\FollowRequest;
 use App\Models\User;
 use App\Services\SocialGraph\SocialGraphService;
 use Illuminate\Http\RedirectResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 class FollowController extends Controller
 {
@@ -26,8 +27,12 @@ class FollowController extends Controller
         FollowRequest $request,
         User $user,
         SocialGraphService $socialGraphService,
-    ): RedirectResponse {
+    ): Response|RedirectResponse {
         $socialGraphService->unfollow($request->user(), $user);
+
+        if ($request->expectsJson()) {
+            return response()->noContent();
+        }
 
         return back();
     }
