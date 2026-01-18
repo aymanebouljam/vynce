@@ -1,10 +1,69 @@
+import Modal from '@/Components/Modal';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Search, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-export default function Index({ profile, connections, type, title, emptyState }) {
+export default function Index({
+    profile,
+    connections,
+    type,
+    title,
+    emptyState,
+    routeName,
+    routeParams = {},
+    search = '',
+}) {
     const { auth } = usePage().props;
     const canUnfollow = type === 'following' && auth.user.username === profile.username;
+    const [filteredConnections, setFilteredConnections] = useState(connections.data);
+    const [personToUnfollow, setPersonToUnfollow] = useState(null);
+    const [isUnfollowing, setIsUnfollowing] = useState(false);
+    const [searchTerm, setSearchTerm] = useState(search);
+
+    useEffect(() => {
+        setFilteredConnections(connections.data);
+    }, [connections.data]);
+
+    useEffect(() => {
+        setSearchTerm(search);
+    }, [search]);
+
+    useEffect(() => {
+        if (searchTerm === search) {
+            return;
+        }
+
+        const timeoutId = window.setTimeout(() => {
+            router.get(route(routeName, routeParams), searchTerm ? { search: searchTerm } : {}, {
+                preserveScroll: true,
+                preserveState: true,
+                replace: true,
+                only: ['connections', 'search'],
+            });
+        }, 250);
+
+        return () => window.clearTimeout(timeoutId);
+    }, [routeName, routeParams, search, searchTerm]);
+
+    const routeWithQuery = (params = {}) =>
+        route(routeName, {
+            ...routeParams,
+            ...(search ? { search } : {}),
+            ...params,
+        });
+    const friendsRoute = route(
+        routeName === 'contacts.index' ? 'contacts.index' : 'users.friends',
+        routeName === 'contacts.index'
+            ? search
+                ? { search }
+                : {}
+            : {
+                  user: profile.username,
+                  ...(search ? { search } : {}),
+              },
+    );
+
     const goBack = () => {
         if (window.history.length > 1) {
             window.history.back();
@@ -12,6 +71,42 @@ export default function Index({ profile, connections, type, title, emptyState })
         }
 
         router.visit(route('feed.home'));
+    };
+
+    const closeUnfollowModal = () => {
+        if (isUnfollowing) {
+            return;
+        }
+
+        setPersonToUnfollow(null);
+    };
+
+    const confirmUnfollow = () => {
+        if (!personToUnfollow) {
+            return;
+        }
+
+        const person = personToUnfollow;
+        const previousConnections = filteredConnections;
+
+        setIsUnfollowing(true);
+        setFilteredConnections((current) =>
+            current.filter((connection) => connection.id !== person.id),
+        );
+        setPersonToUnfollow(null);
+
+        window.axios
+            .delete(route('users.unfollow', person.id), {
+                headers: {
+                    Accept: 'application/json',
+                },
+            })
+            .catch(() => {
+                setFilteredConnections(previousConnections);
+            })
+            .finally(() => {
+                setIsUnfollowing(false);
+            });
     };
 
     return (
@@ -42,7 +137,7 @@ export default function Index({ profile, connections, type, title, emptyState })
 
                     <div className="flex flex-wrap gap-2">
                         <Link
-                            href={route('users.friends', profile.username)}
+                            href={friendsRoute}
                             className={`rounded-full px-4 py-2 text-sm ${
                                 type === 'friends' ? 'app-button-primary' : 'app-button-secondary'
                             }`}
@@ -50,7 +145,10 @@ export default function Index({ profile, connections, type, title, emptyState })
                             Friends
                         </Link>
                         <Link
-                            href={route('users.followers', profile.username)}
+                            href={route('users.followers', {
+                                user: profile.username,
+                                ...(search ? { search } : {}),
+                            })}
                             className={`rounded-full px-4 py-2 text-sm ${
                                 type === 'followers' ? 'app-button-primary' : 'app-button-secondary'
                             }`}
@@ -58,7 +156,10 @@ export default function Index({ profile, connections, type, title, emptyState })
                             Followers
                         </Link>
                         <Link
-                            href={route('users.following', profile.username)}
+                            href={route('users.following', {
+                                user: profile.username,
+                                ...(search ? { search } : {}),
+                            })}
                             className={`rounded-full px-4 py-2 text-sm ${
                                 type === 'following' ? 'app-button-primary' : 'app-button-secondary'
                             }`}
@@ -70,12 +171,35 @@ export default function Index({ profile, connections, type, title, emptyState })
             </section>
 
             <section className="mt-6 space-y-4">
-                {connections.data.length === 0 ? (
+                <div className="app-panel rounded-[28px] p-4">
+                    <label className="app-panel-inset flex items-center gap-3 rounded-2xl px-4 py-3">
+                        <Search className="app-text-soft h-4 w-4 shrink-0" strokeWidth={1.9} />
+                        <input
+                            type="search"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder={`Search ${title.toLowerCase()}`}
+                            className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--vynce-text-soft)]"
+                        />
+                        {searchTerm && (
+                            <button
+                                type="button"
+                                onClick={() => setSearchTerm('')}
+                                className="app-button-secondary rounded-full p-2"
+                                aria-label="Clear search"
+                            >
+                                <X className="h-3.5 w-3.5" strokeWidth={2} />
+                            </button>
+                        )}
+                    </label>
+                </div>
+
+                {filteredConnections.length === 0 ? (
                     <div className="app-dashed-panel app-text-muted rounded-[28px] p-8 text-sm">
-                        {emptyState}
+                        {search ? `No ${title.toLowerCase()} match "${search}".` : emptyState}
                     </div>
                 ) : (
-                    connections.data.map((person) => (
+                    filteredConnections.map((person) => (
                         <div key={person.id} className="app-panel rounded-[28px] p-5">
                             <div className="flex items-center justify-between gap-4">
                                 <div className="flex min-w-0 items-center gap-3">
@@ -108,17 +232,13 @@ export default function Index({ profile, connections, type, title, emptyState })
 
                                 <div className="flex shrink-0 gap-2">
                                     {canUnfollow && (
-                                        <Link
-                                            href={route('users.unfollow', person.id)}
-                                            method="delete"
-                                            as="button"
-                                            onBefore={() =>
-                                                window.confirm(`Unfollow ${person.name}?`)
-                                            }
+                                        <button
+                                            type="button"
+                                            onClick={() => setPersonToUnfollow(person)}
                                             className="app-button-secondary rounded-full px-4 py-2 text-sm"
                                         >
                                             Unfollow
-                                        </Link>
+                                        </button>
                                     )}
                                     <Link
                                         href={route('users.show', person.username)}
@@ -135,10 +255,7 @@ export default function Index({ profile, connections, type, title, emptyState })
                 {connections.meta.current_page < connections.meta.last_page && (
                     <div>
                         <Link
-                            href={route(`users.${type}`, {
-                                user: profile.username,
-                                page: connections.meta.current_page + 1,
-                            })}
+                            href={routeWithQuery({ page: connections.meta.current_page + 1 })}
                             className="app-button-secondary inline-flex rounded-full px-5 py-3 text-sm"
                         >
                             Load more
@@ -146,6 +263,39 @@ export default function Index({ profile, connections, type, title, emptyState })
                     </div>
                 )}
             </section>
+
+            <Modal show={Boolean(personToUnfollow)} onClose={closeUnfollowModal} maxWidth="md">
+                <div className="space-y-5 p-6">
+                    <div>
+                        <div className="text-lg font-semibold">
+                            Unfollow {personToUnfollow?.name}?
+                        </div>
+                        <p className="app-text-soft mt-2 text-sm leading-6">
+                            Their posts will stop appearing in your feed until you follow them
+                            again.
+                        </p>
+                    </div>
+
+                    <div className="flex justify-end gap-3">
+                        <button
+                            type="button"
+                            onClick={closeUnfollowModal}
+                            disabled={isUnfollowing}
+                            className="app-button-secondary rounded-full px-4 py-2 text-sm disabled:opacity-60"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            onClick={confirmUnfollow}
+                            disabled={isUnfollowing}
+                            className="app-button-primary rounded-full px-4 py-2 text-sm disabled:opacity-60"
+                        >
+                            Unfollow
+                        </button>
+                    </div>
+                </div>
+            </Modal>
         </AuthenticatedLayout>
     );
 }
