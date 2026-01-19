@@ -1,7 +1,7 @@
 import Modal from '@/Components/Modal';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Search, X } from 'lucide-react';
+import { ArrowLeft, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function Index({
@@ -15,11 +15,24 @@ export default function Index({
     search = '',
 }) {
     const { auth } = usePage().props;
+    const isOwnProfile = auth.user.username === profile.username;
     const canUnfollow = type === 'following' && auth.user.username === profile.username;
+    const descriptionByType = {
+        friends: isOwnProfile
+            ? 'Browse the people you are friends with.'
+            : 'Browse the people this profile is friends with.',
+        followers: isOwnProfile
+            ? 'Browse the people following your profile.'
+            : 'Browse the people following this profile.',
+        following: isOwnProfile
+            ? 'Browse the people your profile follows.'
+            : 'Browse the people this profile follows.',
+    };
     const [filteredConnections, setFilteredConnections] = useState(connections.data);
     const [personToUnfollow, setPersonToUnfollow] = useState(null);
     const [isUnfollowing, setIsUnfollowing] = useState(false);
     const [searchTerm, setSearchTerm] = useState(search);
+    const [searchOpen, setSearchOpen] = useState(Boolean(search));
 
     useEffect(() => {
         setFilteredConnections(connections.data);
@@ -27,6 +40,7 @@ export default function Index({
 
     useEffect(() => {
         setSearchTerm(search);
+        setSearchOpen(Boolean(search));
     }, [search]);
 
     useEffect(() => {
@@ -52,17 +66,10 @@ export default function Index({
             ...(search ? { search } : {}),
             ...params,
         });
-    const friendsRoute = route(
-        routeName === 'contacts.index' ? 'contacts.index' : 'users.friends',
-        routeName === 'contacts.index'
-            ? search
-                ? { search }
-                : {}
-            : {
-                  user: profile.username,
-                  ...(search ? { search } : {}),
-              },
-    );
+    const friendsRoute = route('users.friends', {
+        user: profile.username,
+        ...(search ? { search } : {}),
+    });
 
     const goBack = () => {
         if (window.history.length > 1) {
@@ -110,7 +117,7 @@ export default function Index({
     };
 
     return (
-        <AuthenticatedLayout title={`${profile.name} ${title}`}>
+        <AuthenticatedLayout title={isOwnProfile ? `Your ${title}` : `${profile.name} ${title}`}>
             <section className="app-panel rounded-[32px] p-6">
                 <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                     <div>
@@ -122,20 +129,58 @@ export default function Index({
                             <ArrowLeft className="h-4 w-4" strokeWidth={1.9} />
                             Back
                         </button>
-                        <div className="app-text-soft mt-4 text-sm">
-                            <Link href={route('users.show', profile.username)} className="app-link">
-                                @{profile.username}
-                            </Link>
-                        </div>
+                        {!isOwnProfile && (
+                            <div className="app-text-soft mt-4 text-sm">
+                                <Link
+                                    href={route('users.show', profile.username)}
+                                    className="app-link"
+                                >
+                                    @{profile.username}
+                                </Link>
+                            </div>
+                        )}
                         <h1 className="mt-2 text-3xl font-semibold">
-                            {profile.name}&apos;s {title.toLowerCase()}
+                            {isOwnProfile
+                                ? `Your ${title.toLowerCase()}`
+                                : `${profile.name}'s ${title.toLowerCase()}`}
                         </h1>
                         <p className="app-text-soft mt-3 text-sm leading-7">
-                            Browse the people connected to this profile.
+                            {descriptionByType[type] ??
+                                'Browse the people connected to this profile.'}
                         </p>
                     </div>
 
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                        {searchOpen ? (
+                            <label className="app-panel-inset flex items-center gap-3 rounded-2xl px-4 py-2.5">
+                                <Search
+                                    className="app-text-muted h-4 w-4 shrink-0"
+                                    strokeWidth={1.8}
+                                />
+                                <input
+                                    type="search"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onBlur={() => {
+                                        if (!searchTerm) {
+                                            setSearchOpen(false);
+                                        }
+                                    }}
+                                    placeholder={`Search ${title.toLowerCase()}`}
+                                    className="w-40 bg-transparent text-sm focus:outline-none"
+                                    autoFocus
+                                />
+                            </label>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => setSearchOpen(true)}
+                                className="app-button-secondary inline-flex h-10 w-10 items-center justify-center rounded-full"
+                                aria-label={`Search ${title.toLowerCase()}`}
+                            >
+                                <Search className="h-4 w-4" strokeWidth={1.8} />
+                            </button>
+                        )}
                         <Link
                             href={friendsRoute}
                             className={`rounded-full px-4 py-2 text-sm ${
@@ -171,29 +216,6 @@ export default function Index({
             </section>
 
             <section className="mt-6 space-y-4">
-                <div className="app-panel rounded-[28px] p-4">
-                    <label className="app-panel-inset flex items-center gap-3 rounded-2xl px-4 py-3">
-                        <Search className="app-text-soft h-4 w-4 shrink-0" strokeWidth={1.9} />
-                        <input
-                            type="search"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder={`Search ${title.toLowerCase()}`}
-                            className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--vynce-text-soft)]"
-                        />
-                        {searchTerm && (
-                            <button
-                                type="button"
-                                onClick={() => setSearchTerm('')}
-                                className="app-button-secondary rounded-full p-2"
-                                aria-label="Clear search"
-                            >
-                                <X className="h-3.5 w-3.5" strokeWidth={2} />
-                            </button>
-                        )}
-                    </label>
-                </div>
-
                 {filteredConnections.length === 0 ? (
                     <div className="app-dashed-panel app-text-muted rounded-[28px] p-8 text-sm">
                         {search ? `No ${title.toLowerCase()} match "${search}".` : emptyState}

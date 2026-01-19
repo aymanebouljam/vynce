@@ -1,18 +1,35 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { Compass, House, LogOut, MessageCircle, Search, Settings, Users } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
-export default function AppShell({ children, title, sidebar }) {
+export default function AppShell({ children, title, sidebar, navSearch = null }) {
     const { auth } = usePage().props;
     const ownProfileActive =
         route().current('users.show') && route().params.user === auth.user.username;
+    const ownFriendsActive =
+        route().current('users.friends') && route().params.user === auth.user.username;
     const initials = auth.user.name
         ?.split(' ')
         .map((part) => part[0])
         .join('')
         .slice(0, 2)
         .toUpperCase();
-    const showSearch = route().current('feed.home') || route().current('feed.following');
+    const showFeedSearch = route().current('feed.home') || route().current('feed.following');
+    const [navSearchOpen, setNavSearchOpen] = useState(false);
+    const navSearchInputRef = useRef(null);
+
+    useEffect(() => {
+        if (navSearch && navSearchOpen) {
+            navSearchInputRef.current?.focus();
+        }
+    }, [navSearch, navSearchOpen]);
+
+    useEffect(() => {
+        if (!navSearch) {
+            setNavSearchOpen(false);
+        }
+    }, [navSearch]);
     const navigation = [
         {
             label: 'Home',
@@ -21,9 +38,9 @@ export default function AppShell({ children, title, sidebar }) {
             icon: House,
         },
         {
-            label: 'Contacts',
-            href: route('contacts.index'),
-            active: route().current('contacts.index'),
+            label: 'Friends',
+            href: route('users.friends', auth.user.username),
+            active: ownFriendsActive,
             icon: Users,
         },
         {
@@ -103,6 +120,44 @@ export default function AppShell({ children, title, sidebar }) {
                                 </Link>
 
                                 <nav className="space-y-2">
+                                    {navSearch && !navSearchOpen && (
+                                        <div className="flex justify-end">
+                                            <button
+                                                type="button"
+                                                onClick={() => setNavSearchOpen(true)}
+                                                className="app-nav-link inline-flex h-11 w-11 items-center justify-center rounded-2xl"
+                                                aria-label={navSearch.ariaLabel ?? 'Open search'}
+                                            >
+                                                <Search
+                                                    className="h-5 w-5 shrink-0"
+                                                    strokeWidth={1.8}
+                                                />
+                                            </button>
+                                        </div>
+                                    )}
+                                    {navSearch && navSearchOpen && (
+                                        <label className="app-panel-inset flex items-center gap-3 rounded-2xl px-4 py-3">
+                                            <Search
+                                                className="app-text-muted h-5 w-5 shrink-0"
+                                                strokeWidth={1.8}
+                                            />
+                                            <input
+                                                ref={navSearchInputRef}
+                                                type="search"
+                                                value={navSearch.value}
+                                                onChange={(event) =>
+                                                    navSearch.onChange(event.target.value)
+                                                }
+                                                onBlur={() => {
+                                                    if (!navSearch.value) {
+                                                        setNavSearchOpen(false);
+                                                    }
+                                                }}
+                                                placeholder={navSearch.placeholder ?? 'Search'}
+                                                className="w-full bg-transparent text-sm focus:outline-none"
+                                            />
+                                        </label>
+                                    )}
                                     {navigation.map((item) => (
                                         <Link
                                             key={item.label}
@@ -136,7 +191,7 @@ export default function AppShell({ children, title, sidebar }) {
                     </aside>
 
                     <main className="min-w-0 flex-1 space-y-6">
-                        {showSearch && (
+                        {showFeedSearch && (
                             <label className="app-search flex items-center gap-3 rounded-[24px] px-4 py-3 backdrop-blur transition">
                                 <Search
                                     className="app-text-muted h-5 w-5 shrink-0"

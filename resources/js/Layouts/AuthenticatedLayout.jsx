@@ -1,8 +1,8 @@
 import AppShell from '@/Layouts/AppShell';
 
-export default function AuthenticatedLayout({ children, header, title, sidebar }) {
+export default function AuthenticatedLayout({ children, header, title, sidebar, navSearch }) {
     return (
-        <AppShell title={title} sidebar={sidebar}>
+        <AppShell title={title} sidebar={sidebar} navSearch={navSearch}>
             {header}
             {children}
         </AppShell>
