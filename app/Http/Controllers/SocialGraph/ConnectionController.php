@@ -13,26 +13,6 @@ use Inertia\Response;
 
 class ConnectionController extends Controller
 {
-    public function contacts(Request $request, SocialGraphService $socialGraphService): Response
-    {
-        $user = $request->user();
-        $search = trim((string) $request->string('search'));
-
-        return Inertia::render('Connections/Index', [
-            'profile' => UserResource::make($user)->resolve(),
-            'connections' => InertiaPaginatedData::fromPaginator(
-                $socialGraphService->friends($user, search: $search),
-                UserResource::class,
-            ),
-            'type' => 'friends',
-            'title' => 'Contacts',
-            'emptyState' => 'No mutual connections yet.',
-            'routeName' => 'contacts.index',
-            'routeParams' => [],
-            'search' => $search,
-        ]);
-    }
-
     public function friends(Request $request, User $user, SocialGraphService $socialGraphService): Response
     {
         $this->authorize('view', $user);
