@@ -22,13 +22,31 @@ PHP_FILES=$(filter_files '\.php$')
 PRETTIER_FILES=$(filter_files '\.(js|jsx|ts|tsx|json|md|css|scss|html|yml|yaml)$')
 
 if [ -n "$PHP_FILES" ]; then
+    if [ ! -x vendor/bin/pint ]; then
+        echo "pre-commit: vendor/bin/pint is not available."
+        exit 1
+    fi
+
     echo "Running Pint on staged PHP files..."
     vendor/bin/pint $PHP_FILES
     git add $PHP_FILES
 fi
 
 if [ -n "$PRETTIER_FILES" ]; then
+    if ! command -v pnpm >/dev/null 2>&1; then
+        echo "pre-commit: pnpm is not installed."
+        exit 1
+    fi
+
     echo "Running Prettier on staged frontend files..."
     pnpm prettier --write $PRETTIER_FILES
     git add $PRETTIER_FILES
 fi
+
+if ! command -v pnpm >/dev/null 2>&1; then
+    echo "pre-commit: pnpm is not installed."
+    exit 1
+fi
+
+echo "Running ESLint..."
+pnpm lint
