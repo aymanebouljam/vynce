@@ -2,7 +2,7 @@ import Modal from '@/Components/Modal';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Link, router, usePage } from '@inertiajs/react';
 import { ArrowLeft, Search } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function Index({
     profile,
@@ -28,47 +28,88 @@ export default function Index({
             ? 'Browse the people your profile follows.'
             : 'Browse the people this profile follows.',
     };
+    const [sourceConnections, setSourceConnections] = useState(connections.data);
     const [filteredConnections, setFilteredConnections] = useState(connections.data);
+    const [connectionsMeta, setConnectionsMeta] = useState(connections.meta);
     const [personToUnfollow, setPersonToUnfollow] = useState(null);
     const [isUnfollowing, setIsUnfollowing] = useState(false);
     const [searchTerm, setSearchTerm] = useState(search);
+    const [activeSearch, setActiveSearch] = useState(search);
     const [searchOpen, setSearchOpen] = useState(Boolean(search));
+    const searchRequestIdRef = useRef(0);
 
     useEffect(() => {
+        setSourceConnections(connections.data);
         setFilteredConnections(connections.data);
-    }, [connections.data]);
+        setConnectionsMeta(connections.meta);
+        setActiveSearch(search);
+    }, [connections.data, connections.meta, search]);
 
     useEffect(() => {
         setSearchTerm(search);
-        setSearchOpen(Boolean(search));
+        if (search) {
+            setSearchOpen(true);
+        }
     }, [search]);
 
     useEffect(() => {
-        if (searchTerm === search) {
+        if (searchTerm === activeSearch) {
             return;
         }
 
+        const normalizedTerm = searchTerm.trim().toLowerCase();
+        setFilteredConnections(
+            normalizedTerm
+                ? sourceConnections.filter(
+                      (connection) =>
+                          connection.name?.toLowerCase().includes(normalizedTerm) ||
+                          connection.username?.toLowerCase().includes(normalizedTerm),
+                  )
+                : sourceConnections,
+        );
+
         const timeoutId = window.setTimeout(() => {
-            router.get(route(routeName, routeParams), searchTerm ? { search: searchTerm } : {}, {
-                preserveScroll: true,
-                preserveState: true,
-                replace: true,
-                only: ['connections', 'search'],
-            });
+            const requestId = ++searchRequestIdRef.current;
+
+            window.axios
+                .get(route(routeName, routeParams), {
+                    params: searchTerm ? { search: searchTerm } : {},
+                    headers: {
+                        Accept: 'application/json',
+                    },
+                })
+                .then(({ data }) => {
+                    if (requestId !== searchRequestIdRef.current) {
+                        return;
+                    }
+
+                    setSourceConnections(data.connections.data);
+                    setFilteredConnections(data.connections.data);
+                    setConnectionsMeta(data.connections.meta);
+                    setActiveSearch(data.search ?? '');
+                })
+                .catch(() => {
+                    if (requestId !== searchRequestIdRef.current) {
+                        return;
+                    }
+
+                    setFilteredConnections(sourceConnections);
+                    setSearchTerm(activeSearch);
+                });
         }, 250);
 
         return () => window.clearTimeout(timeoutId);
-    }, [routeName, routeParams, search, searchTerm]);
+    }, [activeSearch, routeName, routeParams, searchTerm, sourceConnections]);
 
     const routeWithQuery = (params = {}) =>
         route(routeName, {
             ...routeParams,
-            ...(search ? { search } : {}),
+            ...(activeSearch ? { search: activeSearch } : {}),
             ...params,
         });
     const friendsRoute = route('users.friends', {
         user: profile.username,
-        ...(search ? { search } : {}),
+        ...(activeSearch ? { search: activeSearch } : {}),
     });
 
     const goBack = () => {
@@ -94,9 +135,13 @@ export default function Index({
         }
 
         const person = personToUnfollow;
-        const previousConnections = filteredConnections;
+        const previousSourceConnections = sourceConnections;
+        const previousFilteredConnections = filteredConnections;
 
         setIsUnfollowing(true);
+        setSourceConnections((current) =>
+            current.filter((connection) => connection.id !== person.id),
+        );
         setFilteredConnections((current) =>
             current.filter((connection) => connection.id !== person.id),
         );
@@ -109,7 +154,8 @@ export default function Index({
                 },
             })
             .catch(() => {
-                setFilteredConnections(previousConnections);
+                setSourceConnections(previousSourceConnections);
+                setFilteredConnections(previousFilteredConnections);
             })
             .finally(() => {
                 setIsUnfollowing(false);
@@ -152,7 +198,7 @@ export default function Index({
 
                     <div className="flex flex-wrap items-center gap-2">
                         {searchOpen ? (
-                            <label className="app-panel-inset flex items-center gap-3 rounded-2xl px-4 py-2.5">
+                            <label className="app-panel-inset flex w-[10.5rem] items-center gap-3 rounded-full px-4 py-2 transition-all duration-300 ease-out md:w-[13rem]">
                                 <Search
                                     className="app-text-muted h-4 w-4 shrink-0"
                                     strokeWidth={1.8}
@@ -167,7 +213,8 @@ export default function Index({
                                         }
                                     }}
                                     placeholder={`Search ${title.toLowerCase()}`}
-                                    className="w-40 bg-transparent text-sm focus:outline-none"
+                                    className="w-full appearance-none border-0 bg-transparent text-sm opacity-100 shadow-none outline-none ring-0 transition-all duration-300 ease-out focus:border-0 focus:shadow-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+                                    style={{ WebkitAppearance: 'none', boxShadow: 'none' }}
                                     autoFocus
                                 />
                             </label>
@@ -175,7 +222,7 @@ export default function Index({
                             <button
                                 type="button"
                                 onClick={() => setSearchOpen(true)}
-                                className="app-button-secondary inline-flex h-10 w-10 items-center justify-center rounded-full"
+                                className="app-button-secondary inline-flex h-9 w-9 items-center justify-center rounded-full transition-all duration-300 ease-out"
                                 aria-label={`Search ${title.toLowerCase()}`}
                             >
                                 <Search className="h-4 w-4" strokeWidth={1.8} />
@@ -192,7 +239,7 @@ export default function Index({
                         <Link
                             href={route('users.followers', {
                                 user: profile.username,
-                                ...(search ? { search } : {}),
+                                ...(activeSearch ? { search: activeSearch } : {}),
                             })}
                             className={`rounded-full px-4 py-2 text-sm ${
                                 type === 'followers' ? 'app-button-primary' : 'app-button-secondary'
@@ -203,7 +250,7 @@ export default function Index({
                         <Link
                             href={route('users.following', {
                                 user: profile.username,
-                                ...(search ? { search } : {}),
+                                ...(activeSearch ? { search: activeSearch } : {}),
                             })}
                             className={`rounded-full px-4 py-2 text-sm ${
                                 type === 'following' ? 'app-button-primary' : 'app-button-secondary'
@@ -217,8 +264,14 @@ export default function Index({
 
             <section className="mt-6 space-y-4">
                 {filteredConnections.length === 0 ? (
-                    <div className="app-dashed-panel app-text-muted rounded-[28px] p-8 text-sm">
-                        {search ? `No ${title.toLowerCase()} match "${search}".` : emptyState}
+                    <div className="app-dashed-panel app-text-muted break-words rounded-[28px] p-8 text-sm">
+                        {searchTerm ? (
+                            <span className="break-all">
+                                {`No ${title.toLowerCase()} match "${searchTerm}".`}
+                            </span>
+                        ) : (
+                            emptyState
+                        )}
                     </div>
                 ) : (
                     filteredConnections.map((person) => (
@@ -238,14 +291,14 @@ export default function Index({
                                     )}
 
                                     <div className="min-w-0">
-                                        <div className="truncate text-base font-semibold">
+                                        <div className="truncate break-all text-base font-semibold">
                                             {person.name}
                                         </div>
-                                        <div className="app-text-muted truncate text-sm">
+                                        <div className="app-text-muted truncate break-all text-sm">
                                             @{person.username}
                                         </div>
                                         {person.bio && (
-                                            <div className="app-text-soft mt-2 line-clamp-2 text-sm leading-6">
+                                            <div className="app-text-soft mt-2 line-clamp-2 break-words text-sm leading-6">
                                                 {person.bio}
                                             </div>
                                         )}
@@ -274,10 +327,10 @@ export default function Index({
                     ))
                 )}
 
-                {connections.meta.current_page < connections.meta.last_page && (
+                {connectionsMeta.current_page < connectionsMeta.last_page && (
                     <div>
                         <Link
-                            href={routeWithQuery({ page: connections.meta.current_page + 1 })}
+                            href={routeWithQuery({ page: connectionsMeta.current_page + 1 })}
                             className="app-button-secondary inline-flex rounded-full px-5 py-3 text-sm"
                         >
                             Load more

@@ -201,12 +201,12 @@ class SocialGraphService
 
     protected function applyUserSearch(Builder $query, string $search): Builder
     {
-        $term = trim($search);
+        $term = mb_strtolower(trim($search));
 
         return $query->where(function (Builder $builder) use ($term) {
             $builder
-                ->where('users.name', 'like', "%{$term}%")
-                ->orWhere('users.username', 'like', "%{$term}%");
+                ->whereRaw('LOWER(users.name) LIKE ?', ["%{$term}%"])
+                ->orWhereRaw('LOWER(users.username) LIKE ?', ["%{$term}%"]);
         });
     }
 
