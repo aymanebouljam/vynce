@@ -38,7 +38,7 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
             icon: House,
         },
         {
-            label: 'Friends',
+            label: 'Contacts',
             href: route('users.friends', auth.user.username),
             active: ownFriendsActive,
             icon: Users,
