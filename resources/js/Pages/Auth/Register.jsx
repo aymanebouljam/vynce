@@ -92,7 +92,7 @@ export default function Register() {
                 <button
                     type="submit"
                     disabled={processing}
-                    className="app-button-primary w-full rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                    className="app-button-primary w-full rounded-full px-5 py-3 text-sm font-semibold disabled:opacity-60"
                 >
                     Create account
                 </button>
