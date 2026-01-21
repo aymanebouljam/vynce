@@ -1,12 +1,24 @@
+import Modal from '@/Components/Modal';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, PenSquare } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
-export default function Index({ conversations, activeConversation, messages }) {
+export default function Index({ conversations, activeConversation, contacts = [], messages }) {
     const { auth } = usePage().props;
     const form = useForm({
         body: '',
     });
+    const [pickerOpen, setPickerOpen] = useState(false);
+    const conversationParticipantIds = useMemo(
+        () => conversations.map((conversation) => conversation.participant?.id).filter(Boolean),
+        [conversations],
+    );
+    const availableContacts = useMemo(
+        () => contacts.filter((contact) => !conversationParticipantIds.includes(contact.id)),
+        [contacts, conversationParticipantIds],
+    );
+
     const goBack = () => {
         if (window.history.length > 1) {
             window.history.back();
@@ -29,11 +41,16 @@ export default function Index({ conversations, activeConversation, messages }) {
         });
     };
 
+    const startConversation = (contactId) => {
+        router.post(route('messages.start', contactId), {}, { preserveScroll: true });
+        setPickerOpen(false);
+    };
+
     return (
         <AuthenticatedLayout title="Messages">
             <div className="grid gap-6 xl:grid-cols-[320px,1fr]">
                 <section className="app-panel rounded-[32px] p-5">
-                    <div className="mb-4">
+                    <div className="mb-4 flex items-start justify-between gap-3">
                         <button
                             type="button"
                             onClick={goBack}
@@ -42,10 +59,18 @@ export default function Index({ conversations, activeConversation, messages }) {
                             <ArrowLeft className="h-4 w-4" strokeWidth={1.9} />
                             Back
                         </button>
-                        <h1 className="mt-4 text-xl font-semibold">Messages</h1>
-                        <p className="app-text-soft mt-2 text-sm leading-6">
-                            Start from someone’s profile, then keep the conversation going here.
-                        </p>
+                        <button
+                            type="button"
+                            onClick={() => setPickerOpen(true)}
+                            className="app-button-primary inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold"
+                        >
+                            <PenSquare className="h-4 w-4" strokeWidth={1.9} />
+                            New
+                        </button>
+                    </div>
+
+                    <div className="mb-4">
+                        <h1 className="text-xl font-semibold">Messages</h1>
                     </div>
 
                     {conversations.length === 0 ? (
@@ -62,7 +87,7 @@ export default function Index({ conversations, activeConversation, messages }) {
                                     className={`block rounded-[24px] p-4 transition ${
                                         activeConversation?.id === conversation.id
                                             ? 'app-nav-link-active'
-                                            : 'app-card-inset hover:bg-[var(--vynce-surface-muted)]'
+                                            : 'app-card-inset border border-white/5 bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.07)]'
                                     }`}
                                 >
                                     <div className="flex items-start gap-3">
@@ -72,9 +97,6 @@ export default function Index({ conversations, activeConversation, messages }) {
                                         <div className="min-w-0 flex-1">
                                             <div className="truncate text-sm font-semibold">
                                                 {conversation.participant?.name ?? 'Unknown user'}
-                                            </div>
-                                            <div className="app-text-soft truncate text-xs">
-                                                @{conversation.participant?.username ?? 'unknown'}
                                             </div>
                                             <div className="app-text-soft mt-2 truncate text-sm">
                                                 {conversation.latest_message?.sender?.id ===
@@ -163,7 +185,7 @@ export default function Index({ conversations, activeConversation, messages }) {
                                 <button
                                     type="submit"
                                     disabled={form.processing || !form.data.body.trim()}
-                                    className="app-button-primary self-end rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="app-button-primary self-end rounded-full px-5 py-3 text-sm font-semibold disabled:opacity-60"
                                 >
                                     Send
                                 </button>
@@ -172,6 +194,54 @@ export default function Index({ conversations, activeConversation, messages }) {
                     )}
                 </section>
             </div>
+
+            <Modal show={pickerOpen} onClose={() => setPickerOpen(false)} maxWidth="md">
+                <div className="space-y-5 p-6">
+                    <div>
+                        <div className="text-lg font-semibold">Start a new conversation</div>
+                        <p className="app-text-soft mt-2 text-sm leading-6">
+                            Pick one of your contacts to open a direct chat.
+                        </p>
+                    </div>
+
+                    {availableContacts.length === 0 ? (
+                        <div className="app-dashed-panel app-text-muted rounded-[24px] p-5 text-sm">
+                            You’ve already started conversations with all available contacts.
+                        </div>
+                    ) : (
+                        <div className="max-h-[24rem] space-y-3 overflow-y-auto pr-1">
+                            {availableContacts.map((contact) => (
+                                <button
+                                    key={contact.id}
+                                    type="button"
+                                    onClick={() => startConversation(contact.id)}
+                                    className="app-card-inset flex w-full items-center gap-3 rounded-[24px] p-4 text-left transition hover:bg-[var(--vynce-surface-muted)]"
+                                >
+                                    {contact.avatar_url ? (
+                                        <img
+                                            src={contact.avatar_url}
+                                            alt={contact.name}
+                                            className="h-11 w-11 rounded-2xl object-cover"
+                                        />
+                                    ) : (
+                                        <div className="app-avatar-fallback flex h-11 w-11 items-center justify-center rounded-2xl text-sm font-semibold">
+                                            {initialsFor(contact.name)}
+                                        </div>
+                                    )}
+                                    <div className="min-w-0 flex-1">
+                                        <div className="truncate text-sm font-semibold">
+                                            {contact.name}
+                                        </div>
+                                        <div className="app-text-soft truncate text-xs">
+                                            @{contact.username}
+                                        </div>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </Modal>
         </AuthenticatedLayout>
     );
 }
