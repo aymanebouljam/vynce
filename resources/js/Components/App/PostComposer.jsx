@@ -221,7 +221,7 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
                         <button
                             type="submit"
                             disabled={processing}
-                            className="feed-composer-send disabled:cursor-not-allowed disabled:opacity-60"
+                            className="feed-composer-send disabled:opacity-60"
                         >
                             <SendHorizontal className="h-4 w-4" />
                         </button>

@@ -446,7 +446,7 @@ export default function PostCard({
                                         <button
                                             type="submit"
                                             disabled={commentForm.processing}
-                                            className="app-button-primary inline-flex h-11 w-11 items-center justify-center rounded-full disabled:cursor-not-allowed disabled:opacity-60"
+                                            className="app-button-primary inline-flex h-11 w-11 items-center justify-center rounded-full disabled:opacity-60"
                                         >
                                             <SendHorizontal className="h-4 w-4" strokeWidth={1.9} />
                                         </button>
@@ -603,7 +603,7 @@ export default function PostCard({
                                 <button
                                     type="submit"
                                     disabled={editForm.processing}
-                                    className="app-button-primary rounded-full px-5 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="app-button-primary rounded-full px-5 py-2 text-sm font-semibold disabled:opacity-60"
                                 >
                                     Save changes
                                 </button>

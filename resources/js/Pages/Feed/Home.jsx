@@ -181,7 +181,7 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
                                                     isConfirmed
                                                         ? 'app-panel-inset text-emerald-200'
                                                         : 'app-button-primary'
-                                                } disabled:cursor-default disabled:opacity-100`}
+                                                } disabled:opacity-100`}
                                                 aria-label={
                                                     person.is_private
                                                         ? `Add ${person.name}`
