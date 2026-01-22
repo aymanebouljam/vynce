@@ -11,6 +11,7 @@ use App\Models\Conversation;
 use App\Models\User;
 use App\Services\Messaging\ConversationService;
 use App\Services\SocialGraph\SocialGraphService;
+use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -66,14 +67,23 @@ class ConversationController extends Controller
         StoreMessageRequest $request,
         Conversation $conversation,
         ConversationService $conversationService,
-    ) {
+    ): Response|JsonResponse {
         $this->authorize('view', $conversation);
 
-        $conversationService->sendMessage(
+        $message = $conversationService->sendMessage(
             $request->user(),
             $conversation,
             $request->string('body')->trim()->value(),
         );
+
+        if ($request->expectsJson()) {
+            $conversation->load(['participants', 'latestMessage.sender']);
+
+            return response()->json([
+                'message' => MessageResource::make($message)->resolve(),
+                'conversation' => ConversationResource::make($conversation)->resolve(),
+            ]);
+        }
 
         return redirect()->route('messages.show', $conversation);
     }
