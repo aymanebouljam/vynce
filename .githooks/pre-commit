@@ -49,4 +49,5 @@ if ! command -v pnpm >/dev/null 2>&1; then
 fi
 
 echo "Running ESLint..."
-pnpm lint
+pnpm lint:fix
+git add $STAGED_FILES
