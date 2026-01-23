@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\Messaging\ConversationService;
 use App\Services\SocialGraph\SocialGraphService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -67,7 +68,7 @@ class ConversationController extends Controller
         StoreMessageRequest $request,
         Conversation $conversation,
         ConversationService $conversationService,
-    ): Response|JsonResponse {
+    ): Response|JsonResponse|RedirectResponse {
         $this->authorize('view', $conversation);
 
         $message = $conversationService->sendMessage(

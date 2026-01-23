@@ -1,23 +1,41 @@
 import Modal from '@/Components/Modal';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Link, router, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, PenSquare } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { ArrowLeft, PenSquare, SendHorizonal } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 export default function Index({ conversations, activeConversation, contacts = [], messages }) {
     const { auth } = usePage().props;
-    const form = useForm({
-        body: '',
-    });
     const [pickerOpen, setPickerOpen] = useState(false);
+    const [draft, setDraft] = useState('');
+    const [isSending, setIsSending] = useState(false);
+    const [localConversations, setLocalConversations] = useState(conversations);
+    const [localMessages, setLocalMessages] = useState(messages);
+    const messagesViewportRef = useRef(null);
+    const optimisticMessageIdRef = useRef(0);
     const conversationParticipantIds = useMemo(
-        () => conversations.map((conversation) => conversation.participant?.id).filter(Boolean),
-        [conversations],
+        () =>
+            localConversations.map((conversation) => conversation.participant?.id).filter(Boolean),
+        [localConversations],
     );
     const availableContacts = useMemo(
         () => contacts.filter((contact) => !conversationParticipantIds.includes(contact.id)),
         [contacts, conversationParticipantIds],
     );
+    const displayedConversation = useMemo(
+        () =>
+            localConversations.find((conversation) => conversation.id === activeConversation?.id) ??
+            activeConversation,
+        [activeConversation, localConversations],
+    );
+
+    useEffect(() => {
+        setLocalConversations(conversations);
+    }, [conversations]);
+
+    useEffect(() => {
+        setLocalMessages(messages);
+    }, [messages]);
 
     const goBack = () => {
         if (window.history.length > 1) {
@@ -30,21 +48,93 @@ export default function Index({ conversations, activeConversation, contacts = []
 
     const submit = (event) => {
         event.preventDefault();
+        const body = draft.trim();
 
-        if (!activeConversation || !form.data.body.trim()) {
+        if (!activeConversation || !body || isSending) {
             return;
         }
 
-        form.post(route('messages.messages.store', activeConversation.id), {
-            preserveScroll: true,
-            onSuccess: () => form.reset(),
-        });
+        const temporaryId = `temp-${++optimisticMessageIdRef.current}`;
+        const optimisticMessage = {
+            id: temporaryId,
+            body,
+            created_at: new Date().toISOString(),
+            sender: {
+                id: auth.user.id,
+                name: auth.user.name,
+                username: auth.user.username,
+            },
+        };
+        const previousMessages = localMessages;
+        const previousConversations = localConversations;
+
+        setDraft('');
+        setIsSending(true);
+        setLocalMessages((current) => [...current, optimisticMessage]);
+        setLocalConversations((current) =>
+            current.map((conversation) =>
+                conversation.id === activeConversation.id
+                    ? {
+                          ...conversation,
+                          latest_message: optimisticMessage,
+                          latest_message_at: optimisticMessage.created_at,
+                      }
+                    : conversation,
+            ),
+        );
+
+        window.axios
+            .post(
+                route('messages.messages.store', activeConversation.id),
+                { body },
+                {
+                    headers: {
+                        Accept: 'application/json',
+                    },
+                },
+            )
+            .then(({ data }) => {
+                setLocalMessages((current) =>
+                    current.map((message) => (message.id === temporaryId ? data.message : message)),
+                );
+                setLocalConversations((current) => {
+                    const updated = current.map((conversation) =>
+                        conversation.id === data.conversation.id ? data.conversation : conversation,
+                    );
+                    const active = updated.find(
+                        (conversation) => conversation.id === data.conversation.id,
+                    );
+
+                    return active
+                        ? [
+                              active,
+                              ...updated.filter((conversation) => conversation.id !== active.id),
+                          ]
+                        : updated;
+                });
+            })
+            .catch(() => {
+                setLocalMessages(previousMessages);
+                setLocalConversations(previousConversations);
+                setDraft(body);
+            })
+            .finally(() => {
+                setIsSending(false);
+            });
     };
 
     const startConversation = (contactId) => {
         router.post(route('messages.start', contactId), {}, { preserveScroll: true });
         setPickerOpen(false);
     };
+
+    useEffect(() => {
+        if (!messagesViewportRef.current) {
+            return;
+        }
+
+        messagesViewportRef.current.scrollTop = messagesViewportRef.current.scrollHeight;
+    }, [displayedConversation?.id, localMessages]);
 
     return (
         <AuthenticatedLayout title="Messages">
@@ -73,19 +163,19 @@ export default function Index({ conversations, activeConversation, contacts = []
                         <h1 className="text-xl font-semibold">Messages</h1>
                     </div>
 
-                    {conversations.length === 0 ? (
+                    {localConversations.length === 0 ? (
                         <div className="app-dashed-panel app-text-muted rounded-[28px] p-5 text-sm leading-6">
                             No conversations yet. Visit a profile and tap Message to open a direct
                             chat.
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            {conversations.map((conversation) => (
+                            {localConversations.map((conversation) => (
                                 <Link
                                     key={conversation.id}
                                     href={route('messages.show', conversation.id)}
                                     className={`block rounded-[24px] p-4 transition ${
-                                        activeConversation?.id === conversation.id
+                                        displayedConversation?.id === conversation.id
                                             ? 'app-nav-link-active'
                                             : 'app-card-inset border border-white/5 bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.07)]'
                                     }`}
@@ -114,30 +204,30 @@ export default function Index({ conversations, activeConversation, contacts = []
                     )}
                 </section>
 
-                <section className="app-panel rounded-[32px] p-5">
-                    {!activeConversation ? (
-                        <div className="app-dashed-panel app-text-muted flex min-h-[420px] items-center justify-center rounded-[28px] p-8 text-center text-sm leading-7">
+                <section className="app-panel flex min-h-[420px] flex-col rounded-[32px] p-5 xl:h-[calc(100vh-3rem)]">
+                    {!displayedConversation ? (
+                        <div className="app-dashed-panel app-text-muted flex min-h-[420px] flex-1 items-center justify-center rounded-[28px] p-8 text-center text-sm leading-7">
                             Pick a conversation from the left, or start one from a user profile.
                         </div>
                     ) : (
-                        <div className="flex min-h-[420px] flex-col">
+                        <div className="flex min-h-0 flex-1 flex-col">
                             <div className="app-panel-inset mb-5 flex items-center gap-3 rounded-[24px] px-4 py-4">
                                 <div className="app-avatar-fallback flex h-12 w-12 items-center justify-center rounded-2xl text-sm font-semibold">
-                                    {initialsFor(activeConversation.participant?.name)}
+                                    {initialsFor(displayedConversation.participant?.name)}
                                 </div>
                                 <div className="min-w-0">
                                     <div className="truncate font-semibold">
-                                        {activeConversation.participant?.name}
+                                        {displayedConversation.participant?.name}
                                     </div>
                                     <div className="app-text-soft truncate text-sm">
-                                        @{activeConversation.participant?.username}
+                                        @{displayedConversation.participant?.username}
                                     </div>
                                 </div>
                                 <div className="ml-auto">
                                     <Link
                                         href={route(
                                             'users.show',
-                                            activeConversation.participant?.username,
+                                            displayedConversation.participant?.username,
                                         )}
                                         className="app-button-secondary rounded-full px-4 py-2 text-sm"
                                     >
@@ -146,8 +236,11 @@ export default function Index({ conversations, activeConversation, contacts = []
                                 </div>
                             </div>
 
-                            <div className="flex-1 space-y-3">
-                                {messages.map((message) => {
+                            <div
+                                ref={messagesViewportRef}
+                                className="app-scrollbar-hidden flex-1 space-y-3 overflow-y-auto pr-1"
+                            >
+                                {localMessages.map((message) => {
                                     const own = message.sender?.id === auth.user.id;
 
                                     return (
@@ -172,22 +265,20 @@ export default function Index({ conversations, activeConversation, contacts = []
                                 })}
                             </div>
 
-                            <form
-                                onSubmit={submit}
-                                className="mt-5 flex flex-col gap-3 md:flex-row"
-                            >
+                            <form onSubmit={submit} className="relative mt-5">
                                 <textarea
-                                    value={form.data.body}
-                                    onChange={(event) => form.setData('body', event.target.value)}
-                                    className="field app-scrollbar-hidden min-h-24 flex-1 resize-none overflow-y-auto text-sm"
-                                    placeholder={`Message ${activeConversation.participant?.name}...`}
+                                    value={draft}
+                                    onChange={(event) => setDraft(event.target.value)}
+                                    className="field app-scrollbar-hidden min-h-24 w-full resize-none overflow-y-auto pr-16 text-sm"
+                                    placeholder={`Message ${displayedConversation.participant?.name}...`}
                                 />
                                 <button
                                     type="submit"
-                                    disabled={form.processing || !form.data.body.trim()}
-                                    className="app-button-primary self-end rounded-full px-5 py-3 text-sm font-semibold disabled:opacity-60"
+                                    disabled={isSending || !draft.trim()}
+                                    className="app-button-primary absolute bottom-4 right-3 inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full disabled:opacity-60"
+                                    aria-label="Send message"
                                 >
-                                    Send
+                                    <SendHorizonal className="h-4 w-4" strokeWidth={1.9} />
                                 </button>
                             </form>
                         </div>
