@@ -176,7 +176,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                     href={route('messages.show', conversation.id)}
                                     className={`block rounded-[24px] p-4 transition ${
                                         displayedConversation?.id === conversation.id
-                                            ? 'app-nav-link-active'
+                                            ? 'border border-[rgba(196,177,232,0.9)] bg-[rgba(120,88,166,0.22)] shadow-[0_0_0_1px_rgba(214,198,242,0.45),0_0_24px_rgba(144,114,204,0.18)]'
                                             : 'app-card-inset border border-white/5 bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.07)]'
                                     }`}
                                 >
