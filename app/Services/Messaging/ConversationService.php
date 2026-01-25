@@ -77,6 +77,30 @@ class ConversationService
         });
     }
 
+    public function updateMessage(Message $message, string $body): Message
+    {
+        $message->update([
+            'body' => $body,
+        ]);
+
+        return $message->load('sender');
+    }
+
+    public function deleteMessage(Message $message): void
+    {
+        DB::transaction(function () use ($message) {
+            $conversation = $message->conversation()->firstOrFail();
+
+            $message->delete();
+
+            $latestMessage = $conversation->messages()->latest()->first();
+
+            $conversation->forceFill([
+                'latest_message_at' => $latestMessage?->created_at,
+            ])->save();
+        });
+    }
+
     public function markAsRead(User $user, Conversation $conversation): void
     {
         $conversation->participants()->updateExistingPivot($user->id, [

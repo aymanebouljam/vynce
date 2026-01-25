@@ -8,6 +8,7 @@ use App\Http\Resources\ConversationResource;
 use App\Http\Resources\MessageResource;
 use App\Http\Resources\UserResource;
 use App\Models\Conversation;
+use App\Models\Message;
 use App\Models\User;
 use App\Services\Messaging\ConversationService;
 use App\Services\SocialGraph\SocialGraphService;
@@ -82,6 +83,56 @@ class ConversationController extends Controller
 
             return response()->json([
                 'message' => MessageResource::make($message)->resolve(),
+                'conversation' => ConversationResource::make($conversation)->resolve(),
+            ]);
+        }
+
+        return redirect()->route('messages.show', $conversation);
+    }
+
+    public function updateMessage(
+        StoreMessageRequest $request,
+        Conversation $conversation,
+        Message $message,
+        ConversationService $conversationService,
+    ): JsonResponse|RedirectResponse {
+        $this->authorize('view', $conversation);
+        abort_unless($message->conversation_id === $conversation->id, 404);
+        abort_unless($message->user_id === $request->user()->id, 403);
+
+        $message = $conversationService->updateMessage(
+            $message,
+            $request->string('body')->trim()->value(),
+        );
+
+        $conversation->load(['participants', 'latestMessage.sender']);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => MessageResource::make($message)->resolve(),
+                'conversation' => ConversationResource::make($conversation)->resolve(),
+            ]);
+        }
+
+        return redirect()->route('messages.show', $conversation);
+    }
+
+    public function destroyMessage(
+        Conversation $conversation,
+        Message $message,
+        ConversationService $conversationService,
+    ): JsonResponse|RedirectResponse {
+        $this->authorize('view', $conversation);
+        abort_unless($message->conversation_id === $conversation->id, 404);
+        abort_unless($message->user_id === request()->user()->id, 403);
+
+        $deletedMessageId = $message->id;
+        $conversationService->deleteMessage($message);
+        $conversation->load(['participants', 'latestMessage.sender']);
+
+        if (request()->expectsJson()) {
+            return response()->json([
+                'deleted_message_id' => $deletedMessageId,
                 'conversation' => ConversationResource::make($conversation)->resolve(),
             ]);
         }
