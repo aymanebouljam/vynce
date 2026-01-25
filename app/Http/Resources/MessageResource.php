@@ -13,6 +13,7 @@ class MessageResource extends JsonResource
             'id' => $this->id,
             'body' => $this->body,
             'created_at' => optional($this->created_at)->toIso8601String(),
+            'updated_at' => optional($this->updated_at)->toIso8601String(),
             'sender' => $this->relationLoaded('sender') && $this->sender
                 ? UserResource::make($this->sender)->resolve($request)
                 : null,
