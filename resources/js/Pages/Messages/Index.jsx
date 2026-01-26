@@ -5,6 +5,7 @@ import {
     ArrowLeft,
     Check,
     Copy,
+    Eraser,
     Ellipsis,
     Pencil,
     PenSquare,
@@ -16,18 +17,27 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 export default function Index({ conversations, activeConversation, contacts = [], messages }) {
     const { auth } = usePage().props;
+    const [activeConversationId, setActiveConversationId] = useState(
+        activeConversation?.id ?? null,
+    );
     const [pickerOpen, setPickerOpen] = useState(false);
     const [messageToDelete, setMessageToDelete] = useState(null);
+    const [conversationToDelete, setConversationToDelete] = useState(null);
+    const [conversationToClear, setConversationToClear] = useState(null);
     const [draft, setDraft] = useState('');
     const [isSending, setIsSending] = useState(false);
     const [editingMessageId, setEditingMessageId] = useState(null);
     const [editDraft, setEditDraft] = useState('');
     const [deletingMessageIds, setDeletingMessageIds] = useState([]);
     const [openMenuMessageId, setOpenMenuMessageId] = useState(null);
+    const [openConversationMenuId, setOpenConversationMenuId] = useState(null);
+    const [clearingConversationIds, setClearingConversationIds] = useState([]);
+    const [deletingConversationIds, setDeletingConversationIds] = useState([]);
     const [localConversations, setLocalConversations] = useState(conversations);
     const [localMessages, setLocalMessages] = useState(messages);
     const messagesViewportRef = useRef(null);
     const messageMenuRef = useRef(null);
+    const conversationMenuRef = useRef(null);
     const optimisticMessageIdRef = useRef(0);
     const conversationParticipantIds = useMemo(
         () =>
@@ -40,10 +50,14 @@ export default function Index({ conversations, activeConversation, contacts = []
     );
     const displayedConversation = useMemo(
         () =>
-            localConversations.find((conversation) => conversation.id === activeConversation?.id) ??
-            activeConversation,
-        [activeConversation, localConversations],
+            localConversations.find((conversation) => conversation.id === activeConversationId) ??
+            null,
+        [activeConversationId, localConversations],
     );
+
+    useEffect(() => {
+        setActiveConversationId(activeConversation?.id ?? null);
+    }, [activeConversation?.id]);
 
     useEffect(() => {
         setLocalConversations(conversations);
@@ -57,6 +71,10 @@ export default function Index({ conversations, activeConversation, contacts = []
         const handleClickOutside = (event) => {
             if (!messageMenuRef.current?.contains(event.target)) {
                 setOpenMenuMessageId(null);
+            }
+
+            if (!conversationMenuRef.current?.contains(event.target)) {
+                setOpenConversationMenuId(null);
             }
         };
 
@@ -80,7 +98,7 @@ export default function Index({ conversations, activeConversation, contacts = []
         event.preventDefault();
         const body = draft.trim();
 
-        if (!activeConversation || !body || isSending) {
+        if (!displayedConversation || !body || isSending) {
             return;
         }
 
@@ -103,7 +121,7 @@ export default function Index({ conversations, activeConversation, contacts = []
         setLocalMessages((current) => [...current, optimisticMessage]);
         setLocalConversations((current) =>
             current.map((conversation) =>
-                conversation.id === activeConversation.id
+                conversation.id === displayedConversation.id
                     ? {
                           ...conversation,
                           latest_message: optimisticMessage,
@@ -115,7 +133,7 @@ export default function Index({ conversations, activeConversation, contacts = []
 
         window.axios
             .post(
-                route('messages.messages.store', activeConversation.id),
+                route('messages.messages.store', displayedConversation.id),
                 { body },
                 {
                     headers: {
@@ -249,6 +267,32 @@ export default function Index({ conversations, activeConversation, contacts = []
         setOpenMenuMessageId(null);
     };
 
+    const openClearConversationModal = (conversation) => {
+        setConversationToClear(conversation);
+        setOpenConversationMenuId(null);
+    };
+
+    const closeClearConversationModal = () => {
+        if (conversationToClear && clearingConversationIds.includes(conversationToClear.id)) {
+            return;
+        }
+
+        setConversationToClear(null);
+    };
+
+    const openDeleteConversationModal = (conversation) => {
+        setConversationToDelete(conversation);
+        setOpenConversationMenuId(null);
+    };
+
+    const closeDeleteConversationModal = () => {
+        if (conversationToDelete && deletingConversationIds.includes(conversationToDelete.id)) {
+            return;
+        }
+
+        setConversationToDelete(null);
+    };
+
     const closeDeleteModal = () => {
         if (messageToDelete && deletingMessageIds.includes(messageToDelete.id)) {
             return;
@@ -316,6 +360,112 @@ export default function Index({ conversations, activeConversation, contacts = []
             });
     };
 
+    const confirmClearConversation = () => {
+        const conversationId = conversationToClear?.id;
+
+        if (!conversationId || clearingConversationIds.includes(conversationId)) {
+            return;
+        }
+
+        const previousMessages = localMessages;
+        const previousConversations = localConversations;
+
+        setClearingConversationIds((current) => [...current, conversationId]);
+        setConversationToClear(null);
+        setLocalConversations((current) =>
+            current.map((conversation) =>
+                conversation.id === conversationId
+                    ? {
+                          ...conversation,
+                          latest_message: null,
+                          latest_message_at: null,
+                      }
+                    : conversation,
+            ),
+        );
+
+        if (displayedConversation?.id === conversationId) {
+            setLocalMessages([]);
+        }
+
+        window.axios
+            .delete(route('messages.clear', conversationId), {
+                headers: {
+                    Accept: 'application/json',
+                },
+            })
+            .then(({ data }) => {
+                setLocalConversations((current) =>
+                    current.map((conversation) =>
+                        conversation.id === data.conversation.id ? data.conversation : conversation,
+                    ),
+                );
+            })
+            .catch(() => {
+                setLocalMessages(previousMessages);
+                setLocalConversations(previousConversations);
+            })
+            .finally(() => {
+                setClearingConversationIds((current) =>
+                    current.filter((id) => id !== conversationId),
+                );
+            });
+    };
+
+    const confirmDeleteConversation = () => {
+        const conversationId = conversationToDelete?.id;
+
+        if (!conversationId || deletingConversationIds.includes(conversationId)) {
+            return;
+        }
+
+        const previousConversations = localConversations;
+        const previousMessages = localMessages;
+        const previousActiveConversationId = activeConversationId;
+        const wasActive = displayedConversation?.id === conversationId;
+        const remainingConversations = localConversations.filter(
+            (conversation) => conversation.id !== conversationId,
+        );
+
+        setDeletingConversationIds((current) => [...current, conversationId]);
+        setConversationToDelete(null);
+        setLocalConversations(remainingConversations);
+
+        if (wasActive) {
+            setActiveConversationId(null);
+            setLocalMessages([]);
+        }
+
+        window.axios
+            .delete(route('messages.destroy', conversationId), {
+                headers: {
+                    Accept: 'application/json',
+                },
+            })
+            .then(() => {
+                if (wasActive) {
+                    const nextConversation = remainingConversations[0] ?? null;
+
+                    router.visit(
+                        nextConversation
+                            ? route('messages.show', nextConversation.id)
+                            : route('messages.index'),
+                        { preserveScroll: true },
+                    );
+                }
+            })
+            .catch(() => {
+                setLocalConversations(previousConversations);
+                setLocalMessages(previousMessages);
+                setActiveConversationId(previousActiveConversationId);
+            })
+            .finally(() => {
+                setDeletingConversationIds((current) =>
+                    current.filter((id) => id !== conversationId),
+                );
+            });
+    };
+
     useEffect(() => {
         if (!messagesViewportRef.current) {
             return;
@@ -326,6 +476,7 @@ export default function Index({ conversations, activeConversation, contacts = []
 
     useEffect(() => {
         setOpenMenuMessageId(null);
+        setOpenConversationMenuId(null);
     }, [displayedConversation?.id]);
 
     return (
@@ -362,36 +513,100 @@ export default function Index({ conversations, activeConversation, contacts = []
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            {localConversations.map((conversation) => (
-                                <Link
-                                    key={conversation.id}
-                                    href={route('messages.show', conversation.id)}
-                                    className={`block rounded-[24px] p-4 transition ${
-                                        displayedConversation?.id === conversation.id
-                                            ? 'border border-[rgba(196,177,232,0.9)] bg-[rgba(120,88,166,0.22)] shadow-[0_0_0_1px_rgba(214,198,242,0.45),0_0_24px_rgba(144,114,204,0.18)]'
-                                            : 'app-card-inset border border-white/5 bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.07)]'
-                                    }`}
-                                >
-                                    <div className="flex items-start gap-3">
-                                        <div className="app-avatar-fallback flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-semibold">
-                                            {initialsFor(conversation.participant?.name)}
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <div className="truncate text-sm font-semibold">
-                                                {conversation.participant?.name ?? 'Unknown user'}
+                            {localConversations.map((conversation) => {
+                                const isConversationBusy =
+                                    clearingConversationIds.includes(conversation.id) ||
+                                    deletingConversationIds.includes(conversation.id);
+
+                                return (
+                                    <div key={conversation.id} className="relative">
+                                        <Link
+                                            href={route('messages.show', conversation.id)}
+                                            className={`block rounded-[24px] p-4 pr-14 transition ${
+                                                displayedConversation?.id === conversation.id
+                                                    ? 'border border-[rgba(196,177,232,0.9)] bg-[rgba(120,88,166,0.22)] shadow-[0_0_0_1px_rgba(214,198,242,0.45),0_0_24px_rgba(144,114,204,0.18)]'
+                                                    : 'app-card-inset border border-white/5 bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.07)]'
+                                            }`}
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                <div className="app-avatar-fallback flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-semibold">
+                                                    {initialsFor(conversation.participant?.name)}
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="truncate text-sm font-semibold">
+                                                        {conversation.participant?.name ??
+                                                            'Unknown user'}
+                                                    </div>
+                                                    <div className="app-text-soft mt-2 truncate text-sm">
+                                                        {conversation.latest_message?.sender?.id ===
+                                                        auth.user.id
+                                                            ? 'You: '
+                                                            : ''}
+                                                        {conversation.latest_message?.body ??
+                                                            'No messages yet'}
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="app-text-soft mt-2 truncate text-sm">
-                                                {conversation.latest_message?.sender?.id ===
-                                                auth.user.id
-                                                    ? 'You: '
-                                                    : ''}
-                                                {conversation.latest_message?.body ??
-                                                    'No messages yet'}
-                                            </div>
+                                        </Link>
+                                        <div
+                                            className="absolute right-3 top-3"
+                                            ref={
+                                                openConversationMenuId === conversation.id
+                                                    ? conversationMenuRef
+                                                    : null
+                                            }
+                                        >
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setOpenConversationMenuId((current) =>
+                                                        current === conversation.id
+                                                            ? null
+                                                            : conversation.id,
+                                                    )
+                                                }
+                                                disabled={isConversationBusy}
+                                                className="text-current/75 inline-flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-white/10 hover:text-current disabled:opacity-60"
+                                                aria-label="Conversation options"
+                                            >
+                                                <Ellipsis className="h-4 w-4" strokeWidth={1.9} />
+                                            </button>
+                                            {openConversationMenuId === conversation.id && (
+                                                <div className="app-panel-inset absolute right-0 top-full z-20 mt-2 w-48 rounded-2xl p-2 shadow-[var(--vynce-shadow-md)]">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            openClearConversationModal(conversation)
+                                                        }
+                                                        className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm"
+                                                    >
+                                                        <Eraser
+                                                            className="h-4 w-4"
+                                                            strokeWidth={1.9}
+                                                        />
+                                                        Clear conversation
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            openDeleteConversationModal(
+                                                                conversation,
+                                                            )
+                                                        }
+                                                        className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-rose-200"
+                                                    >
+                                                        <Trash2
+                                                            className="h-4 w-4"
+                                                            strokeWidth={1.9}
+                                                        />
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                </Link>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </section>
@@ -429,171 +644,197 @@ export default function Index({ conversations, activeConversation, contacts = []
                                 </div>
                             </div>
 
-                            <div
-                                ref={messagesViewportRef}
-                                className="app-scrollbar-hidden flex-1 space-y-3 overflow-y-auto pr-1"
-                            >
-                                {localMessages.map((message) => {
-                                    const own = message.sender?.id === auth.user.id;
-                                    const isEditing = editingMessageId === message.id;
-                                    const isDeleting = deletingMessageIds.includes(message.id);
-                                    const timestamp = message.updated_at ?? message.created_at;
-                                    const isEdited = Boolean(
-                                        message.updated_at &&
-                                        message.created_at &&
-                                        message.updated_at !== message.created_at,
-                                    );
+                            <div className="relative min-h-0 flex-1">
+                                <div className="pointer-events-none sticky top-0 z-10 flex justify-center pb-3">
+                                    <div className="app-panel-inset rounded-full px-3 py-1 text-xs font-semibold tracking-[0.08em] text-[rgba(241,235,251,0.82)] shadow-[var(--vynce-shadow-sm)]">
+                                        {localMessages.length}{' '}
+                                        {localMessages.length === 1 ? 'message' : 'messages'}
+                                    </div>
+                                </div>
 
-                                    return (
-                                        <div
-                                            key={message.id}
-                                            className={`flex ${own ? 'justify-end' : 'justify-start'}`}
-                                        >
+                                <div
+                                    ref={messagesViewportRef}
+                                    className="app-scrollbar-hidden h-full space-y-3 overflow-y-auto pr-1 pt-1"
+                                >
+                                    {localMessages.map((message) => {
+                                        const own = message.sender?.id === auth.user.id;
+                                        const isEditing = editingMessageId === message.id;
+                                        const isDeleting = deletingMessageIds.includes(message.id);
+                                        const timestamp = message.updated_at ?? message.created_at;
+                                        const isEdited = Boolean(
+                                            message.updated_at &&
+                                            message.created_at &&
+                                            message.updated_at !== message.created_at,
+                                        );
+
+                                        return (
                                             <div
-                                                className={`relative max-w-[78%] rounded-[24px] px-3 py-2.5 text-sm leading-7 ${
-                                                    own ? 'app-button-primary' : 'app-panel-inset'
-                                                }`}
+                                                key={message.id}
+                                                className={`flex ${own ? 'justify-end' : 'justify-start'}`}
                                             >
-                                                {!isEditing && (
-                                                    <div
-                                                        className="absolute right-3 top-3"
-                                                        ref={
-                                                            openMenuMessageId === message.id
-                                                                ? messageMenuRef
-                                                                : null
-                                                        }
-                                                    >
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                setOpenMenuMessageId((current) =>
-                                                                    current === message.id
-                                                                        ? null
-                                                                        : message.id,
-                                                                )
+                                                <div
+                                                    className={`relative max-w-[78%] rounded-[24px] px-3 py-2.5 text-sm leading-7 ${
+                                                        own
+                                                            ? 'app-button-primary'
+                                                            : 'app-panel-inset'
+                                                    }`}
+                                                >
+                                                    {!isEditing && (
+                                                        <div
+                                                            className="absolute right-3 top-3"
+                                                            ref={
+                                                                openMenuMessageId === message.id
+                                                                    ? messageMenuRef
+                                                                    : null
                                                             }
-                                                            className="text-current/75 inline-flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-white/10 hover:text-current"
-                                                            aria-label="Message options"
                                                         >
-                                                            <Ellipsis
-                                                                className="h-4 w-4"
-                                                                strokeWidth={1.9}
-                                                            />
-                                                        </button>
-                                                        {openMenuMessageId === message.id && (
-                                                            <div className="app-panel-inset absolute right-0 top-full z-20 mt-2 w-36 rounded-2xl p-2 shadow-[var(--vynce-shadow-md)]">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        copyMessage(message.body)
-                                                                    }
-                                                                    className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm"
-                                                                >
-                                                                    <Copy
-                                                                        className="h-4 w-4"
-                                                                        strokeWidth={1.9}
-                                                                    />
-                                                                    Copy
-                                                                </button>
-                                                                {own && (
-                                                                    <>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => {
-                                                                                beginEdit(message);
-                                                                                setOpenMenuMessageId(
-                                                                                    null,
-                                                                                );
-                                                                            }}
-                                                                            className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm"
-                                                                        >
-                                                                            <Pencil
-                                                                                className="h-4 w-4"
-                                                                                strokeWidth={1.9}
-                                                                            />
-                                                                            Edit
-                                                                        </button>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() =>
-                                                                                openDeleteModal(
-                                                                                    message,
-                                                                                )
-                                                                            }
-                                                                            disabled={isDeleting}
-                                                                            className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-rose-200 disabled:opacity-60"
-                                                                        >
-                                                                            <Trash2
-                                                                                className="h-4 w-4"
-                                                                                strokeWidth={1.9}
-                                                                            />
-                                                                            Delete
-                                                                        </button>
-                                                                    </>
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-                                                {isEditing ? (
-                                                    <div className="relative -mx-1.5 -my-1">
-                                                        <button
-                                                            type="button"
-                                                            onClick={cancelEdit}
-                                                            className="text-current/80 absolute left-0 top-0 inline-flex h-7 w-7 items-center justify-center transition hover:text-current"
-                                                            aria-label="Cancel edit"
-                                                        >
-                                                            <ArrowLeft
-                                                                className="h-4 w-4"
-                                                                strokeWidth={1.9}
-                                                            />
-                                                        </button>
-                                                        <textarea
-                                                            value={editDraft}
-                                                            onChange={(event) =>
-                                                                setEditDraft(event.target.value)
-                                                            }
-                                                            className="app-scrollbar-hidden min-h-20 w-full resize-none overflow-y-auto border-0 bg-transparent pb-12 pl-10 pr-16 text-sm focus:border-0 focus:shadow-none focus:outline-none focus:ring-0 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0"
-                                                            style={{
-                                                                outline: 'none',
-                                                                boxShadow: 'none',
-                                                            }}
-                                                        />
-                                                        <div className="absolute bottom-3 right-3 flex items-center gap-1 text-xs">
                                                             <button
                                                                 type="button"
-                                                                onClick={() => saveEdit(message.id)}
-                                                                className="inline-flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-white/15"
-                                                                aria-label="Save edit"
+                                                                onClick={() =>
+                                                                    setOpenMenuMessageId(
+                                                                        (current) =>
+                                                                            current === message.id
+                                                                                ? null
+                                                                                : message.id,
+                                                                    )
+                                                                }
+                                                                className="text-current/75 inline-flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-white/10 hover:text-current"
+                                                                aria-label="Message options"
                                                             >
-                                                                <Check
+                                                                <Ellipsis
                                                                     className="h-4 w-4"
                                                                     strokeWidth={1.9}
                                                                 />
                                                             </button>
+                                                            {openMenuMessageId === message.id && (
+                                                                <div className="app-panel-inset absolute right-0 top-full z-20 mt-2 w-36 rounded-2xl p-2 shadow-[var(--vynce-shadow-md)]">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            copyMessage(
+                                                                                message.body,
+                                                                            )
+                                                                        }
+                                                                        className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm"
+                                                                    >
+                                                                        <Copy
+                                                                            className="h-4 w-4"
+                                                                            strokeWidth={1.9}
+                                                                        />
+                                                                        Copy
+                                                                    </button>
+                                                                    {own && (
+                                                                        <>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    beginEdit(
+                                                                                        message,
+                                                                                    );
+                                                                                    setOpenMenuMessageId(
+                                                                                        null,
+                                                                                    );
+                                                                                }}
+                                                                                className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm"
+                                                                            >
+                                                                                <Pencil
+                                                                                    className="h-4 w-4"
+                                                                                    strokeWidth={
+                                                                                        1.9
+                                                                                    }
+                                                                                />
+                                                                                Edit
+                                                                            </button>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() =>
+                                                                                    openDeleteModal(
+                                                                                        message,
+                                                                                    )
+                                                                                }
+                                                                                disabled={
+                                                                                    isDeleting
+                                                                                }
+                                                                                className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-rose-200 disabled:opacity-60"
+                                                                            >
+                                                                                <Trash2
+                                                                                    className="h-4 w-4"
+                                                                                    strokeWidth={
+                                                                                        1.9
+                                                                                    }
+                                                                                />
+                                                                                Delete
+                                                                            </button>
+                                                                        </>
+                                                                    )}
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                    </div>
-                                                ) : (
-                                                    <div className="whitespace-pre-wrap break-all pr-10">
-                                                        {message.body}
-                                                    </div>
-                                                )}
-                                                {!isEditing && (
-                                                    <div className="app-text-soft mt-2 flex items-center gap-2 text-xs">
-                                                        {isEdited && (
-                                                            <span className="bg-white/8 text-current/75 rounded-full px-2 py-0.5 text-[11px] uppercase tracking-[0.16em]">
-                                                                Edited
+                                                    )}
+                                                    {isEditing ? (
+                                                        <div className="relative -mx-1.5 -my-1">
+                                                            <button
+                                                                type="button"
+                                                                onClick={cancelEdit}
+                                                                className="text-current/80 absolute left-0 top-0 inline-flex h-7 w-7 items-center justify-center transition hover:text-current"
+                                                                aria-label="Cancel edit"
+                                                            >
+                                                                <ArrowLeft
+                                                                    className="h-4 w-4"
+                                                                    strokeWidth={1.9}
+                                                                />
+                                                            </button>
+                                                            <textarea
+                                                                value={editDraft}
+                                                                onChange={(event) =>
+                                                                    setEditDraft(event.target.value)
+                                                                }
+                                                                className="app-scrollbar-hidden min-h-20 w-full resize-none overflow-y-auto border-0 bg-transparent pb-12 pl-10 pr-16 text-sm focus:border-0 focus:shadow-none focus:outline-none focus:ring-0 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0"
+                                                                style={{
+                                                                    outline: 'none',
+                                                                    boxShadow: 'none',
+                                                                }}
+                                                            />
+                                                            <div className="absolute bottom-3 right-3 flex items-center gap-1 text-xs">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        saveEdit(message.id)
+                                                                    }
+                                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-white/15"
+                                                                    aria-label="Save edit"
+                                                                >
+                                                                    <Check
+                                                                        className="h-4 w-4"
+                                                                        strokeWidth={1.9}
+                                                                    />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="whitespace-pre-wrap break-all pr-10">
+                                                            {message.body}
+                                                        </div>
+                                                    )}
+                                                    {!isEditing && (
+                                                        <div className="app-text-soft mt-2 flex items-center gap-2 text-xs">
+                                                            {isEdited && (
+                                                                <span className="bg-white/8 text-current/75 rounded-full px-2 py-0.5 text-[11px] uppercase tracking-[0.16em]">
+                                                                    Edited
+                                                                </span>
+                                                            )}
+                                                            <span>
+                                                                {new Date(
+                                                                    timestamp,
+                                                                ).toLocaleString()}
                                                             </span>
-                                                        )}
-                                                        <span>
-                                                            {new Date(timestamp).toLocaleString()}
-                                                        </span>
-                                                    </div>
-                                                )}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                    );
-                                })}
+                                        );
+                                    })}
+                                </div>
                             </div>
 
                             <form onSubmit={submit} className="relative mt-5">
@@ -690,6 +931,87 @@ export default function Index({ conversations, activeConversation, contacts = []
                             onClick={confirmDeleteMessage}
                             disabled={Boolean(
                                 messageToDelete && deletingMessageIds.includes(messageToDelete.id),
+                            )}
+                            className="app-button-primary rounded-full px-4 py-2 text-sm disabled:opacity-60"
+                        >
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            <Modal
+                show={Boolean(conversationToClear)}
+                onClose={closeClearConversationModal}
+                maxWidth="md"
+            >
+                <div className="space-y-5 p-6">
+                    <div>
+                        <div className="text-lg font-semibold">Clear conversation?</div>
+                        <p className="app-text-soft mt-2 text-sm leading-6">
+                            This will remove every message from this thread and keep the
+                            conversation itself in your inbox.
+                        </p>
+                    </div>
+
+                    <div className="flex justify-end gap-3">
+                        <button
+                            type="button"
+                            onClick={closeClearConversationModal}
+                            disabled={Boolean(
+                                conversationToClear &&
+                                clearingConversationIds.includes(conversationToClear.id),
+                            )}
+                            className="app-button-secondary rounded-full px-4 py-2 text-sm disabled:opacity-60"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            onClick={confirmClearConversation}
+                            disabled={Boolean(
+                                conversationToClear &&
+                                clearingConversationIds.includes(conversationToClear.id),
+                            )}
+                            className="app-button-primary rounded-full px-4 py-2 text-sm disabled:opacity-60"
+                        >
+                            Clear
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            <Modal
+                show={Boolean(conversationToDelete)}
+                onClose={closeDeleteConversationModal}
+                maxWidth="md"
+            >
+                <div className="space-y-5 p-6">
+                    <div>
+                        <div className="text-lg font-semibold">Delete conversation?</div>
+                        <p className="app-text-soft mt-2 text-sm leading-6">
+                            This will remove the thread from your inbox.
+                        </p>
+                    </div>
+
+                    <div className="flex justify-end gap-3">
+                        <button
+                            type="button"
+                            onClick={closeDeleteConversationModal}
+                            disabled={Boolean(
+                                conversationToDelete &&
+                                deletingConversationIds.includes(conversationToDelete.id),
+                            )}
+                            className="app-button-secondary rounded-full px-4 py-2 text-sm disabled:opacity-60"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            onClick={confirmDeleteConversation}
+                            disabled={Boolean(
+                                conversationToDelete &&
+                                deletingConversationIds.includes(conversationToDelete.id),
                             )}
                             className="app-button-primary rounded-full px-4 py-2 text-sm disabled:opacity-60"
                         >
