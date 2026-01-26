@@ -101,6 +101,30 @@ class ConversationService
         });
     }
 
+    public function clearConversation(Conversation $conversation): Conversation
+    {
+        return DB::transaction(function () use ($conversation) {
+            $conversation->messages()->delete();
+
+            $conversation->forceFill([
+                'latest_message_at' => null,
+            ])->save();
+
+            return $conversation->load(['participants', 'latestMessage.sender']);
+        });
+    }
+
+    public function deleteConversationFor(User $user, Conversation $conversation): void
+    {
+        DB::transaction(function () use ($user, $conversation) {
+            $conversation->participants()->detach($user->id);
+
+            if (! $conversation->participants()->exists()) {
+                $conversation->delete();
+            }
+        });
+    }
+
     public function markAsRead(User $user, Conversation $conversation): void
     {
         $conversation->participants()->updateExistingPivot($user->id, [

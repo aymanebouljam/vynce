@@ -65,6 +65,41 @@ class ConversationController extends Controller
         return redirect()->route('messages.show', $conversation);
     }
 
+    public function destroy(
+        Conversation $conversation,
+        ConversationService $conversationService,
+    ): JsonResponse|RedirectResponse {
+        $this->authorize('view', $conversation);
+
+        $deletedConversationId = $conversation->id;
+        $conversationService->deleteConversationFor(request()->user(), $conversation);
+
+        if (request()->expectsJson()) {
+            return response()->json([
+                'deleted_conversation_id' => $deletedConversationId,
+            ]);
+        }
+
+        return redirect()->route('messages.index');
+    }
+
+    public function clear(
+        Conversation $conversation,
+        ConversationService $conversationService,
+    ): JsonResponse|RedirectResponse {
+        $this->authorize('view', $conversation);
+
+        $conversation = $conversationService->clearConversation($conversation);
+
+        if (request()->expectsJson()) {
+            return response()->json([
+                'conversation' => ConversationResource::make($conversation)->resolve(),
+            ]);
+        }
+
+        return redirect()->route('messages.show', $conversation);
+    }
+
     public function storeMessage(
         StoreMessageRequest $request,
         Conversation $conversation,

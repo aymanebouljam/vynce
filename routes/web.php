@@ -34,6 +34,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/messages', [ConversationController::class, 'index'])->name('messages.index');
     Route::get('/messages/{conversation}', [ConversationController::class, 'show'])->name('messages.show');
     Route::post('/messages/start/{user}', [ConversationController::class, 'start'])->middleware('throttle:60,1')->name('messages.start');
+    Route::delete('/messages/{conversation}', [ConversationController::class, 'destroy'])->middleware('throttle:60,1')->name('messages.destroy');
+    Route::delete('/messages/{conversation}/clear', [ConversationController::class, 'clear'])->middleware('throttle:60,1')->name('messages.clear');
     Route::post('/messages/{conversation}/messages', [ConversationController::class, 'storeMessage'])->middleware('throttle:120,1')->name('messages.messages.store');
     Route::patch('/messages/{conversation}/messages/{message}', [ConversationController::class, 'updateMessage'])->middleware('throttle:120,1')->name('messages.messages.update');
     Route::delete('/messages/{conversation}/messages/{message}', [ConversationController::class, 'destroyMessage'])->middleware('throttle:120,1')->name('messages.messages.destroy');
