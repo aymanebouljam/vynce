@@ -3,12 +3,16 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
+    File,
+    Image as ImageIcon,
     Check,
     Copy,
     Eraser,
     Ellipsis,
+    Paperclip,
     Pencil,
     PenSquare,
+    X,
     SendHorizonal,
     Trash2,
     User,
@@ -25,6 +29,7 @@ export default function Index({ conversations, activeConversation, contacts = []
     const [conversationToDelete, setConversationToDelete] = useState(null);
     const [conversationToClear, setConversationToClear] = useState(null);
     const [draft, setDraft] = useState('');
+    const [draftAttachment, setDraftAttachment] = useState(null);
     const [isSending, setIsSending] = useState(false);
     const [editingMessageId, setEditingMessageId] = useState(null);
     const [editDraft, setEditDraft] = useState('');
@@ -36,6 +41,8 @@ export default function Index({ conversations, activeConversation, contacts = []
     const [localConversations, setLocalConversations] = useState(conversations);
     const [localMessages, setLocalMessages] = useState(messages);
     const messagesViewportRef = useRef(null);
+    const imageInputRef = useRef(null);
+    const fileInputRef = useRef(null);
     const messageMenuRef = useRef(null);
     const conversationMenuRef = useRef(null);
     const optimisticMessageIdRef = useRef(0);
@@ -47,6 +54,20 @@ export default function Index({ conversations, activeConversation, contacts = []
     const availableContacts = useMemo(
         () => contacts.filter((contact) => !conversationParticipantIds.includes(contact.id)),
         [contacts, conversationParticipantIds],
+    );
+    const sortedConversations = useMemo(
+        () =>
+            [...localConversations].sort((left, right) => {
+                const leftTime = left.latest_message_at
+                    ? new Date(left.latest_message_at).getTime()
+                    : 0;
+                const rightTime = right.latest_message_at
+                    ? new Date(right.latest_message_at).getTime()
+                    : 0;
+
+                return rightTime - leftTime;
+            }),
+        [localConversations],
     );
     const displayedConversation = useMemo(
         () =>
@@ -98,15 +119,27 @@ export default function Index({ conversations, activeConversation, contacts = []
         event.preventDefault();
         const body = draft.trim();
 
-        if (!displayedConversation || !body || isSending) {
+        if (!displayedConversation || (!body && !draftAttachment) || isSending) {
             return;
         }
 
         const temporaryId = `temp-${++optimisticMessageIdRef.current}`;
+        const formData = new FormData();
+        const attachmentPreviewUrl = draftAttachment?.previewUrl ?? null;
         const optimisticMessage = {
             id: temporaryId,
             body,
             created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            attachment: draftAttachment
+                ? {
+                      url: draftAttachment.previewUrl,
+                      name: draftAttachment.name,
+                      mime_type: draftAttachment.mimeType,
+                      size: draftAttachment.size,
+                      is_image: draftAttachment.isImage,
+                  }
+                : null,
             sender: {
                 id: auth.user.id,
                 name: auth.user.name,
@@ -115,8 +148,16 @@ export default function Index({ conversations, activeConversation, contacts = []
         };
         const previousMessages = localMessages;
         const previousConversations = localConversations;
+        const previousDraftAttachment = draftAttachment;
+
+        formData.append('body', body);
+
+        if (draftAttachment?.file) {
+            formData.append('attachment', draftAttachment.file);
+        }
 
         setDraft('');
+        setDraftAttachment(null);
         setIsSending(true);
         setLocalMessages((current) => [...current, optimisticMessage]);
         setLocalConversations((current) =>
@@ -132,15 +173,11 @@ export default function Index({ conversations, activeConversation, contacts = []
         );
 
         window.axios
-            .post(
-                route('messages.messages.store', displayedConversation.id),
-                { body },
-                {
-                    headers: {
-                        Accept: 'application/json',
-                    },
+            .post(route('messages.messages.store', displayedConversation.id), formData, {
+                headers: {
+                    Accept: 'application/json',
                 },
-            )
+            })
             .then(({ data }) => {
                 setLocalMessages((current) =>
                     current.map((message) => (message.id === temporaryId ? data.message : message)),
@@ -160,15 +197,59 @@ export default function Index({ conversations, activeConversation, contacts = []
                           ]
                         : updated;
                 });
+
+                if (attachmentPreviewUrl) {
+                    URL.revokeObjectURL(attachmentPreviewUrl);
+                }
             })
             .catch(() => {
                 setLocalMessages(previousMessages);
                 setLocalConversations(previousConversations);
                 setDraft(body);
+                setDraftAttachment(previousDraftAttachment);
             })
             .finally(() => {
                 setIsSending(false);
             });
+    };
+
+    const selectDraftAttachment = (event) => {
+        const file = event.target.files?.[0];
+
+        if (!file) {
+            return;
+        }
+
+        if (draftAttachment?.previewUrl) {
+            URL.revokeObjectURL(draftAttachment.previewUrl);
+        }
+
+        setDraftAttachment({
+            file,
+            name: file.name,
+            size: file.size,
+            mimeType: file.type || 'application/octet-stream',
+            isImage: file.type.startsWith('image/'),
+            previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
+        });
+
+        event.target.value = '';
+    };
+
+    const clearDraftAttachment = () => {
+        if (draftAttachment?.previewUrl) {
+            URL.revokeObjectURL(draftAttachment.previewUrl);
+        }
+
+        setDraftAttachment(null);
+
+        if (imageInputRef.current) {
+            imageInputRef.current.value = '';
+        }
+
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
     };
 
     const startConversation = (contactId) => {
@@ -513,7 +594,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            {localConversations.map((conversation) => {
+                            {sortedConversations.map((conversation) => {
                                 const isConversationBusy =
                                     clearingConversationIds.includes(conversation.id) ||
                                     deletingConversationIds.includes(conversation.id);
@@ -812,8 +893,107 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                             </div>
                                                         </div>
                                                     ) : (
-                                                        <div className="whitespace-pre-wrap break-all pr-10">
-                                                            {message.body}
+                                                        <div className="space-y-3">
+                                                            {message.attachment && (
+                                                                <div>
+                                                                    {message.attachment.is_image ? (
+                                                                        message.attachment.url ? (
+                                                                            <a
+                                                                                href={
+                                                                                    message
+                                                                                        .attachment
+                                                                                        .url
+                                                                                }
+                                                                                target="_blank"
+                                                                                rel="noreferrer"
+                                                                                className="block overflow-hidden rounded-[20px]"
+                                                                            >
+                                                                                <img
+                                                                                    src={
+                                                                                        message
+                                                                                            .attachment
+                                                                                            .url
+                                                                                    }
+                                                                                    alt={
+                                                                                        message
+                                                                                            .attachment
+                                                                                            .name ??
+                                                                                        'Attachment'
+                                                                                    }
+                                                                                    className="max-h-72 w-full object-cover"
+                                                                                />
+                                                                            </a>
+                                                                        ) : null
+                                                                    ) : message.attachment.url ? (
+                                                                        <a
+                                                                            href={
+                                                                                message.attachment
+                                                                                    .url
+                                                                            }
+                                                                            target="_blank"
+                                                                            rel="noreferrer"
+                                                                            className="app-panel-inset flex items-center gap-3 rounded-[18px] px-3 py-3"
+                                                                        >
+                                                                            <div className="app-avatar-fallback flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-semibold">
+                                                                                <File
+                                                                                    className="h-4 w-4"
+                                                                                    strokeWidth={
+                                                                                        1.9
+                                                                                    }
+                                                                                />
+                                                                            </div>
+                                                                            <div className="min-w-0 flex-1">
+                                                                                <div className="truncate text-sm font-semibold">
+                                                                                    {
+                                                                                        message
+                                                                                            .attachment
+                                                                                            .name
+                                                                                    }
+                                                                                </div>
+                                                                                <div className="app-text-soft text-xs">
+                                                                                    {formatFileSize(
+                                                                                        message
+                                                                                            .attachment
+                                                                                            .size,
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+                                                                        </a>
+                                                                    ) : (
+                                                                        <div className="app-panel-inset flex items-center gap-3 rounded-[18px] px-3 py-3">
+                                                                            <div className="app-avatar-fallback flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-semibold">
+                                                                                <File
+                                                                                    className="h-4 w-4"
+                                                                                    strokeWidth={
+                                                                                        1.9
+                                                                                    }
+                                                                                />
+                                                                            </div>
+                                                                            <div className="min-w-0 flex-1">
+                                                                                <div className="truncate text-sm font-semibold">
+                                                                                    {
+                                                                                        message
+                                                                                            .attachment
+                                                                                            .name
+                                                                                    }
+                                                                                </div>
+                                                                                <div className="app-text-soft text-xs">
+                                                                                    {formatFileSize(
+                                                                                        message
+                                                                                            .attachment
+                                                                                            .size,
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                            {message.body && (
+                                                                <div className="whitespace-pre-wrap break-all pr-10">
+                                                                    {message.body}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     )}
                                                     {!isEditing && (
@@ -838,15 +1018,89 @@ export default function Index({ conversations, activeConversation, contacts = []
                             </div>
 
                             <form onSubmit={submit} className="relative mt-5">
+                                <input
+                                    ref={imageInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={selectDraftAttachment}
+                                />
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    className="hidden"
+                                    onChange={selectDraftAttachment}
+                                />
                                 <textarea
                                     value={draft}
                                     onChange={(event) => setDraft(event.target.value)}
-                                    className="field app-scrollbar-hidden min-h-24 w-full resize-none overflow-y-auto pr-16 text-sm"
+                                    className="field app-scrollbar-hidden min-h-24 w-full resize-none overflow-y-auto pb-14 pr-16 text-sm"
                                     placeholder={`Message ${displayedConversation.participant?.name}...`}
                                 />
+                                {draftAttachment && (
+                                    <div className="absolute left-3 right-16 top-3">
+                                        {draftAttachment.isImage ? (
+                                            <div className="relative inline-flex overflow-hidden rounded-[18px]">
+                                                <img
+                                                    src={draftAttachment.previewUrl}
+                                                    alt={draftAttachment.name}
+                                                    className="h-20 w-20 object-cover"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={clearDraftAttachment}
+                                                    className="app-button-secondary absolute right-1 top-1 inline-flex h-7 w-7 items-center justify-center rounded-full p-0"
+                                                    aria-label="Remove attachment"
+                                                >
+                                                    <X className="h-3.5 w-3.5" strokeWidth={1.9} />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="app-panel-inset flex items-center gap-3 rounded-[18px] px-3 py-2">
+                                                <div className="app-avatar-fallback flex h-9 w-9 items-center justify-center rounded-2xl text-sm font-semibold">
+                                                    <File className="h-4 w-4" strokeWidth={1.9} />
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="truncate text-sm font-semibold">
+                                                        {draftAttachment.name}
+                                                    </div>
+                                                    <div className="app-text-soft text-xs">
+                                                        {formatFileSize(draftAttachment.size)}
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={clearDraftAttachment}
+                                                    className="app-button-secondary inline-flex h-8 w-8 items-center justify-center rounded-full p-0"
+                                                    aria-label="Remove attachment"
+                                                >
+                                                    <X className="h-3.5 w-3.5" strokeWidth={1.9} />
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                                <div className="absolute bottom-3 left-3 flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => imageInputRef.current?.click()}
+                                        className="app-button-secondary inline-flex h-9 w-9 items-center justify-center rounded-full p-0"
+                                        aria-label="Attach image"
+                                    >
+                                        <ImageIcon className="h-4 w-4" strokeWidth={1.9} />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="app-button-secondary inline-flex h-9 w-9 items-center justify-center rounded-full p-0"
+                                        aria-label="Attach file"
+                                    >
+                                        <Paperclip className="h-4 w-4" strokeWidth={1.9} />
+                                    </button>
+                                </div>
                                 <button
                                     type="submit"
-                                    disabled={isSending || !draft.trim()}
+                                    disabled={isSending || (!draft.trim() && !draftAttachment)}
                                     className="app-button-primary absolute bottom-4 right-3 inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full disabled:opacity-60"
                                     aria-label="Send message"
                                 >
@@ -1033,4 +1287,16 @@ function initialsFor(name) {
             .slice(0, 2)
             .toUpperCase() ?? 'DM'
     );
+}
+
+function formatFileSize(size) {
+    if (!size) {
+        return 'File';
+    }
+
+    if (size < 1024 * 1024) {
+        return `${Math.max(1, Math.round(size / 1024))} KB`;
+    }
+
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
