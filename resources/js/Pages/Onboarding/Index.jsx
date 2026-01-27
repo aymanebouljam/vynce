@@ -26,9 +26,6 @@ export default function Onboarding({ profile }) {
         <AuthenticatedLayout title="Onboarding">
             <section className="app-panel rounded-[32px] p-6 md:p-8">
                 <div className="mb-8 max-w-2xl">
-                    <div className="app-chip mb-3 inline-flex rounded-full px-4 py-2 text-xs uppercase tracking-[0.25em]">
-                        Step 1 of MVP
-                    </div>
                     <h1 className="text-3xl font-semibold md:text-4xl">
                         Finish your profile in one pass
                     </h1>
@@ -85,7 +82,7 @@ export default function Onboarding({ profile }) {
                             type="file"
                             accept="image/*"
                             onChange={(event) => setData('avatar', event.target.files[0] ?? null)}
-                            className="field app-file-input"
+                            className="field app-file-input app-file-input-compact"
                         />
                     </Field>
                     <Field placeholder="Cover image" hint="Cover image" error={errors.cover}>
@@ -93,7 +90,7 @@ export default function Onboarding({ profile }) {
                             type="file"
                             accept="image/*"
                             onChange={(event) => setData('cover', event.target.files[0] ?? null)}
-                            className="field app-file-input"
+                            className="field app-file-input app-file-input-compact"
                         />
                     </Field>
 
@@ -113,7 +110,7 @@ export default function Onboarding({ profile }) {
                             disabled={processing}
                             className="app-button-primary rounded-full px-5 py-3 text-sm font-semibold disabled:opacity-60"
                         >
-                            Enter Vynce
+                            Join
                         </button>
                     </div>
                 </form>

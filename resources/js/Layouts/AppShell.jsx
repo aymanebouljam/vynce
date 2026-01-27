@@ -104,7 +104,16 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                                             />
                                         </div>
                                     ) : (
-                                        <div className="app-avatar-fallback flex h-12 w-12 items-center justify-center rounded-2xl text-sm font-semibold">
+                                        <div
+                                            className="app-avatar-fallback flex h-12 w-12 items-center justify-center rounded-2xl text-sm font-semibold"
+                                            style={
+                                                ownProfileActive
+                                                    ? {
+                                                          background: 'rgba(77, 53, 112, 0.92)',
+                                                      }
+                                                    : undefined
+                                            }
+                                        >
                                             {initials}
                                         </div>
                                     )}
