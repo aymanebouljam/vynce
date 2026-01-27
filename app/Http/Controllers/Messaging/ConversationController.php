@@ -111,9 +111,11 @@ class ConversationController extends Controller
             $request->user(),
             $conversation,
             $request->string('body')->trim()->value(),
+            $request->file('attachment'),
         );
 
         if ($request->expectsJson()) {
+            $message->load('conversation.participants');
             $conversation->load(['participants', 'latestMessage.sender']);
 
             return response()->json([
@@ -140,6 +142,7 @@ class ConversationController extends Controller
             $request->string('body')->trim()->value(),
         );
 
+        $message->load('conversation.participants');
         $conversation->load(['participants', 'latestMessage.sender']);
 
         if ($request->expectsJson()) {
