@@ -1,6 +1,17 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
+import Modal from '@/Components/Modal';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { Compass, House, LogOut, MessageCircle, Search, Settings, Users } from 'lucide-react';
+import {
+    Compass,
+    FileText,
+    Hash,
+    House,
+    LogOut,
+    MessageCircle,
+    Search,
+    Settings,
+    Users,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 export default function AppShell({ children, title, sidebar, navSearch = null }) {
@@ -15,7 +26,19 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
         .join('')
         .slice(0, 2)
         .toUpperCase();
-    const showFeedSearch = route().current('feed.home') || route().current('feed.following');
+    const showFeedSearch =
+        route().current('feed.home') ||
+        route().current('feed.following') ||
+        route().current('feed.search');
+    const [feedSearchOpen, setFeedSearchOpen] = useState(false);
+    const [feedSearchValue, setFeedSearchValue] = useState('');
+    const [feedSearchResults, setFeedSearchResults] = useState({
+        users: [],
+        posts: [],
+        topics: [],
+    });
+    const [feedSearchLoading, setFeedSearchLoading] = useState(false);
+    const feedSearchInputRef = useRef(null);
     const [navSearchOpen, setNavSearchOpen] = useState(false);
     const navSearchInputRef = useRef(null);
 
@@ -26,10 +49,106 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
     }, [navSearch, navSearchOpen]);
 
     useEffect(() => {
+        if (showFeedSearch && feedSearchOpen) {
+            feedSearchInputRef.current?.focus();
+        }
+    }, [showFeedSearch, feedSearchOpen]);
+
+    useEffect(() => {
+        if (!feedSearchOpen) {
+            return;
+        }
+
+        setFeedSearchValue('');
+        setFeedSearchResults({
+            users: [],
+            posts: [],
+            topics: [],
+        });
+        setFeedSearchLoading(false);
+    }, [feedSearchOpen]);
+
+    useEffect(() => {
+        if (!showFeedSearch || !feedSearchOpen) {
+            return undefined;
+        }
+
+        const term = feedSearchValue.trim();
+
+        if (!term) {
+            setFeedSearchResults({
+                users: [],
+                posts: [],
+                topics: [],
+            });
+            setFeedSearchLoading(false);
+            return undefined;
+        }
+
+        let cancelled = false;
+        setFeedSearchLoading(true);
+
+        const timeoutId = window.setTimeout(() => {
+            window.axios
+                .get(route('feed.search'), {
+                    params: { q: term },
+                    headers: {
+                        Accept: 'application/json',
+                    },
+                })
+                .then(({ data }) => {
+                    if (cancelled) {
+                        return;
+                    }
+
+                    setFeedSearchResults({
+                        users: data.users ?? [],
+                        posts: data.posts ?? [],
+                        topics: data.topics ?? [],
+                    });
+                })
+                .catch(() => {
+                    if (cancelled) {
+                        return;
+                    }
+
+                    setFeedSearchResults({
+                        users: [],
+                        posts: [],
+                        topics: [],
+                    });
+                })
+                .finally(() => {
+                    if (!cancelled) {
+                        setFeedSearchLoading(false);
+                    }
+                });
+        }, 220);
+
+        return () => {
+            cancelled = true;
+            window.clearTimeout(timeoutId);
+        };
+    }, [showFeedSearch, feedSearchOpen, feedSearchValue]);
+
+    useEffect(() => {
         if (!navSearch) {
             setNavSearchOpen(false);
         }
     }, [navSearch]);
+
+    const submitFeedSearch = (event) => {
+        event.preventDefault();
+
+        const term = feedSearchValue.trim();
+
+        if (!term) {
+            return;
+        }
+
+        setFeedSearchOpen(false);
+        router.visit(route('feed.search', { q: term, filter: 'people' }));
+    };
     const navigation = [
         {
             label: 'Home',
@@ -168,19 +287,33 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                                         </label>
                                     )}
                                     {navigation.map((item) => (
-                                        <Link
-                                            key={item.label}
-                                            href={item.href}
-                                            className={`app-nav-link flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium ${
-                                                item.active ? 'app-nav-link-active' : ''
-                                            }`}
-                                        >
-                                            <item.icon
-                                                className="h-5 w-5 shrink-0"
-                                                strokeWidth={1.8}
-                                            />
-                                            {item.label}
-                                        </Link>
+                                        <div key={item.label} className="space-y-2">
+                                            <Link
+                                                href={item.href}
+                                                className={`app-nav-link flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium ${
+                                                    item.active ? 'app-nav-link-active' : ''
+                                                }`}
+                                            >
+                                                <item.icon
+                                                    className="h-5 w-5 shrink-0"
+                                                    strokeWidth={1.8}
+                                                />
+                                                {item.label}
+                                            </Link>
+                                            {item.label === 'Home' && showFeedSearch && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setFeedSearchOpen(true)}
+                                                    className="app-nav-link flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium"
+                                                >
+                                                    <Search
+                                                        className="h-5 w-5 shrink-0"
+                                                        strokeWidth={1.8}
+                                                    />
+                                                    Search
+                                                </button>
+                                            )}
+                                        </div>
                                     ))}
                                 </nav>
                             </div>
@@ -199,22 +332,7 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                         </div>
                     </aside>
 
-                    <main className="min-w-0 flex-1 space-y-6">
-                        {showFeedSearch && (
-                            <label className="app-search flex items-center gap-3 rounded-[24px] px-4 py-3 backdrop-blur transition">
-                                <Search
-                                    className="app-text-muted h-5 w-5 shrink-0"
-                                    strokeWidth={1.8}
-                                />
-                                <input
-                                    type="search"
-                                    placeholder="Search people, posts, or topics"
-                                    className="app-search-input w-full bg-transparent text-sm focus:outline-none"
-                                />
-                            </label>
-                        )}
-                        {children}
-                    </main>
+                    <main className="min-w-0 flex-1 space-y-6">{children}</main>
 
                     {sidebar && (
                         <aside className="min-[1246px]:sticky min-[1246px]:top-6 min-[1246px]:h-fit min-[1246px]:w-80">
@@ -223,6 +341,177 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                     )}
                 </div>
             </div>
+
+            <Modal
+                show={showFeedSearch && feedSearchOpen}
+                onClose={() => {
+                    setFeedSearchOpen(false);
+                    setFeedSearchValue('');
+                    setFeedSearchResults({ users: [], posts: [], topics: [] });
+                    setFeedSearchLoading(false);
+                }}
+                maxWidth="xl"
+                centered
+            >
+                <div className="space-y-5 p-6">
+                    <div>
+                        <div className="text-lg font-semibold">Search</div>
+                        <p className="app-text-soft mt-2 text-sm leading-6">
+                            Search people, posts, or topics across your feed.
+                        </p>
+                    </div>
+
+                    <form onSubmit={submitFeedSearch} className="space-y-4">
+                        <label className="app-search flex items-center gap-3 rounded-[24px] px-4 py-3 backdrop-blur transition">
+                            <Search className="app-text-muted h-5 w-5 shrink-0" strokeWidth={1.8} />
+                            <input
+                                ref={feedSearchInputRef}
+                                type="search"
+                                value={feedSearchValue}
+                                onChange={(event) => setFeedSearchValue(event.target.value)}
+                                placeholder="Search people, posts, or topics"
+                                className="app-search-input w-full bg-transparent text-sm focus:outline-none"
+                            />
+                        </label>
+
+                        <div className="flex justify-end">
+                            <button
+                                type="submit"
+                                disabled={!feedSearchValue.trim()}
+                                className="app-button-primary rounded-full px-4 py-2 text-sm disabled:opacity-60"
+                            >
+                                Search
+                            </button>
+                        </div>
+                    </form>
+
+                    {feedSearchLoading ? (
+                        <div className="app-panel-inset rounded-[24px] px-4 py-4 text-sm">
+                            Searching...
+                        </div>
+                    ) : feedSearchValue.trim() ? (
+                        <div className="space-y-4">
+                            {feedSearchResults.users.length > 0 && (
+                                <div className="space-y-3">
+                                    <div className="app-text-soft text-xs uppercase tracking-[0.18em]">
+                                        People
+                                    </div>
+                                    <div className="space-y-3">
+                                        {feedSearchResults.users.map((person) => (
+                                            <Link
+                                                key={person.id}
+                                                href={route('users.show', person.username)}
+                                                onClick={() => setFeedSearchOpen(false)}
+                                                className="app-card-inset flex items-center gap-3 rounded-[22px] px-4 py-3 transition hover:bg-[var(--vynce-surface-muted)]"
+                                            >
+                                                {person.avatar_url ? (
+                                                    <img
+                                                        src={person.avatar_url}
+                                                        alt={person.name}
+                                                        className="h-11 w-11 rounded-2xl object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="app-avatar-fallback flex h-11 w-11 items-center justify-center rounded-2xl text-sm font-semibold">
+                                                        {initialsFor(person.name)}
+                                                    </div>
+                                                )}
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="truncate text-sm font-semibold">
+                                                        {person.name}
+                                                    </div>
+                                                    <div className="app-text-soft truncate text-xs">
+                                                        @{person.username}
+                                                    </div>
+                                                </div>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {feedSearchResults.topics.length > 0 && (
+                                <div className="space-y-3">
+                                    <div className="app-text-soft text-xs uppercase tracking-[0.18em]">
+                                        Topics
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {feedSearchResults.topics.map((topic) => (
+                                            <button
+                                                key={topic}
+                                                type="button"
+                                                onClick={() => setFeedSearchValue(topic)}
+                                                className="app-button-secondary inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm"
+                                            >
+                                                <Hash className="h-4 w-4" strokeWidth={1.8} />
+                                                {topic}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {feedSearchResults.posts.length > 0 && (
+                                <div className="space-y-3">
+                                    <div className="app-text-soft text-xs uppercase tracking-[0.18em]">
+                                        Posts
+                                    </div>
+                                    <div className="space-y-3">
+                                        {feedSearchResults.posts.map((post) => (
+                                            <Link
+                                                key={post.id}
+                                                href={route('users.show', post.user?.username)}
+                                                onClick={() => setFeedSearchOpen(false)}
+                                                className="app-card-inset block rounded-[22px] px-4 py-4 transition hover:bg-[var(--vynce-surface-muted)]"
+                                            >
+                                                <div className="mb-2 flex items-center gap-2 text-xs">
+                                                    <FileText
+                                                        className="h-3.5 w-3.5"
+                                                        strokeWidth={1.8}
+                                                    />
+                                                    <span className="font-semibold">
+                                                        {post.user?.name ?? 'Unknown user'}
+                                                    </span>
+                                                    {post.user?.username && (
+                                                        <span className="app-text-soft">
+                                                            @{post.user.username}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="line-clamp-3 whitespace-pre-wrap text-sm leading-6">
+                                                    {post.body}
+                                                </div>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {feedSearchResults.users.length === 0 &&
+                                feedSearchResults.topics.length === 0 &&
+                                feedSearchResults.posts.length === 0 && (
+                                    <div className="app-dashed-panel app-text-muted rounded-[24px] p-5 text-sm leading-6">
+                                        No results match “{feedSearchValue.trim()}”.
+                                    </div>
+                                )}
+                        </div>
+                    ) : (
+                        <div className="app-dashed-panel app-text-muted rounded-[24px] p-5 text-sm leading-6">
+                            Start typing to search for people, posts, or topics.
+                        </div>
+                    )}
+                </div>
+            </Modal>
         </>
+    );
+}
+
+function initialsFor(name) {
+    return (
+        name
+            ?.split(' ')
+            .map((part) => part[0])
+            .join('')
+            .slice(0, 2)
+            .toUpperCase() ?? 'VN'
     );
 }
