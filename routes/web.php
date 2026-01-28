@@ -31,6 +31,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/feed', [FeedController::class, 'home'])->name('feed.home');
     Route::get('/feed/following', [FeedController::class, 'following'])->name('feed.following');
     Route::get('/feed/discover', [FeedController::class, 'discover'])->name('feed.discover');
+    Route::get('/search', [FeedController::class, 'search'])->name('feed.search');
     Route::get('/messages', [ConversationController::class, 'index'])->name('messages.index');
     Route::get('/messages/{conversation}', [ConversationController::class, 'show'])->name('messages.show');
     Route::post('/messages/start/{user}', [ConversationController::class, 'start'])->middleware('throttle:60,1')->name('messages.start');

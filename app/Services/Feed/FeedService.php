@@ -84,6 +84,79 @@ class FeedService
             ->paginate($perPage);
     }
 
+    public function search(
+        User $user,
+        string $search,
+        int $userLimit = 5,
+        int $postLimit = 5,
+        int $topicLimit = 5,
+    ): array {
+        $term = trim($search);
+
+        if ($term === '') {
+            return [
+                'users' => collect(),
+                'posts' => collect(),
+                'topics' => [],
+            ];
+        }
+
+        $normalized = mb_strtolower($term);
+
+        $users = User::query()
+            ->where(function (Builder $query) use ($normalized) {
+                $query->whereRaw('LOWER(users.name) LIKE ?', ["%{$normalized}%"])
+                    ->orWhereRaw('LOWER(users.username) LIKE ?', ["%{$normalized}%"]);
+            })
+            ->whereNotIn('users.id', function ($query) use ($user) {
+                $query->select('blocked_id')
+                    ->from('user_blocks')
+                    ->where('blocker_id', $user->id);
+            })
+            ->whereNotIn('users.id', function ($query) use ($user) {
+                $query->select('blocker_id')
+                    ->from('user_blocks')
+                    ->where('blocked_id', $user->id);
+            })
+            ->where(function (Builder $query) use ($user) {
+                $query->where('users.is_private', false)
+                    ->orWhere('users.id', $user->id)
+                    ->orWhereExists(function ($subQuery) use ($user) {
+                        $subQuery->selectRaw('1')
+                            ->from('follows')
+                            ->whereColumn('follows.followed_id', 'users.id')
+                            ->where('follows.follower_id', $user->id)
+                            ->where('follows.status', FollowStatus::Accepted);
+                    });
+            })
+            ->limit($userLimit)
+            ->get();
+
+        $posts = $this->baseQuery($user)
+            ->where(function (Builder $query) use ($normalized) {
+                $query->whereRaw('LOWER(posts.body) LIKE ?', ["%{$normalized}%"])
+                    ->orWhereRaw('LOWER(CAST(posts.hashtags AS TEXT)) LIKE ?', ["%{$normalized}%"]);
+            })
+            ->latest('published_at')
+            ->limit($postLimit)
+            ->get();
+
+        $topics = $posts
+            ->flatMap(fn (Post $post) => $post->hashtags ?? [])
+            ->filter(fn ($tag) => str_contains(mb_strtolower((string) $tag), $normalized))
+            ->map(fn ($tag) => ltrim((string) $tag, '#'))
+            ->unique()
+            ->values()
+            ->take($topicLimit)
+            ->all();
+
+        return [
+            'users' => $users,
+            'posts' => $posts,
+            'topics' => $topics,
+        ];
+    }
+
     private function baseQuery(User $user): Builder
     {
         return Post::query()

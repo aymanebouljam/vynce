@@ -9,6 +9,8 @@ use App\Models\User;
 use App\Services\Feed\FeedService;
 use App\Services\SocialGraph\SocialGraphService;
 use App\Support\InertiaPaginatedData;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -59,6 +61,36 @@ class FeedController extends Controller
             'suggestions' => UserResource::collection(
                 $socialGraphService->suggestions(request()->user()),
             )->resolve(),
+        ]);
+    }
+
+    public function search(Request $request, FeedService $feedService): JsonResponse
+    {
+        $term = trim((string) $request->string('q'));
+        $filter = trim((string) $request->string('filter', 'people'));
+        $results = $feedService->search(
+            request()->user(),
+            $term,
+            $request->expectsJson() ? 5 : 12,
+            $request->expectsJson() ? 5 : 12,
+            8,
+        );
+
+        if (! $request->expectsJson()) {
+            return Inertia::render('Search/Index', [
+                'query' => $term,
+                'filter' => in_array($filter, ['people', 'posts'], true) ? $filter : 'people',
+                'users' => UserResource::collection($results['users'])->resolve(),
+                'posts' => PostResource::collection($results['posts'])->resolve(),
+                'topics' => $results['topics'],
+            ]);
+        }
+
+        return response()->json([
+            'query' => $term,
+            'users' => UserResource::collection($results['users'])->resolve(),
+            'posts' => PostResource::collection($results['posts'])->resolve(),
+            'topics' => $results['topics'],
         ]);
     }
 
