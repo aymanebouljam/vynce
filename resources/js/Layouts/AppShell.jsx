@@ -1,17 +1,7 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import Modal from '@/Components/Modal';
-import { Head, Link, usePage } from '@inertiajs/react';
-import {
-    Compass,
-    FileText,
-    Hash,
-    House,
-    LogOut,
-    MessageCircle,
-    Search,
-    Settings,
-    Users,
-} from 'lucide-react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Compass, House, LogOut, MessageCircle, Search, Settings, Users } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 export default function AppShell({ children, title, sidebar, navSearch = null }) {
@@ -34,8 +24,6 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
     const [feedSearchValue, setFeedSearchValue] = useState('');
     const [feedSearchResults, setFeedSearchResults] = useState({
         users: [],
-        posts: [],
-        topics: [],
     });
     const [feedSearchLoading, setFeedSearchLoading] = useState(false);
     const feedSearchInputRef = useRef(null);
@@ -62,8 +50,6 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
         setFeedSearchValue('');
         setFeedSearchResults({
             users: [],
-            posts: [],
-            topics: [],
         });
         setFeedSearchLoading(false);
     }, [feedSearchOpen]);
@@ -78,8 +64,6 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
         if (!term) {
             setFeedSearchResults({
                 users: [],
-                posts: [],
-                topics: [],
             });
             setFeedSearchLoading(false);
             return undefined;
@@ -103,8 +87,6 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
 
                     setFeedSearchResults({
                         users: data.users ?? [],
-                        posts: data.posts ?? [],
-                        topics: data.topics ?? [],
                     });
                 })
                 .catch(() => {
@@ -114,8 +96,6 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
 
                     setFeedSearchResults({
                         users: [],
-                        posts: [],
-                        topics: [],
                     });
                 })
                 .finally(() => {
@@ -347,7 +327,7 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                 onClose={() => {
                     setFeedSearchOpen(false);
                     setFeedSearchValue('');
-                    setFeedSearchResults({ users: [], posts: [], topics: [] });
+                    setFeedSearchResults({ users: [] });
                     setFeedSearchLoading(false);
                 }}
                 maxWidth="xl"
@@ -357,7 +337,7 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                     <div>
                         <div className="text-lg font-semibold">Search</div>
                         <p className="app-text-soft mt-2 text-sm leading-6">
-                            Search people, posts, or topics across your feed.
+                            Search people here, or continue to the full search page.
                         </p>
                     </div>
 
@@ -369,7 +349,7 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                                 type="search"
                                 value={feedSearchValue}
                                 onChange={(event) => setFeedSearchValue(event.target.value)}
-                                placeholder="Search people, posts, or topics"
+                                placeholder="Search people"
                                 className="app-search-input w-full bg-transparent text-sm focus:outline-none"
                             />
                         </label>
@@ -409,6 +389,11 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                                                         src={person.avatar_url}
                                                         alt={person.name}
                                                         className="h-11 w-11 rounded-2xl object-cover"
+                                                        style={{
+                                                            objectPosition: `${person.avatar_position_x}% ${person.avatar_position_y}%`,
+                                                            transform: `scale(${person.avatar_zoom})`,
+                                                            transformOrigin: `${person.avatar_position_x}% ${person.avatar_position_y}%`,
+                                                        }}
                                                     />
                                                 ) : (
                                                     <div className="app-avatar-fallback flex h-11 w-11 items-center justify-center rounded-2xl text-sm font-semibold">
@@ -428,77 +413,13 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                                     </div>
                                 </div>
                             )}
-
-                            {feedSearchResults.topics.length > 0 && (
-                                <div className="space-y-3">
-                                    <div className="app-text-soft text-xs uppercase tracking-[0.18em]">
-                                        Topics
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {feedSearchResults.topics.map((topic) => (
-                                            <button
-                                                key={topic}
-                                                type="button"
-                                                onClick={() => setFeedSearchValue(topic)}
-                                                className="app-button-secondary inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm"
-                                            >
-                                                <Hash className="h-4 w-4" strokeWidth={1.8} />
-                                                {topic}
-                                            </button>
-                                        ))}
-                                    </div>
+                            {feedSearchResults.users.length === 0 && (
+                                <div className="app-dashed-panel app-text-muted rounded-[24px] p-5 text-sm leading-6">
+                                    No results match “{feedSearchValue.trim()}”.
                                 </div>
                             )}
-
-                            {feedSearchResults.posts.length > 0 && (
-                                <div className="space-y-3">
-                                    <div className="app-text-soft text-xs uppercase tracking-[0.18em]">
-                                        Posts
-                                    </div>
-                                    <div className="space-y-3">
-                                        {feedSearchResults.posts.map((post) => (
-                                            <Link
-                                                key={post.id}
-                                                href={route('users.show', post.user?.username)}
-                                                onClick={() => setFeedSearchOpen(false)}
-                                                className="app-card-inset block rounded-[22px] px-4 py-4 transition hover:bg-[var(--vynce-surface-muted)]"
-                                            >
-                                                <div className="mb-2 flex items-center gap-2 text-xs">
-                                                    <FileText
-                                                        className="h-3.5 w-3.5"
-                                                        strokeWidth={1.8}
-                                                    />
-                                                    <span className="font-semibold">
-                                                        {post.user?.name ?? 'Unknown user'}
-                                                    </span>
-                                                    {post.user?.username && (
-                                                        <span className="app-text-soft">
-                                                            @{post.user.username}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="line-clamp-3 whitespace-pre-wrap text-sm leading-6">
-                                                    {post.body}
-                                                </div>
-                                            </Link>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {feedSearchResults.users.length === 0 &&
-                                feedSearchResults.topics.length === 0 &&
-                                feedSearchResults.posts.length === 0 && (
-                                    <div className="app-dashed-panel app-text-muted rounded-[24px] p-5 text-sm leading-6">
-                                        No results match “{feedSearchValue.trim()}”.
-                                    </div>
-                                )}
                         </div>
-                    ) : (
-                        <div className="app-dashed-panel app-text-muted rounded-[24px] p-5 text-sm leading-6">
-                            Start typing to search for people, posts, or topics.
-                        </div>
-                    )}
+                    ) : null}
                 </div>
             </Modal>
         </>

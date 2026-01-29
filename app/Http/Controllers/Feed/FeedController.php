@@ -64,7 +64,7 @@ class FeedController extends Controller
         ]);
     }
 
-    public function search(Request $request, FeedService $feedService): JsonResponse
+    public function search(Request $request, FeedService $feedService): Response|JsonResponse
     {
         $term = trim((string) $request->string('q'));
         $filter = trim((string) $request->string('filter', 'people'));
@@ -76,14 +76,20 @@ class FeedController extends Controller
             8,
         );
 
+        $page = Inertia::render('Search/Index', [
+            'query' => $term,
+            'filter' => in_array($filter, ['people', 'posts'], true) ? $filter : 'people',
+            'users' => UserResource::collection($results['users'])->resolve(),
+            'posts' => PostResource::collection($results['posts'])->resolve(),
+            'topics' => $results['topics'],
+        ]);
+
+        if ($request->header('X-Inertia')) {
+            return $page;
+        }
+
         if (! $request->expectsJson()) {
-            return Inertia::render('Search/Index', [
-                'query' => $term,
-                'filter' => in_array($filter, ['people', 'posts'], true) ? $filter : 'people',
-                'users' => UserResource::collection($results['users'])->resolve(),
-                'posts' => PostResource::collection($results['posts'])->resolve(),
-                'topics' => $results['topics'],
-            ]);
+            return $page;
         }
 
         return response()->json([
