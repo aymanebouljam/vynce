@@ -156,6 +156,11 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
                                                         src={person.avatar_url}
                                                         alt={person.name}
                                                         className="h-12 w-12 rounded-2xl object-cover"
+                                                        style={{
+                                                            objectPosition: `${person.avatar_position_x}% ${person.avatar_position_y}%`,
+                                                            transform: `scale(${person.avatar_zoom})`,
+                                                            transformOrigin: `${person.avatar_position_x}% ${person.avatar_position_y}%`,
+                                                        }}
                                                     />
                                                 ) : (
                                                     <div className="app-avatar-fallback flex h-12 w-12 items-center justify-center rounded-2xl text-xs font-semibold">

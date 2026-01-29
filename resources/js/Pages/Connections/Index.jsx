@@ -283,6 +283,11 @@ export default function Index({
                                             src={person.avatar_url}
                                             alt={person.name}
                                             className="h-14 w-14 rounded-2xl object-cover"
+                                            style={{
+                                                objectPosition: `${person.avatar_position_x}% ${person.avatar_position_y}%`,
+                                                transform: `scale(${person.avatar_zoom})`,
+                                                transformOrigin: `${person.avatar_position_x}% ${person.avatar_position_y}%`,
+                                            }}
                                         />
                                     ) : (
                                         <div className="app-avatar-fallback flex h-14 w-14 items-center justify-center rounded-2xl text-sm font-semibold">

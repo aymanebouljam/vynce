@@ -1139,6 +1139,11 @@ export default function Index({ conversations, activeConversation, contacts = []
                                             src={contact.avatar_url}
                                             alt={contact.name}
                                             className="h-11 w-11 rounded-2xl object-cover"
+                                            style={{
+                                                objectPosition: `${contact.avatar_position_x}% ${contact.avatar_position_y}%`,
+                                                transform: `scale(${contact.avatar_zoom})`,
+                                                transformOrigin: `${contact.avatar_position_x}% ${contact.avatar_position_y}%`,
+                                            }}
                                         />
                                     ) : (
                                         <div className="app-avatar-fallback flex h-11 w-11 items-center justify-center rounded-2xl text-sm font-semibold">
