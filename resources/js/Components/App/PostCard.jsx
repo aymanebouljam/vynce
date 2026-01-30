@@ -353,11 +353,23 @@ export default function PostCard({
                                     }`}
                                 >
                                     {post.media.map((media, index) => (
-                                        <div key={media.id} className="feed-post-card__media">
+                                        <div
+                                            key={media.id}
+                                            className={`feed-post-card__media ${
+                                                post.media.length === 1
+                                                    ? 'feed-post-card__media--single'
+                                                    : ''
+                                            }`}
+                                        >
                                             <img
                                                 src={media.url}
                                                 alt=""
                                                 className="feed-post-card__media-image"
+                                                style={{
+                                                    objectPosition: `${media.position_x}% ${media.position_y}%`,
+                                                    transform: `scale(${media.zoom ?? 1})`,
+                                                    transformOrigin: `${media.position_x}% ${media.position_y}%`,
+                                                }}
                                             />
                                             {index === 0 && (
                                                 <div className="feed-post-card__media-badge">

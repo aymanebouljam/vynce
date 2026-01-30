@@ -1,5 +1,13 @@
+import Modal from '@/Components/Modal';
 import InputError from '@/Components/InputError';
-import { ChevronDown, Image, MessageCircle, SendHorizontal } from 'lucide-react';
+import {
+    ChevronDown,
+    Image,
+    MessageCircle,
+    Move,
+    SendHorizontal,
+    SlidersHorizontal,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useForm, usePage } from '@inertiajs/react';
 
@@ -14,9 +22,11 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
         body: '',
         visibility: 'public',
         media: [],
+        media_transform: [],
     });
     const [isAudienceOpen, setIsAudienceOpen] = useState(false);
     const [mediaPreviews, setMediaPreviews] = useState([]);
+    const [activeMediaIndex, setActiveMediaIndex] = useState(null);
     const audienceRef = useRef(null);
     const mediaInputRef = useRef(null);
     const initials = auth.user.name
@@ -52,6 +62,14 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
         mediaPreviews.forEach((preview) => URL.revokeObjectURL(preview.url));
 
         setData('media', nextFiles);
+        setData(
+            'media_transform',
+            nextFiles.map(() => ({
+                zoom: 1,
+                position_x: 50,
+                position_y: 50,
+            })),
+        );
         setMediaPreviews(
             nextFiles.map((file, index) => ({
                 id: `${file.name}-${file.size}-${index}`,
@@ -67,6 +85,10 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
         mediaPreviews.forEach((preview) => URL.revokeObjectURL(preview.url));
 
         setData('media', nextFiles);
+        setData(
+            'media_transform',
+            data.media_transform.filter((_, index) => index !== indexToRemove),
+        );
         setMediaPreviews(
             nextFiles.map((file, index) => ({
                 id: `${file.name}-${file.size}-${index}`,
@@ -77,6 +99,10 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
 
         if (mediaInputRef.current) {
             mediaInputRef.current.value = '';
+        }
+
+        if (activeMediaIndex === indexToRemove) {
+            setActiveMediaIndex(null);
         }
     };
 
@@ -102,6 +128,22 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
     const activeVisibility =
         visibilityOptions.find((option) => option.value === data.visibility) ??
         visibilityOptions[0];
+    const activeMediaPreview =
+        activeMediaIndex !== null ? (mediaPreviews[activeMediaIndex] ?? null) : null;
+
+    const updateMediaTransform = (index, field, value) => {
+        setData(
+            'media_transform',
+            data.media_transform.map((transform, transformIndex) =>
+                transformIndex === index
+                    ? {
+                          ...transform,
+                          [field]: value,
+                      }
+                    : transform,
+            ),
+        );
+    };
 
     return (
         <form
@@ -151,6 +193,11 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
                                         src={preview.url}
                                         alt={preview.name}
                                         className="h-40 w-full object-cover"
+                                        style={{
+                                            objectPosition: `${data.media_transform[index]?.position_x ?? 50}% ${data.media_transform[index]?.position_y ?? 50}%`,
+                                            transform: `scale(${data.media_transform[index]?.zoom ?? 1})`,
+                                            transformOrigin: `${data.media_transform[index]?.position_x ?? 50}% ${data.media_transform[index]?.position_y ?? 50}%`,
+                                        }}
                                     />
                                     <button
                                         type="button"
@@ -158,6 +205,17 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
                                         className="app-button-secondary absolute right-3 top-3 rounded-full px-3 py-1 text-xs"
                                     >
                                         Remove
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveMediaIndex(index)}
+                                        className="app-button-secondary absolute bottom-3 right-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs"
+                                    >
+                                        <SlidersHorizontal
+                                            className="h-3.5 w-3.5"
+                                            strokeWidth={1.9}
+                                        />
+                                        Adjust
                                     </button>
                                 </div>
                             ))}
@@ -233,6 +291,106 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
                     <InputError message={errors['media.0']} className="mt-2" />
                 </div>
             </div>
+
+            <Modal
+                show={activeMediaIndex !== null && Boolean(activeMediaPreview)}
+                onClose={() => setActiveMediaIndex(null)}
+                maxWidth="2xl"
+                centered
+            >
+                {activeMediaPreview && activeMediaIndex !== null && (
+                    <div className="space-y-6 p-6">
+                        <div>
+                            <div className="text-lg font-semibold">Adjust image</div>
+                            <p className="app-text-soft mt-2 text-sm leading-6">
+                                Fine-tune the framing before publishing the post.
+                            </p>
+                        </div>
+
+                        <div className="app-panel-inset relative overflow-hidden rounded-[32px]">
+                            <img
+                                src={activeMediaPreview.url}
+                                alt={activeMediaPreview.name}
+                                className="h-[26rem] w-full object-cover"
+                                style={{
+                                    objectPosition: `${data.media_transform[activeMediaIndex]?.position_x ?? 50}% ${data.media_transform[activeMediaIndex]?.position_y ?? 50}%`,
+                                    transform: `scale(${data.media_transform[activeMediaIndex]?.zoom ?? 1})`,
+                                    transformOrigin: `${data.media_transform[activeMediaIndex]?.position_x ?? 50}% ${data.media_transform[activeMediaIndex]?.position_y ?? 50}%`,
+                                }}
+                            />
+                        </div>
+
+                        <div className="grid gap-4 md:grid-cols-3">
+                            <MediaRangeField
+                                icon={SlidersHorizontal}
+                                label="Zoom"
+                                value={data.media_transform[activeMediaIndex]?.zoom ?? 1}
+                                min={1}
+                                max={3}
+                                step={0.05}
+                                onChange={(value) =>
+                                    updateMediaTransform(activeMediaIndex, 'zoom', value)
+                                }
+                            />
+                            <MediaRangeField
+                                icon={Move}
+                                label="Horizontal"
+                                value={data.media_transform[activeMediaIndex]?.position_x ?? 50}
+                                min={0}
+                                max={100}
+                                step={1}
+                                onChange={(value) =>
+                                    updateMediaTransform(activeMediaIndex, 'position_x', value)
+                                }
+                            />
+                            <MediaRangeField
+                                icon={Move}
+                                label="Vertical"
+                                value={data.media_transform[activeMediaIndex]?.position_y ?? 50}
+                                min={0}
+                                max={100}
+                                step={1}
+                                onChange={(value) =>
+                                    updateMediaTransform(activeMediaIndex, 'position_y', value)
+                                }
+                            />
+                        </div>
+
+                        <div className="flex justify-end">
+                            <button
+                                type="button"
+                                onClick={() => setActiveMediaIndex(null)}
+                                className="app-button-primary rounded-full px-4 py-2 text-sm font-semibold"
+                            >
+                                Done
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </Modal>
         </form>
+    );
+}
+
+function MediaRangeField({ icon: Icon, label, value, min, max, step, onChange }) {
+    return (
+        <label className="block">
+            <div className="mb-1 flex items-center justify-between gap-3 text-[11px] uppercase tracking-[0.18em] text-[rgba(241,235,251,0.76)]">
+                <span className="inline-flex items-center gap-1.5">
+                    <Icon className="h-3.5 w-3.5" strokeWidth={1.9} />
+                    {label}
+                </span>
+                <span>{value}</span>
+            </div>
+            <input
+                type="range"
+                min={min}
+                max={max}
+                step={step}
+                value={value}
+                onChange={(event) => onChange(Number(event.target.value))}
+                className="w-full accent-[var(--vynce-accent)]"
+            />
+        </label>
     );
 }
