@@ -20,6 +20,10 @@ class StorePostRequest extends FormRequest
             'visibility' => ['required', Rule::in(['public', 'followers'])],
             'media' => ['nullable', 'array', 'max:4'],
             'media.*' => ['image', 'max:8192'],
+            'media_transform' => ['nullable', 'array'],
+            'media_transform.*.zoom' => ['nullable', 'numeric', 'between:1,3'],
+            'media_transform.*.position_x' => ['nullable', 'integer', 'between:0,100'],
+            'media_transform.*.position_y' => ['nullable', 'integer', 'between:0,100'],
         ];
     }
 

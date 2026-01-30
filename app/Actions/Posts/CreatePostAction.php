@@ -22,16 +22,23 @@ class CreatePostAction
                 'published_at' => now(),
             ]);
 
+            $mediaTransforms = $data['media_transform'] ?? [];
+
             foreach ($data['media'] ?? [] as $position => $file) {
                 if (! $file instanceof UploadedFile) {
                     continue;
                 }
+
+                $transform = $mediaTransforms[$position] ?? [];
 
                 $post->media()->create([
                     'disk' => 'public',
                     'path' => $file->store('posts', 'public'),
                     'mime_type' => $file->getMimeType() ?? 'application/octet-stream',
                     'size' => $file->getSize(),
+                    'zoom' => $transform['zoom'] ?? 1,
+                    'position_x' => $transform['position_x'] ?? 50,
+                    'position_y' => $transform['position_y'] ?? 50,
                     'position' => $position,
                 ]);
             }
