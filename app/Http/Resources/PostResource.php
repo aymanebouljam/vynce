@@ -35,6 +35,9 @@ class PostResource extends JsonResource
                 'id' => $media->id,
                 'url' => route('media.public', ['path' => $media->path]),
                 'mime_type' => $media->mime_type,
+                'zoom' => $media->zoom ?? 1,
+                'position_x' => $media->position_x ?? 50,
+                'position_y' => $media->position_y ?? 50,
                 'position' => $media->position,
             ])->values(),
             'comments' => $this->comments->take(5)->map(fn ($comment) => [

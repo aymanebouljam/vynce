@@ -16,8 +16,20 @@ class PostMedia extends Model
         'path',
         'mime_type',
         'size',
+        'zoom',
+        'position_x',
+        'position_y',
         'position',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'zoom' => 'float',
+            'position_x' => 'integer',
+            'position_y' => 'integer',
+        ];
+    }
 
     public function post(): BelongsTo
     {
