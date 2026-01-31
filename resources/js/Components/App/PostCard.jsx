@@ -2,6 +2,8 @@ import DangerButton from '@/Components/DangerButton';
 import Modal from '@/Components/Modal';
 import SecondaryButton from '@/Components/SecondaryButton';
 import {
+    ChevronLeft,
+    ChevronRight,
     Ellipsis,
     Globe,
     Heart,
@@ -37,6 +39,7 @@ export default function PostCard({
     const [visibilityMenuOpen, setVisibilityMenuOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
+    const [viewerIndex, setViewerIndex] = useState(null);
     const [selectedVisibility, setSelectedVisibility] = useState(post.visibility);
     const menuButtonRef = useRef(null);
     const menuPanelRef = useRef(null);
@@ -76,6 +79,10 @@ export default function PostCard({
     }, [post.id, post.visibility]);
 
     useEffect(() => {
+        setViewerIndex(null);
+    }, [post.id]);
+
+    useEffect(() => {
         const handleClickOutside = (event) => {
             const clickedButton = menuButtonRef.current?.contains(event.target);
             const clickedPanel = menuPanelRef.current?.contains(event.target);
@@ -97,6 +104,40 @@ export default function PostCard({
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
+
+    useEffect(() => {
+        if (viewerIndex === null) {
+            return undefined;
+        }
+
+        const handleKeyDown = (event) => {
+            if (event.key === 'ArrowLeft') {
+                setViewerIndex((current) => {
+                    if (current === null) {
+                        return current;
+                    }
+
+                    return current === 0 ? post.media.length - 1 : current - 1;
+                });
+            }
+
+            if (event.key === 'ArrowRight') {
+                setViewerIndex((current) => {
+                    if (current === null) {
+                        return current;
+                    }
+
+                    return current === post.media.length - 1 ? 0 : current + 1;
+                });
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [viewerIndex, post.media.length]);
 
     useEffect(() => {
         if (!menuOpen) {
@@ -259,6 +300,29 @@ export default function PostCard({
         });
     };
 
+    const currentViewerMedia =
+        viewerIndex !== null && post.media?.[viewerIndex] ? post.media[viewerIndex] : null;
+
+    const showPreviousMedia = () => {
+        setViewerIndex((current) => {
+            if (current === null) {
+                return current;
+            }
+
+            return current === 0 ? post.media.length - 1 : current - 1;
+        });
+    };
+
+    const showNextMedia = () => {
+        setViewerIndex((current) => {
+            if (current === null) {
+                return current;
+            }
+
+            return current === post.media.length - 1 ? 0 : current + 1;
+        });
+    };
+
     return (
         <>
             <article
@@ -360,6 +424,15 @@ export default function PostCard({
                                                     ? 'feed-post-card__media--single'
                                                     : ''
                                             }`}
+                                            role="button"
+                                            tabIndex={0}
+                                            onClick={() => setViewerIndex(index)}
+                                            onKeyDown={(event) => {
+                                                if (event.key === 'Enter' || event.key === ' ') {
+                                                    event.preventDefault();
+                                                    setViewerIndex(index);
+                                                }
+                                            }}
                                         >
                                             <img
                                                 src={media.url}
@@ -653,6 +726,60 @@ export default function PostCard({
                     </Modal>
                 </>
             )}
+            <Modal
+                show={viewerIndex !== null}
+                onClose={() => setViewerIndex(null)}
+                maxWidth="3xl"
+                centered
+                panel={false}
+            >
+                <div className="relative mx-auto flex min-h-[70vh] w-full max-w-5xl items-center justify-center">
+                    {currentViewerMedia ? (
+                        <>
+                            <div className="app-panel-inset relative w-full overflow-hidden rounded-[32px] p-4 sm:p-5">
+                                <img
+                                    src={currentViewerMedia.url}
+                                    alt=""
+                                    className="mx-auto max-h-[72vh] w-full rounded-[24px] object-contain"
+                                    style={{
+                                        objectPosition: `${currentViewerMedia.position_x}% ${currentViewerMedia.position_y}%`,
+                                        transform: `scale(${currentViewerMedia.zoom ?? 1})`,
+                                        transformOrigin: `${currentViewerMedia.position_x}% ${currentViewerMedia.position_y}%`,
+                                    }}
+                                />
+
+                                <div className="pointer-events-none absolute inset-x-0 top-4 flex justify-center">
+                                    <div className="app-panel-subtle rounded-full px-3 py-1 text-xs font-medium">
+                                        {viewerIndex + 1} / {post.media.length}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {post.media.length > 1 ? (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={showPreviousMedia}
+                                        className="app-button-secondary absolute left-2 inline-flex h-11 w-11 items-center justify-center rounded-full sm:left-4"
+                                        aria-label="Previous image"
+                                    >
+                                        <ChevronLeft className="h-5 w-5" strokeWidth={1.9} />
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={showNextMedia}
+                                        className="app-button-secondary absolute right-2 inline-flex h-11 w-11 items-center justify-center rounded-full sm:right-4"
+                                        aria-label="Next image"
+                                    >
+                                        <ChevronRight className="h-5 w-5" strokeWidth={1.9} />
+                                    </button>
+                                </>
+                            ) : null}
+                        </>
+                    ) : null}
+                </div>
+            </Modal>
         </>
     );
 }
