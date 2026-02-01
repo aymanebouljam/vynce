@@ -36,7 +36,6 @@ class CreatePostAction
                     'path' => $file->store('posts', 'public'),
                     'mime_type' => $file->getMimeType() ?? 'application/octet-stream',
                     'size' => $file->getSize(),
-                    'zoom' => $transform['zoom'] ?? 1,
                     'position_x' => $transform['position_x'] ?? 50,
                     'position_y' => $transform['position_y'] ?? 50,
                     'position' => $position,
