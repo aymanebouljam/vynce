@@ -438,11 +438,7 @@ export default function PostCard({
                                                 src={media.url}
                                                 alt=""
                                                 className="feed-post-card__media-image"
-                                                style={{
-                                                    objectPosition: `${media.position_x}% ${media.position_y}%`,
-                                                    transform: `scale(${media.zoom ?? 1})`,
-                                                    transformOrigin: `${media.position_x}% ${media.position_y}%`,
-                                                }}
+                                                style={postMediaTransformStyle(media)}
                                             />
                                             {index === 0 && (
                                                 <div className="feed-post-card__media-badge">
@@ -741,11 +737,7 @@ export default function PostCard({
                                     src={currentViewerMedia.url}
                                     alt=""
                                     className="mx-auto max-h-[72vh] w-full rounded-[24px] object-contain"
-                                    style={{
-                                        objectPosition: `${currentViewerMedia.position_x}% ${currentViewerMedia.position_y}%`,
-                                        transform: `scale(${currentViewerMedia.zoom ?? 1})`,
-                                        transformOrigin: `${currentViewerMedia.position_x}% ${currentViewerMedia.position_y}%`,
-                                    }}
+                                    style={postMediaTransformStyle(currentViewerMedia)}
                                 />
 
                                 <div className="pointer-events-none absolute inset-x-0 top-4 flex justify-center">
@@ -782,4 +774,16 @@ export default function PostCard({
             </Modal>
         </>
     );
+}
+
+function postMediaTransformStyle(media) {
+    const positionX = media.position_x ?? 50;
+    const positionY = media.position_y ?? 50;
+    const zoom = media.zoom ?? 1;
+
+    return {
+        objectPosition: `${positionX}% ${positionY}%`,
+        transform: `scale(${zoom})`,
+        transformOrigin: `${positionX}% ${positionY}%`,
+    };
 }

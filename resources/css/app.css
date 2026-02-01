@@ -1023,12 +1023,8 @@
 
     .feed-post-card__media--single {
         height: auto;
-        min-height: 14rem;
-        max-height: min(32rem, 70vh);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0.85rem;
+        min-height: 18rem;
+        aspect-ratio: 4 / 5;
     }
 
     .feed-post-card__media-image {
@@ -1040,10 +1036,8 @@
 
     .feed-post-card__media--single .feed-post-card__media-image {
         width: 100%;
-        height: auto;
-        max-height: min(30rem, 66vh);
-        object-fit: contain;
-        border-radius: 1rem;
+        height: 100%;
+        object-fit: cover;
     }
 
     .feed-post-card__media-badge {
