@@ -3,6 +3,7 @@ import InputError from '@/Components/InputError';
 import {
     ChevronDown,
     Image,
+    ImagePlus,
     MessageCircle,
     SendHorizontal,
     SquareDashedMousePointer,
@@ -68,7 +69,7 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
     const [cropInteractionState, setCropInteractionState] = useState(null);
     const audienceRef = useRef(null);
     const mediaInputRef = useRef(null);
-    const cropStageRef = useRef(null);
+    const cropViewportRef = useRef(null);
     const cropImageRef = useRef(null);
     const initials = auth.user.name
         ?.split(' ')
@@ -164,20 +165,16 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
         }
 
         const syncCropOverlay = () => {
-            const stage = cropStageRef.current;
+            const viewport = cropViewportRef.current;
             const image = cropImageRef.current;
 
-            if (!stage || !image || image.clientWidth === 0 || image.clientHeight === 0) {
+            if (!viewport || !image || image.clientWidth === 0 || image.clientHeight === 0) {
                 return;
             }
 
-            const stageRect = stage.getBoundingClientRect();
-            const imageRect = image.getBoundingClientRect();
             const nextBounds = {
-                x: imageRect.left - stageRect.left,
-                y: imageRect.top - stageRect.top,
-                width: imageRect.width,
-                height: imageRect.height,
+                width: viewport.clientWidth,
+                height: viewport.clientHeight,
             };
 
             setCropBounds(nextBounds);
@@ -190,8 +187,8 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
             syncCropOverlay();
         });
 
-        if (cropStageRef.current) {
-            resizeObserver.observe(cropStageRef.current);
+        if (cropViewportRef.current) {
+            resizeObserver.observe(cropViewportRef.current);
         }
 
         if (cropImageRef.current) {
@@ -207,17 +204,21 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
     }, [activeMediaIndex, activeMediaPreview]);
 
     const handleMediaChange = (files) => {
-        const nextFiles = Array.from(files ?? []).slice(0, 4);
+        const selectedFiles = Array.from(files ?? []);
+        const nextFiles = [...data.media, ...selectedFiles].slice(0, 4);
 
         mediaPreviews.forEach((preview) => URL.revokeObjectURL(preview.url));
 
         setData('media', nextFiles);
         setData(
             'media_transform',
-            nextFiles.map(() => ({
-                position_x: 50,
-                position_y: 50,
-            })),
+            nextFiles.map(
+                (_, index) =>
+                    data.media_transform[index] ?? {
+                        position_x: 50,
+                        position_y: 50,
+                    },
+            ),
         );
         setMediaPreviews(
             nextFiles.map((file, index) => ({
@@ -226,6 +227,10 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
                 name: file.name,
             })),
         );
+
+        if (mediaInputRef.current) {
+            mediaInputRef.current.value = '';
+        }
     };
 
     const removeMedia = (indexToRemove) => {
@@ -419,6 +424,8 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
                                     key={preview.id}
                                     className="app-panel-inset relative overflow-hidden rounded-3xl"
                                 >
+                                    <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-20 bg-gradient-to-b from-[rgba(10,7,18,0.82)] via-[rgba(10,7,18,0.28)] to-transparent" />
+                                    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-24 bg-gradient-to-t from-[rgba(10,7,18,0.88)] via-[rgba(10,7,18,0.36)] to-transparent" />
                                     <img
                                         src={preview.url}
                                         alt={preview.name}
@@ -430,14 +437,14 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
                                     <button
                                         type="button"
                                         onClick={() => removeMedia(index)}
-                                        className="app-button-secondary absolute right-3 top-3 rounded-full px-3 py-1 text-xs"
+                                        className="border-white/14 absolute right-3 top-3 z-20 inline-flex items-center rounded-full border bg-[rgba(8,6,14,0.76)] px-3 py-1.5 text-xs font-semibold text-white shadow-[0_16px_32px_rgba(0,0,0,0.32)] backdrop-blur-md transition hover:bg-[rgba(8,6,14,0.9)]"
                                     >
                                         Remove
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setActiveMediaIndex(index)}
-                                        className="app-button-secondary absolute bottom-3 right-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs"
+                                        className="border-white/14 absolute bottom-3 right-3 z-20 inline-flex items-center gap-2 rounded-full border bg-[rgba(8,6,14,0.78)] px-3 py-1.5 text-xs font-semibold text-white shadow-[0_16px_32px_rgba(0,0,0,0.32)] backdrop-blur-md transition hover:bg-[rgba(8,6,14,0.92)]"
                                     >
                                         <SquareDashedMousePointer
                                             className="h-3.5 w-3.5"
@@ -452,10 +459,12 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
 
                     <div className="feed-composer-actions">
                         <label className="feed-composer-action cursor-pointer">
-                            <Image className="h-4 w-4" />
-                            {data.media.length > 0
-                                ? `${data.media.length} image${data.media.length > 1 ? 's' : ''}`
-                                : 'Media'}
+                            {data.media.length > 0 ? (
+                                <ImagePlus className="h-4 w-4" />
+                            ) : (
+                                <Image className="h-4 w-4" />
+                            )}
+                            {data.media.length > 0 ? `Add more (${data.media.length}/4)` : 'Media'}
                             <input
                                 ref={mediaInputRef}
                                 type="file"
@@ -535,122 +544,104 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
                             </p>
                         </div>
 
-                        <div
-                            ref={cropStageRef}
-                            className="app-panel-inset relative flex min-h-[24rem] items-center justify-center overflow-hidden rounded-[32px] p-4 sm:p-6"
-                        >
-                            <img
-                                ref={cropImageRef}
-                                src={activeMediaPreview.url}
-                                alt={activeMediaPreview.name}
-                                onLoad={() => {
-                                    const stage = cropStageRef.current;
-                                    const image = cropImageRef.current;
+                        <div className="app-panel-inset relative flex min-h-[24rem] items-center justify-center overflow-hidden rounded-[32px] p-4 sm:p-6">
+                            <div ref={cropViewportRef} className="relative inline-block max-w-full">
+                                <img
+                                    ref={cropImageRef}
+                                    src={activeMediaPreview.url}
+                                    alt={activeMediaPreview.name}
+                                    onLoad={() => {
+                                        const viewport = cropViewportRef.current;
+                                        const image = cropImageRef.current;
 
-                                    if (!stage || !image) {
-                                        return;
-                                    }
+                                        if (!viewport || !image) {
+                                            return;
+                                        }
 
-                                    const stageRect = stage.getBoundingClientRect();
-                                    const imageRect = image.getBoundingClientRect();
-                                    const nextBounds = {
-                                        x: imageRect.left - stageRect.left,
-                                        y: imageRect.top - stageRect.top,
-                                        width: imageRect.width,
-                                        height: imageRect.height,
-                                    };
+                                        const nextBounds = {
+                                            width: viewport.clientWidth,
+                                            height: viewport.clientHeight,
+                                        };
 
-                                    setCropBounds(nextBounds);
-                                    setCropRect((currentRect) =>
-                                        createCropRect(nextBounds, currentRect),
-                                    );
-                                }}
-                                className="max-h-[70vh] w-full rounded-[24px] object-contain"
-                            />
+                                        setCropBounds(nextBounds);
+                                        setCropRect((currentRect) =>
+                                            createCropRect(nextBounds, currentRect),
+                                        );
+                                    }}
+                                    className="block max-h-[70vh] max-w-full rounded-[24px]"
+                                />
 
-                            {cropBounds && cropRect ? (
-                                <>
-                                    <div
-                                        className="pointer-events-none absolute bg-black/50"
-                                        style={{
-                                            left: cropBounds.x,
-                                            top: cropBounds.y,
-                                            width: cropBounds.width,
-                                            height: cropRect.y,
-                                        }}
-                                    />
-                                    <div
-                                        className="pointer-events-none absolute bg-black/50"
-                                        style={{
-                                            left: cropBounds.x,
-                                            top: cropBounds.y + cropRect.y + cropRect.height,
-                                            width: cropBounds.width,
-                                            height:
-                                                cropBounds.height - cropRect.y - cropRect.height,
-                                        }}
-                                    />
-                                    <div
-                                        className="pointer-events-none absolute bg-black/50"
-                                        style={{
-                                            left: cropBounds.x,
-                                            top: cropBounds.y + cropRect.y,
-                                            width: cropRect.x,
-                                            height: cropRect.height,
-                                        }}
-                                    />
-                                    <div
-                                        className="pointer-events-none absolute bg-black/50"
-                                        style={{
-                                            left: cropBounds.x + cropRect.x + cropRect.width,
-                                            top: cropBounds.y + cropRect.y,
-                                            width: cropBounds.width - cropRect.x - cropRect.width,
-                                            height: cropRect.height,
-                                        }}
-                                    />
-                                    <button
-                                        type="button"
-                                        onPointerDown={startCropDrag}
-                                        className="absolute cursor-grab active:cursor-grabbing"
-                                        style={{
-                                            left: cropBounds.x + cropRect.x,
-                                            top: cropBounds.y + cropRect.y,
-                                            width: cropRect.width,
-                                            height: cropRect.height,
-                                        }}
-                                        aria-label="Move crop selection"
-                                    >
-                                        <span className="pointer-events-none absolute inset-0 rounded-[28px] border-2 border-white shadow-[0_0_0_9999px_rgba(0,0,0,0.02)]" />
-                                        <span className="pointer-events-none absolute inset-[10px] rounded-[20px] border border-white/35" />
-                                        <span className="pointer-events-none absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-white/25" />
-                                        <span className="pointer-events-none absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-white/25" />
+                                {cropBounds && cropRect ? (
+                                    <>
+                                        <div
+                                            className="pointer-events-none absolute inset-x-0 top-0 bg-black/50"
+                                            style={{ height: cropRect.y }}
+                                        />
+                                        <div
+                                            className="pointer-events-none absolute inset-x-0 bottom-0 bg-black/50"
+                                            style={{
+                                                height:
+                                                    cropBounds.height -
+                                                    cropRect.y -
+                                                    cropRect.height,
+                                            }}
+                                        />
+                                        <div
+                                            className="pointer-events-none absolute left-0 bg-black/50"
+                                            style={{
+                                                top: cropRect.y,
+                                                width: cropRect.x,
+                                                height: cropRect.height,
+                                            }}
+                                        />
+                                        <div
+                                            className="pointer-events-none absolute right-0 bg-black/50"
+                                            style={{
+                                                top: cropRect.y,
+                                                width:
+                                                    cropBounds.width - cropRect.x - cropRect.width,
+                                                height: cropRect.height,
+                                            }}
+                                        />
+                                        <button
+                                            type="button"
+                                            onPointerDown={startCropDrag}
+                                            className="absolute cursor-grab active:cursor-grabbing"
+                                            style={{
+                                                left: cropRect.x,
+                                                top: cropRect.y,
+                                                width: cropRect.width,
+                                                height: cropRect.height,
+                                            }}
+                                            aria-label="Move crop selection"
+                                        >
+                                            <span className="pointer-events-none absolute inset-0 rounded-[28px] border-2 border-white shadow-[0_0_0_9999px_rgba(0,0,0,0.02)]" />
+                                            <span className="pointer-events-none absolute inset-[10px] rounded-[20px] border border-white/35" />
+                                            <span className="pointer-events-none absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-white/25" />
+                                            <span className="pointer-events-none absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-white/25" />
+                                            {cropHandles.map((handle) => (
+                                                <span
+                                                    key={handle.name}
+                                                    className={`absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[rgba(17,11,28,0.75)] bg-white ${handle.className}`}
+                                                />
+                                            ))}
+                                        </button>
                                         {cropHandles.map((handle) => (
-                                            <span
+                                            <button
                                                 key={handle.name}
-                                                className={`absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[rgba(17,11,28,0.75)] bg-white ${handle.className}`}
+                                                type="button"
+                                                onPointerDown={startCropResize(handle.name)}
+                                                className={`absolute h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full ${handle.cursorClass}`}
+                                                style={{
+                                                    left: cropRect.x + handle.left(cropRect),
+                                                    top: cropRect.y + handle.top(cropRect),
+                                                }}
+                                                aria-label={handle.label}
                                             />
                                         ))}
-                                    </button>
-                                    {cropHandles.map((handle) => (
-                                        <button
-                                            key={handle.name}
-                                            type="button"
-                                            onPointerDown={startCropResize(handle.name)}
-                                            className={`absolute h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full ${handle.cursorClass}`}
-                                            style={{
-                                                left:
-                                                    cropBounds.x +
-                                                    cropRect.x +
-                                                    handle.left(cropRect),
-                                                top:
-                                                    cropBounds.y +
-                                                    cropRect.y +
-                                                    handle.top(cropRect),
-                                            }}
-                                            aria-label={handle.label}
-                                        />
-                                    ))}
-                                </>
-                            ) : null}
+                                    </>
+                                ) : null}
+                            </div>
                         </div>
 
                         <p className="app-text-muted text-xs">
@@ -765,8 +756,8 @@ function clamp(value, min, max) {
 
 function createCropRect(bounds, currentRect = null) {
     const inset = 24;
-    const maxWidth = Math.max(bounds.width - inset, bounds.width * 0.72);
-    const maxHeight = Math.max(bounds.height - inset, bounds.height * 0.72);
+    const maxWidth = Math.min(bounds.width - inset, bounds.width * 0.72);
+    const maxHeight = Math.min(bounds.height - inset, bounds.height * 0.72);
 
     let width = Math.min(maxWidth, maxHeight * cropAspectRatio);
     let height = width / cropAspectRatio;
