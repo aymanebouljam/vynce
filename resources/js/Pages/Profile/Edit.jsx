@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PrimaryButton from '@/Components/PrimaryButton';
 import { Head, router, useForm } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 import { cloneElement } from 'react';
@@ -37,29 +38,31 @@ export default function Edit({ profile }) {
         <AuthenticatedLayout title="Edit profile">
             <Head title="Edit profile" />
 
-            <div className="space-y-6">
-                <section className="app-panel rounded-[32px] p-6">
-                    <div className="mb-6">
+            <div className="space-y-5 2xl:space-y-6">
+                <section className="app-panel rounded-[28px] p-5 2xl:rounded-[32px] 2xl:p-6">
+                    <div className="mb-5 2xl:mb-6">
                         <button
                             type="button"
                             onClick={goBack}
-                            className="app-button-secondary inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm"
+                            className="app-button-secondary inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[13px] 2xl:px-4 2xl:text-sm"
                         >
                             <ArrowLeft className="h-4 w-4" strokeWidth={1.9} />
                             Back
                         </button>
-                        <h1 className="mt-4 text-2xl font-semibold">Edit profile</h1>
-                        <p className="app-text-soft mt-2 text-sm leading-7">
+                        <h1 className="mt-3 text-[1.6rem] font-semibold 2xl:mt-4 2xl:text-2xl">
+                            Edit profile
+                        </h1>
+                        <p className="app-text-soft mt-2 text-[13px] leading-6 2xl:text-sm 2xl:leading-7">
                             Keep identity fields clean and update your public-facing details here.
                         </p>
                     </div>
 
-                    <form onSubmit={submit} className="grid gap-5 md:grid-cols-2">
+                    <form onSubmit={submit} className="grid gap-4 md:grid-cols-2 2xl:gap-5">
                         <Field placeholder="Name" error={errors.name}>
                             <input
                                 value={data.name}
                                 onChange={(event) => setData('name', event.target.value)}
-                                className="field"
+                                className="field px-3.5 py-2.5 text-[13px] 2xl:px-4 2xl:py-3 2xl:text-sm"
                             />
                         </Field>
                         <Field placeholder="Username" error={errors.username}>
@@ -68,7 +71,7 @@ export default function Edit({ profile }) {
                                 onChange={(event) =>
                                     setData('username', event.target.value.toLowerCase())
                                 }
-                                className="field"
+                                className="field px-3.5 py-2.5 text-[13px] 2xl:px-4 2xl:py-3 2xl:text-sm"
                             />
                         </Field>
                         <Field placeholder="Email" error={errors.email}>
@@ -76,14 +79,14 @@ export default function Edit({ profile }) {
                                 type="email"
                                 value={data.email}
                                 onChange={(event) => setData('email', event.target.value)}
-                                className="field"
+                                className="field px-3.5 py-2.5 text-[13px] 2xl:px-4 2xl:py-3 2xl:text-sm"
                             />
                         </Field>
                         <Field placeholder="Location" error={errors.location}>
                             <input
                                 value={data.location}
                                 onChange={(event) => setData('location', event.target.value)}
-                                className="field"
+                                className="field px-3.5 py-2.5 text-[13px] 2xl:px-4 2xl:py-3 2xl:text-sm"
                             />
                         </Field>
                         <Field
@@ -94,17 +97,17 @@ export default function Edit({ profile }) {
                             <input
                                 value={data.website_url}
                                 onChange={(event) => setData('website_url', event.target.value)}
-                                className="field"
+                                className="field px-3.5 py-2.5 text-[13px] 2xl:px-4 2xl:py-3 2xl:text-sm"
                             />
                         </Field>
                         <Field placeholder="Bio" error={errors.bio} className="md:col-span-2">
                             <textarea
                                 value={data.bio}
                                 onChange={(event) => setData('bio', event.target.value)}
-                                className="field min-h-28 resize-none"
+                                className="field min-h-24 resize-none px-3.5 py-2.5 text-[13px] 2xl:min-h-28 2xl:px-4 2xl:py-3 2xl:text-sm"
                             />
                         </Field>
-                        <label className="app-panel-inset app-text-high flex items-center gap-3 rounded-2xl px-4 py-4 text-sm md:col-span-2">
+                        <label className="app-panel-inset app-text-high inline-flex w-fit items-center gap-2.5 rounded-[18px] px-3.5 py-3 text-[13px] md:col-span-2 2xl:gap-3 2xl:rounded-2xl 2xl:px-4 2xl:py-4 2xl:text-sm">
                             <input
                                 type="checkbox"
                                 checked={data.is_private}
@@ -115,22 +118,22 @@ export default function Edit({ profile }) {
                         </label>
 
                         <div className="md:col-span-2">
-                            <button
+                            <PrimaryButton
                                 type="submit"
                                 disabled={processing}
-                                className="app-button-primary rounded-full px-5 py-3 text-sm font-semibold disabled:opacity-60"
+                                className="px-4 py-2"
                             >
                                 Save changes
-                            </button>
+                            </PrimaryButton>
                         </div>
                     </form>
                 </section>
 
-                <section className="app-panel rounded-[32px] p-6">
+                <section className="app-panel rounded-[28px] p-5 2xl:rounded-[32px] 2xl:p-6">
                     <UpdatePasswordForm className="max-w-xl" />
                 </section>
 
-                <section className="app-panel rounded-[32px] p-6">
+                <section className="app-panel rounded-[28px] p-5 2xl:rounded-[32px] 2xl:p-6">
                     <DeleteUserForm className="max-w-xl" />
                 </section>
             </div>
@@ -151,9 +154,13 @@ function Field({ placeholder, hint, error, className = '', children }) {
 
     return (
         <div className={className}>
-            {hint && <div className="app-text-muted mb-2 text-xs font-medium">{hint}</div>}
+            {hint && (
+                <div className="app-text-muted mb-2 text-[11px] font-medium 2xl:text-xs">
+                    {hint}
+                </div>
+            )}
             {cloneElement(children, enhancedProps)}
-            {error && <div className="mt-2 text-sm text-rose-300">{error}</div>}
+            {error && <div className="mt-2 text-[13px] text-rose-300 2xl:text-sm">{error}</div>}
         </div>
     );
 }

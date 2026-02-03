@@ -45,32 +45,37 @@ export default function DeleteUserForm({ className = '' }) {
     };
 
     return (
-        <section className={`space-y-6 ${className}`}>
+        <section className={`space-y-5 2xl:space-y-6 ${className}`}>
             <header>
-                <h2 className="text-lg font-medium">Delete Account</h2>
+                <h2 className="text-base font-medium 2xl:text-lg">Delete Account</h2>
 
-                <p className="app-text-soft mt-1 text-sm">
+                <p className="app-text-soft mt-1 text-[13px] 2xl:text-sm">
                     Once your account is deleted, all of its resources and data will be permanently
                     deleted. Before deleting your account, please download any data or information
                     that you wish to retain.
                 </p>
             </header>
 
-            <DangerButton onClick={confirmUserDeletion}>Delete Account</DangerButton>
+            <DangerButton
+                onClick={confirmUserDeletion}
+                className="rounded-full px-4 py-2 text-[11px] 2xl:px-4 2xl:py-2 2xl:text-xs"
+            >
+                Delete Account
+            </DangerButton>
 
             <Modal show={confirmingUserDeletion} onClose={closeModal}>
-                <form onSubmit={deleteUser} className="p-6">
-                    <h2 className="text-lg font-medium">
+                <form onSubmit={deleteUser} className="p-5 2xl:p-6">
+                    <h2 className="text-base font-medium 2xl:text-lg">
                         Are you sure you want to delete your account?
                     </h2>
 
-                    <p className="app-text-soft mt-1 text-sm">
+                    <p className="app-text-soft mt-1 text-[13px] 2xl:text-sm">
                         Once your account is deleted, all of its resources and data will be
                         permanently deleted. Please enter your password to confirm you would like to
                         permanently delete your account.
                     </p>
 
-                    <div className="mt-6">
+                    <div className="mt-5 2xl:mt-6">
                         <TextInput
                             id="password"
                             type="password"
@@ -78,7 +83,7 @@ export default function DeleteUserForm({ className = '' }) {
                             ref={passwordInput}
                             value={data.password}
                             onChange={(e) => setData('password', e.target.value)}
-                            className="mt-1 block w-full sm:w-3/4"
+                            className="mt-1 block w-full rounded-[18px] px-3.5 py-2.5 text-[13px] sm:w-3/4 2xl:rounded-2xl 2xl:px-4 2xl:py-3 2xl:text-sm"
                             isFocused
                             placeholder="Password"
                             aria-label="Password"
@@ -87,10 +92,18 @@ export default function DeleteUserForm({ className = '' }) {
                         <InputError message={errors.password} className="mt-2" />
                     </div>
 
-                    <div className="mt-6 flex justify-end">
-                        <SecondaryButton onClick={closeModal}>Cancel</SecondaryButton>
+                    <div className="mt-5 flex justify-end 2xl:mt-6">
+                        <SecondaryButton
+                            onClick={closeModal}
+                            className="rounded-full px-4 py-2 text-[11px] 2xl:px-4 2xl:py-2 2xl:text-xs"
+                        >
+                            Cancel
+                        </SecondaryButton>
 
-                        <DangerButton className="ms-3" disabled={processing}>
+                        <DangerButton
+                            className="ms-3 rounded-full px-4 py-2 text-[11px] 2xl:px-4 2xl:py-2 2xl:text-xs"
+                            disabled={processing}
+                        >
                             Delete Account
                         </DangerButton>
                     </div>
