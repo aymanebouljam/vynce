@@ -168,16 +168,16 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
 
             <div className="app-page-shell min-h-screen">
                 <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-6 px-4 py-6 min-[1246px]:flex-row min-[1246px]:px-6">
-                    <aside className="min-[1246px]:sticky min-[1246px]:top-6 min-[1246px]:h-[calc(100vh-3rem)] min-[1246px]:w-72">
-                        <div className="app-panel-strong flex h-full flex-col justify-between rounded-[32px] p-5 backdrop-blur">
-                            <div className="space-y-6">
+                    <aside className="min-[1246px]:sticky min-[1246px]:top-6 min-[1246px]:h-[calc(100vh-3rem)] min-[1246px]:w-64 2xl:w-72">
+                        <div className="app-panel-strong flex h-full flex-col gap-5 rounded-[28px] p-4 backdrop-blur min-[1246px]:pb-6 2xl:gap-6 2xl:rounded-[32px] 2xl:p-5 2xl:pb-7">
+                            <div className="space-y-5 2xl:space-y-6">
                                 <Link
                                     href={route('feed.home')}
                                     className="auth-brand-lockup inline-flex items-center gap-0 self-start"
                                 >
-                                    <ApplicationLogo className="auth-wordmark-icon h-11 w-11 fill-current" />
+                                    <ApplicationLogo className="auth-wordmark-icon h-10 w-10 fill-current 2xl:h-11 2xl:w-11" />
                                     <div>
-                                        <div className="auth-wordmark text-[1.7rem] font-semibold">
+                                        <div className="auth-wordmark text-[1.55rem] font-semibold 2xl:text-[1.7rem]">
                                             ynce
                                         </div>
                                     </div>
@@ -185,12 +185,12 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
 
                                 <Link
                                     href={route('users.show', auth.user.username)}
-                                    className={`app-panel-inset app-sidebar-user-link flex items-center gap-3 rounded-[24px] px-4 py-3 ${
+                                    className={`app-panel-inset app-sidebar-user-link flex items-center gap-2.5 rounded-[22px] px-3.5 py-2.5 2xl:gap-3 2xl:rounded-[24px] 2xl:px-4 2xl:py-3 ${
                                         ownProfileActive ? 'app-sidebar-user-link-active' : ''
                                     }`}
                                 >
                                     {auth.user.avatar_url ? (
-                                        <div className="h-12 w-12 overflow-hidden rounded-2xl">
+                                        <div className="h-10 w-10 overflow-hidden rounded-[18px] 2xl:h-12 2xl:w-12 2xl:rounded-2xl">
                                             <img
                                                 src={auth.user.avatar_url}
                                                 alt={auth.user.name}
@@ -204,7 +204,7 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                                         </div>
                                     ) : (
                                         <div
-                                            className="app-avatar-fallback flex h-12 w-12 items-center justify-center rounded-2xl text-sm font-semibold"
+                                            className="app-avatar-fallback flex h-10 w-10 items-center justify-center rounded-[18px] text-xs font-semibold 2xl:h-12 2xl:w-12 2xl:rounded-2xl 2xl:text-sm"
                                             style={
                                                 ownProfileActive
                                                     ? {
@@ -218,10 +218,10 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                                     )}
 
                                     <div className="min-w-0">
-                                        <div className="truncate text-sm font-semibold">
+                                        <div className="truncate text-[13px] font-semibold 2xl:text-sm">
                                             {auth.user.name}
                                         </div>
-                                        <div className="app-text-muted truncate text-xs">
+                                        <div className="app-text-muted truncate text-[11px] 2xl:text-xs">
                                             @{auth.user.username}
                                         </div>
                                     </div>
@@ -233,20 +233,20 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                                             <button
                                                 type="button"
                                                 onClick={() => setNavSearchOpen(true)}
-                                                className="app-nav-link inline-flex h-11 w-11 items-center justify-center rounded-2xl"
+                                                className="app-nav-link inline-flex h-10 w-10 items-center justify-center rounded-[18px] 2xl:h-11 2xl:w-11 2xl:rounded-2xl"
                                                 aria-label={navSearch.ariaLabel ?? 'Open search'}
                                             >
                                                 <Search
-                                                    className="h-5 w-5 shrink-0"
+                                                    className="h-4 w-4 shrink-0 2xl:h-5 2xl:w-5"
                                                     strokeWidth={1.8}
                                                 />
                                             </button>
                                         </div>
                                     )}
                                     {navSearch && navSearchOpen && (
-                                        <label className="app-panel-inset flex items-center gap-3 rounded-2xl px-4 py-3">
+                                        <label className="app-panel-inset flex items-center gap-2.5 rounded-[18px] px-3.5 py-2.5 2xl:gap-3 2xl:rounded-2xl 2xl:px-4 2xl:py-3">
                                             <Search
-                                                className="app-text-muted h-5 w-5 shrink-0"
+                                                className="app-text-muted h-4 w-4 shrink-0 2xl:h-5 2xl:w-5"
                                                 strokeWidth={1.8}
                                             />
                                             <input
@@ -262,7 +262,7 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                                                     }
                                                 }}
                                                 placeholder={navSearch.placeholder ?? 'Search'}
-                                                className="w-full bg-transparent text-sm focus:outline-none"
+                                                className="w-full bg-transparent text-[13px] focus:outline-none 2xl:text-sm"
                                             />
                                         </label>
                                     )}
@@ -270,12 +270,12 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                                         <div key={item.label} className="space-y-2">
                                             <Link
                                                 href={item.href}
-                                                className={`app-nav-link flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium ${
+                                                className={`app-nav-link flex items-center gap-2.5 rounded-[18px] px-3.5 py-2.5 text-[13px] font-medium 2xl:gap-3 2xl:rounded-2xl 2xl:px-4 2xl:py-3 2xl:text-sm ${
                                                     item.active ? 'app-nav-link-active' : ''
                                                 }`}
                                             >
                                                 <item.icon
-                                                    className="h-5 w-5 shrink-0"
+                                                    className="h-4 w-4 shrink-0 2xl:h-5 2xl:w-5"
                                                     strokeWidth={1.8}
                                                 />
                                                 {item.label}
@@ -284,10 +284,10 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                                                 <button
                                                     type="button"
                                                     onClick={() => setFeedSearchOpen(true)}
-                                                    className="app-nav-link flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium"
+                                                    className="app-nav-link flex w-full items-center gap-2.5 rounded-[18px] px-3.5 py-2.5 text-[13px] font-medium 2xl:gap-3 2xl:rounded-2xl 2xl:px-4 2xl:py-3 2xl:text-sm"
                                                 >
                                                     <Search
-                                                        className="h-5 w-5 shrink-0"
+                                                        className="h-4 w-4 shrink-0 2xl:h-5 2xl:w-5"
                                                         strokeWidth={1.8}
                                                     />
                                                     Search
@@ -298,14 +298,17 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                                 </nav>
                             </div>
 
-                            <div className="space-y-4">
+                            <div className="mt-auto space-y-3 pt-1 2xl:space-y-4 2xl:pt-2">
                                 <Link
                                     href={route('logout')}
                                     method="post"
                                     as="button"
-                                    className="app-button-secondary app-button-secondary--logout app-panel-inset flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm"
+                                    className="app-button-secondary app-button-secondary--logout app-panel-inset flex w-full items-center gap-2.5 rounded-[18px] px-3.5 py-2.5 text-left text-[13px] 2xl:gap-3 2xl:rounded-2xl 2xl:px-4 2xl:py-3 2xl:text-sm"
                                 >
-                                    <LogOut className="h-5 w-5 shrink-0" strokeWidth={1.8} />
+                                    <LogOut
+                                        className="h-4 w-4 shrink-0 2xl:h-5 2xl:w-5"
+                                        strokeWidth={1.8}
+                                    />
                                     Log out
                                 </Link>
                             </div>
