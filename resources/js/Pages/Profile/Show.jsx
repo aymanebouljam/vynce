@@ -38,8 +38,8 @@ export default function Show({ profile, relationship, feed }) {
 
     return (
         <AuthenticatedLayout title={`${profile.name}`}>
-            <section className="app-panel overflow-hidden rounded-[32px]">
-                <div className="relative h-44 overflow-hidden">
+            <section className="app-panel overflow-hidden rounded-[28px] 2xl:rounded-[32px]">
+                <div className="relative h-40 overflow-hidden 2xl:h-44">
                     {profile.cover_url ? (
                         <img
                             src={profile.cover_url}
@@ -62,7 +62,7 @@ export default function Show({ profile, relationship, feed }) {
                         <button
                             type="button"
                             onClick={() => setCoverManagerOpen(true)}
-                            className="app-button-secondary absolute right-4 top-4 inline-flex h-11 w-11 items-center justify-center rounded-full backdrop-blur"
+                            className="app-button-secondary absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full backdrop-blur 2xl:right-4 2xl:top-4 2xl:h-11 2xl:w-11"
                             aria-label="Manage cover image"
                         >
                             <Camera className="h-4 w-4" strokeWidth={1.9} />
@@ -70,12 +70,12 @@ export default function Show({ profile, relationship, feed }) {
                     )}
                 </div>
 
-                <div className="p-6">
+                <div className="p-5 2xl:p-6">
                     <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
                         <div>
-                            <div className="relative -mt-16 mb-4 w-fit">
+                            <div className="relative -mt-14 mb-3 w-fit 2xl:-mt-16 2xl:mb-4">
                                 {profile.avatar_url ? (
-                                    <div className="h-24 w-24 overflow-hidden rounded-[28px] border-4 border-[var(--vynce-bg)]">
+                                    <div className="h-20 w-20 overflow-hidden rounded-[24px] border-4 border-[var(--vynce-bg)] 2xl:h-24 2xl:w-24 2xl:rounded-[28px]">
                                         <img
                                             src={profile.avatar_url}
                                             alt={profile.name}
@@ -88,7 +88,7 @@ export default function Show({ profile, relationship, feed }) {
                                         />
                                     </div>
                                 ) : (
-                                    <div className="app-panel-inset flex h-24 w-24 items-center justify-center rounded-[28px] border-4 border-[var(--vynce-bg)] text-2xl font-bold">
+                                    <div className="app-panel-inset flex h-20 w-20 items-center justify-center rounded-[24px] border-4 border-[var(--vynce-bg)] text-xl font-bold 2xl:h-24 2xl:w-24 2xl:rounded-[28px] 2xl:text-2xl">
                                         {profile.name?.charAt(0)}
                                     </div>
                                 )}
@@ -97,7 +97,7 @@ export default function Show({ profile, relationship, feed }) {
                                     <button
                                         type="button"
                                         onClick={() => setAvatarManagerOpen(true)}
-                                        className="app-button-primary absolute -bottom-2 -right-2 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--vynce-bg)]"
+                                        className="app-button-primary absolute -bottom-2 -right-2 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--vynce-bg)] 2xl:h-10 2xl:w-10"
                                         aria-label="Manage profile photo"
                                     >
                                         <Camera className="h-4 w-4" strokeWidth={1.9} />
@@ -112,41 +112,51 @@ export default function Show({ profile, relationship, feed }) {
                                 errors.position_y) && (
                                 <div className="mb-3 space-y-1">
                                     {errors.avatar && (
-                                        <div className="text-sm text-rose-300">{errors.avatar}</div>
+                                        <div className="text-[13px] text-rose-300 2xl:text-sm">
+                                            {errors.avatar}
+                                        </div>
                                     )}
                                     {errors.cover && (
-                                        <div className="text-sm text-rose-300">{errors.cover}</div>
+                                        <div className="text-[13px] text-rose-300 2xl:text-sm">
+                                            {errors.cover}
+                                        </div>
                                     )}
                                     {errors.zoom && (
-                                        <div className="text-sm text-rose-300">{errors.zoom}</div>
+                                        <div className="text-[13px] text-rose-300 2xl:text-sm">
+                                            {errors.zoom}
+                                        </div>
                                     )}
                                     {errors.position_x && (
-                                        <div className="text-sm text-rose-300">
+                                        <div className="text-[13px] text-rose-300 2xl:text-sm">
                                             {errors.position_x}
                                         </div>
                                     )}
                                     {errors.position_y && (
-                                        <div className="text-sm text-rose-300">
+                                        <div className="text-[13px] text-rose-300 2xl:text-sm">
                                             {errors.position_y}
                                         </div>
                                     )}
                                 </div>
                             )}
 
-                            <h1 className="text-3xl font-semibold">{profile.name}</h1>
-                            <div className="app-text-muted mt-1 text-sm">@{profile.username}</div>
+                            <h1 className="text-[1.8rem] font-semibold 2xl:text-3xl">
+                                {profile.name}
+                            </h1>
+                            <div className="app-text-muted mt-1 text-[13px] 2xl:text-sm">
+                                @{profile.username}
+                            </div>
                             <div
-                                className="app-pill mt-3 inline-flex rounded-full px-3 py-1 text-xs"
+                                className="app-pill mt-3 inline-flex rounded-full px-3 py-1 text-[11px] 2xl:text-xs"
                                 style={{ background: 'var(--vynce-surface-inset-muted)' }}
                             >
                                 {profile.is_private ? 'Private profile' : 'Public profile'}
                             </div>
                             {profile.bio && (
-                                <p className="app-text-high mt-4 max-w-2xl whitespace-pre-wrap text-sm leading-7">
+                                <p className="app-text-high mt-3 max-w-2xl whitespace-pre-wrap text-[13px] leading-6 2xl:mt-4 2xl:text-sm 2xl:leading-7">
                                     {profile.bio}
                                 </p>
                             )}
-                            <div className="app-text-muted mt-4 flex flex-wrap gap-4 text-sm">
+                            <div className="app-text-muted mt-3 flex flex-wrap gap-3 text-[13px] 2xl:mt-4 2xl:gap-4 2xl:text-sm">
                                 {profile.location && <span>{profile.location}</span>}
                                 {profile.website_url && (
                                     <a href={profile.website_url} className="app-link">
@@ -181,13 +191,13 @@ export default function Show({ profile, relationship, feed }) {
                                     <button
                                         type="button"
                                         onClick={() => setComposerOpen(true)}
-                                        className="app-button-primary rounded-full px-5 py-3 text-sm font-semibold"
+                                        className="app-button-primary rounded-full px-4 py-2.5 text-[13px] font-semibold 2xl:px-5 2xl:py-3 2xl:text-sm"
                                     >
                                         Create post
                                     </button>
                                     <Link
                                         href={route('profile.edit')}
-                                        className="app-button-secondary inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm"
+                                        className="app-button-secondary inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[13px] 2xl:px-5 2xl:py-3 2xl:text-sm"
                                     >
                                         <Pencil className="h-4 w-4" strokeWidth={1.9} />
                                         Edit profile
@@ -199,7 +209,7 @@ export default function Show({ profile, relationship, feed }) {
                                         <button
                                             type="button"
                                             onClick={submitFollow}
-                                            className="app-button-primary rounded-full px-5 py-3 text-sm font-semibold"
+                                            className="app-button-primary rounded-full px-4 py-2.5 text-[13px] font-semibold 2xl:px-5 2xl:py-3 2xl:text-sm"
                                         >
                                             {relationshipLabel}
                                         </button>
@@ -209,7 +219,7 @@ export default function Show({ profile, relationship, feed }) {
                                             href={route('messages.start', profile.id)}
                                             method="post"
                                             as="button"
-                                            className="app-button-secondary rounded-full px-5 py-3 text-sm"
+                                            className="app-button-secondary rounded-full px-4 py-2.5 text-[13px] 2xl:px-5 2xl:py-3 2xl:text-sm"
                                         >
                                             Message
                                         </Link>
@@ -254,9 +264,9 @@ export default function Show({ profile, relationship, feed }) {
                 </>
             )}
 
-            <section className="mt-6 space-y-4">
+            <section className="mt-5 space-y-3 2xl:mt-6 2xl:space-y-4">
                 {feed.data.length === 0 ? (
-                    <div className="app-dashed-panel app-text-muted rounded-[28px] p-8 text-sm">
+                    <div className="app-dashed-panel app-text-muted rounded-[24px] p-6 text-[13px] 2xl:rounded-[28px] 2xl:p-8 2xl:text-sm">
                         No posts yet. This space will fill with updates, threads, and media as soon
                         as the first post goes live.
                     </div>
@@ -395,14 +405,14 @@ function ProfileImageManagerModal({
 
     return (
         <Modal show={show} onClose={onClose} maxWidth="2xl">
-            <div className="space-y-6 p-6">
+            <div className="space-y-5 p-5 2xl:space-y-6 2xl:p-6">
                 <div className="flex items-start justify-between gap-4">
                     <div>
-                        <div className="flex items-center gap-2 text-lg font-semibold">
-                            <Eye className="h-5 w-5" strokeWidth={1.9} />
+                        <div className="flex items-center gap-2 text-base font-semibold 2xl:text-lg">
+                            <Eye className="h-4 w-4 2xl:h-5 2xl:w-5" strokeWidth={1.9} />
                             {title}
                         </div>
-                        <p className="app-text-soft mt-2 text-sm leading-6">
+                        <p className="app-text-soft mt-2 text-[13px] leading-5 2xl:text-sm 2xl:leading-6">
                             Upload a new image, preview it at full size, fine-tune the framing, or
                             remove it completely.
                         </p>
@@ -412,8 +422,8 @@ function ProfileImageManagerModal({
                 <div
                     className={`app-panel-inset relative overflow-hidden ${
                         kind === 'avatar'
-                            ? 'mx-auto h-72 w-72 rounded-[36px]'
-                            : 'h-64 rounded-[28px]'
+                            ? 'mx-auto h-64 w-64 rounded-[30px] 2xl:h-72 2xl:w-72 2xl:rounded-[36px]'
+                            : 'h-56 rounded-[24px] 2xl:h-64 2xl:rounded-[28px]'
                     }`}
                 >
                     {previewUrl ? (
@@ -424,7 +434,7 @@ function ProfileImageManagerModal({
                             style={previewStyle}
                         />
                     ) : (
-                        <div className="app-text-soft flex h-full items-center justify-center px-6 text-center text-sm leading-7">
+                        <div className="app-text-soft flex h-full items-center justify-center px-6 text-center text-[13px] leading-6 2xl:text-sm 2xl:leading-7">
                             No {kind === 'avatar' ? 'profile photo' : 'cover image'} yet. Add one
                             here and it will appear right away on your profile.
                         </div>
@@ -445,7 +455,7 @@ function ProfileImageManagerModal({
                     <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="app-button-primary inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold"
+                        className="app-button-primary inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[13px] font-semibold 2xl:px-4 2xl:text-sm"
                         disabled={transformForm.processing || deleteForm.processing}
                     >
                         <ImagePlus className="h-4 w-4" strokeWidth={1.9} />
@@ -456,7 +466,7 @@ function ProfileImageManagerModal({
                         <DangerButton
                             type="button"
                             onClick={() => setConfirmingDelete(true)}
-                            className="rounded-full px-4 py-2 text-sm normal-case tracking-normal"
+                            className="rounded-full px-3.5 py-2 text-[13px] normal-case tracking-normal 2xl:px-4 2xl:text-sm"
                             disabled={deleteForm.processing}
                         >
                             <Trash2 className="mr-2 h-4 w-4" strokeWidth={1.9} />
@@ -466,10 +476,12 @@ function ProfileImageManagerModal({
                 </div>
 
                 {confirmingDelete && imageUrl && !pendingFile && (
-                    <div className="app-panel-inset space-y-4 rounded-2xl p-4">
+                    <div className="app-panel-inset space-y-4 rounded-[20px] p-4 2xl:rounded-2xl">
                         <div>
-                            <div className="text-sm font-semibold">Delete this image?</div>
-                            <p className="app-text-soft mt-1 text-sm leading-6">
+                            <div className="text-[13px] font-semibold 2xl:text-sm">
+                                Delete this image?
+                            </div>
+                            <p className="app-text-soft mt-1 text-[13px] leading-5 2xl:text-sm 2xl:leading-6">
                                 This will remove the current{' '}
                                 {kind === 'avatar' ? 'profile photo' : 'cover image'} from your
                                 profile.
@@ -480,14 +492,14 @@ function ProfileImageManagerModal({
                             <SecondaryButton
                                 type="button"
                                 onClick={() => setConfirmingDelete(false)}
-                                className="rounded-full px-4 py-2 text-sm normal-case tracking-normal"
+                                className="rounded-full px-3.5 py-2 text-[13px] normal-case tracking-normal 2xl:px-4 2xl:text-sm"
                             >
                                 Cancel
                             </SecondaryButton>
                             <DangerButton
                                 type="button"
                                 onClick={destroyImage}
-                                className="rounded-full px-4 py-2 text-sm normal-case tracking-normal"
+                                className="rounded-full px-3.5 py-2 text-[13px] normal-case tracking-normal 2xl:px-4 2xl:text-sm"
                                 disabled={deleteForm.processing}
                             >
                                 Confirm delete
@@ -497,8 +509,8 @@ function ProfileImageManagerModal({
                 )}
 
                 {previewUrl && (
-                    <form onSubmit={saveAdjustments} className="space-y-5">
-                        <div className="grid gap-4 md:grid-cols-3">
+                    <form onSubmit={saveAdjustments} className="space-y-4 2xl:space-y-5">
+                        <div className="grid gap-3 md:grid-cols-3 2xl:gap-4">
                             <RangeField
                                 icon={SlidersHorizontal}
                                 label="Zoom"
@@ -535,13 +547,13 @@ function ProfileImageManagerModal({
                             <SecondaryButton
                                 type="button"
                                 onClick={onClose}
-                                className="rounded-full px-4 py-2 text-sm normal-case tracking-normal"
+                                className="rounded-full px-3.5 py-2 text-[13px] normal-case tracking-normal 2xl:px-4 2xl:text-sm"
                             >
                                 Cancel
                             </SecondaryButton>
                             <button
                                 type="submit"
-                                className="app-button-primary inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold"
+                                className="app-button-primary inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[13px] font-semibold 2xl:px-4 2xl:text-sm"
                                 disabled={transformForm.processing}
                             >
                                 <Camera className="h-4 w-4" strokeWidth={1.9} />
@@ -557,13 +569,13 @@ function ProfileImageManagerModal({
 
 function RangeField({ icon: Icon, label, value, min, max, step, displayValue, onChange }) {
     return (
-        <div className="app-panel-inset rounded-2xl p-4">
+        <div className="app-panel-inset rounded-[20px] p-3.5 2xl:rounded-2xl 2xl:p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-sm font-medium">
+                <div className="flex items-center gap-2 text-[13px] font-medium 2xl:text-sm">
                     <Icon className="h-4 w-4" strokeWidth={1.9} />
                     {label}
                 </div>
-                <div className="app-text-soft text-xs">{displayValue}</div>
+                <div className="app-text-soft text-[11px] 2xl:text-xs">{displayValue}</div>
             </div>
 
             <input

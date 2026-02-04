@@ -562,13 +562,13 @@ export default function Index({ conversations, activeConversation, contacts = []
 
     return (
         <AuthenticatedLayout title="Messages">
-            <div className="grid gap-6 xl:grid-cols-[320px,1fr]">
-                <section className="app-panel rounded-[32px] p-5">
-                    <div className="mb-4 flex items-start justify-between gap-3">
+            <div className="grid gap-5 xl:grid-cols-[290px,1fr] 2xl:grid-cols-[320px,1fr] 2xl:gap-6">
+                <section className="app-panel rounded-[28px] p-4 2xl:rounded-[32px] 2xl:p-5">
+                    <div className="mb-3 flex items-start justify-between gap-3 2xl:mb-4">
                         <button
                             type="button"
                             onClick={goBack}
-                            className="app-button-secondary inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm"
+                            className="app-button-secondary inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[13px] 2xl:px-4 2xl:text-sm"
                         >
                             <ArrowLeft className="h-4 w-4" strokeWidth={1.9} />
                             Back
@@ -576,24 +576,24 @@ export default function Index({ conversations, activeConversation, contacts = []
                         <button
                             type="button"
                             onClick={() => setPickerOpen(true)}
-                            className="app-button-primary inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold"
+                            className="app-button-primary inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[13px] font-semibold 2xl:px-4 2xl:text-sm"
                         >
                             <PenSquare className="h-4 w-4" strokeWidth={1.9} />
                             New
                         </button>
                     </div>
 
-                    <div className="mb-4">
-                        <h1 className="text-xl font-semibold">Messages</h1>
+                    <div className="mb-3 2xl:mb-4">
+                        <h1 className="text-lg font-semibold 2xl:text-xl">Messages</h1>
                     </div>
 
                     {localConversations.length === 0 ? (
-                        <div className="app-dashed-panel app-text-muted rounded-[28px] p-5 text-sm leading-6">
+                        <div className="app-dashed-panel app-text-muted rounded-[24px] p-4 text-[13px] leading-5 2xl:rounded-[28px] 2xl:p-5 2xl:text-sm 2xl:leading-6">
                             No conversations yet. Visit a profile and tap Message to open a direct
                             chat.
                         </div>
                     ) : (
-                        <div className="space-y-3">
+                        <div className="space-y-2.5 2xl:space-y-3">
                             {sortedConversations.map((conversation) => {
                                 const isConversationBusy =
                                     clearingConversationIds.includes(conversation.id) ||
@@ -603,22 +603,22 @@ export default function Index({ conversations, activeConversation, contacts = []
                                     <div key={conversation.id} className="relative">
                                         <Link
                                             href={route('messages.show', conversation.id)}
-                                            className={`block rounded-[24px] p-4 pr-14 transition ${
+                                            className={`block rounded-[20px] p-3.5 pr-12 transition 2xl:rounded-[24px] 2xl:p-4 2xl:pr-14 ${
                                                 displayedConversation?.id === conversation.id
                                                     ? 'border border-[rgba(196,177,232,0.9)] bg-[rgba(120,88,166,0.22)] shadow-[0_0_0_1px_rgba(214,198,242,0.45),0_0_24px_rgba(144,114,204,0.18)]'
                                                     : 'app-card-inset border border-white/5 bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.07)]'
                                             }`}
                                         >
                                             <div className="flex items-start gap-3">
-                                                <div className="app-avatar-fallback flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-semibold">
+                                                <div className="app-avatar-fallback flex h-10 w-10 shrink-0 items-center justify-center rounded-[18px] text-[13px] font-semibold 2xl:h-11 2xl:w-11 2xl:rounded-2xl 2xl:text-sm">
                                                     {initialsFor(conversation.participant?.name)}
                                                 </div>
                                                 <div className="min-w-0 flex-1">
-                                                    <div className="truncate text-sm font-semibold">
+                                                    <div className="truncate text-[13px] font-semibold 2xl:text-sm">
                                                         {conversation.participant?.name ??
                                                             'Unknown user'}
                                                     </div>
-                                                    <div className="app-text-soft mt-2 truncate text-sm">
+                                                    <div className="app-text-soft mt-1.5 truncate text-[13px] 2xl:mt-2 2xl:text-sm">
                                                         {conversation.latest_message?.sender?.id ===
                                                         auth.user.id
                                                             ? 'You: '
@@ -647,19 +647,19 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                     )
                                                 }
                                                 disabled={isConversationBusy}
-                                                className="text-current/75 inline-flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-white/10 hover:text-current disabled:opacity-60"
+                                                className="text-current/75 inline-flex h-7 w-7 items-center justify-center rounded-full transition hover:bg-white/10 hover:text-current disabled:opacity-60 2xl:h-8 2xl:w-8"
                                                 aria-label="Conversation options"
                                             >
                                                 <Ellipsis className="h-4 w-4" strokeWidth={1.9} />
                                             </button>
                                             {openConversationMenuId === conversation.id && (
-                                                <div className="app-panel-inset absolute right-0 top-full z-20 mt-2 w-48 rounded-2xl p-2 shadow-[var(--vynce-shadow-md)]">
+                                                <div className="app-panel-inset absolute right-0 top-full z-20 mt-2 w-44 rounded-[18px] p-2 shadow-[var(--vynce-shadow-md)] 2xl:w-48 2xl:rounded-2xl">
                                                     <button
                                                         type="button"
                                                         onClick={() =>
                                                             openClearConversationModal(conversation)
                                                         }
-                                                        className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm"
+                                                        className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[13px] 2xl:text-sm"
                                                     >
                                                         <Eraser
                                                             className="h-4 w-4"
@@ -674,7 +674,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                                 conversation,
                                                             )
                                                         }
-                                                        className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-rose-200"
+                                                        className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[13px] text-rose-200 2xl:text-sm"
                                                     >
                                                         <Trash2
                                                             className="h-4 w-4"
@@ -692,22 +692,22 @@ export default function Index({ conversations, activeConversation, contacts = []
                     )}
                 </section>
 
-                <section className="app-panel flex min-h-[420px] flex-col rounded-[32px] p-5 xl:h-[calc(100vh-3rem)]">
+                <section className="app-panel flex min-h-[420px] flex-col rounded-[28px] p-4 xl:h-[calc(100vh-3rem)] 2xl:rounded-[32px] 2xl:p-5">
                     {!displayedConversation ? (
-                        <div className="app-dashed-panel app-text-muted flex min-h-[420px] flex-1 items-center justify-center rounded-[28px] p-8 text-center text-sm leading-7">
+                        <div className="app-dashed-panel app-text-muted flex min-h-[420px] flex-1 items-center justify-center rounded-[24px] p-6 text-center text-[13px] leading-6 2xl:rounded-[28px] 2xl:p-8 2xl:text-sm 2xl:leading-7">
                             Pick a conversation from the left, or start one from a user profile.
                         </div>
                     ) : (
                         <div className="flex min-h-0 flex-1 flex-col">
-                            <div className="app-panel-inset mb-5 flex items-center gap-3 rounded-[24px] px-4 py-4">
-                                <div className="app-avatar-fallback flex h-12 w-12 items-center justify-center rounded-2xl text-sm font-semibold">
+                            <div className="app-panel-inset mb-4 flex items-center gap-3 rounded-[20px] px-3.5 py-3 2xl:mb-5 2xl:rounded-[24px] 2xl:px-4 2xl:py-4">
+                                <div className="app-avatar-fallback flex h-10 w-10 items-center justify-center rounded-[18px] text-[13px] font-semibold 2xl:h-12 2xl:w-12 2xl:rounded-2xl 2xl:text-sm">
                                     {initialsFor(displayedConversation.participant?.name)}
                                 </div>
                                 <div className="min-w-0">
-                                    <div className="truncate font-semibold">
+                                    <div className="truncate text-[13px] font-semibold 2xl:text-base">
                                         {displayedConversation.participant?.name}
                                     </div>
-                                    <div className="app-text-soft truncate text-sm">
+                                    <div className="app-text-soft truncate text-[13px] 2xl:text-sm">
                                         @{displayedConversation.participant?.username}
                                     </div>
                                 </div>
@@ -717,7 +717,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                             'users.show',
                                             displayedConversation.participant?.username,
                                         )}
-                                        className="app-button-secondary inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm"
+                                        className="app-button-secondary inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[13px] 2xl:px-4 2xl:text-sm"
                                     >
                                         <User className="h-4 w-4" strokeWidth={1.9} />
                                         View profile
@@ -726,8 +726,8 @@ export default function Index({ conversations, activeConversation, contacts = []
                             </div>
 
                             <div className="relative min-h-0 flex-1">
-                                <div className="pointer-events-none sticky top-0 z-10 flex justify-center pb-3">
-                                    <div className="app-panel-inset rounded-full px-3 py-1 text-xs font-semibold tracking-[0.08em] text-[rgba(241,235,251,0.82)] shadow-[var(--vynce-shadow-sm)]">
+                                <div className="pointer-events-none sticky top-0 z-10 flex justify-center pb-2.5 2xl:pb-3">
+                                    <div className="app-panel-inset rounded-full px-3 py-1 text-[11px] font-semibold tracking-[0.08em] text-[rgba(241,235,251,0.82)] shadow-[var(--vynce-shadow-sm)] 2xl:text-xs">
                                         {localMessages.length}{' '}
                                         {localMessages.length === 1 ? 'message' : 'messages'}
                                     </div>
@@ -735,7 +735,7 @@ export default function Index({ conversations, activeConversation, contacts = []
 
                                 <div
                                     ref={messagesViewportRef}
-                                    className="app-scrollbar-hidden h-full space-y-3 overflow-y-auto pr-1 pt-1"
+                                    className="app-scrollbar-hidden h-full space-y-2.5 overflow-y-auto pr-1 pt-1 2xl:space-y-3"
                                 >
                                     {localMessages.map((message) => {
                                         const own = message.sender?.id === auth.user.id;
@@ -754,7 +754,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                 className={`flex ${own ? 'justify-end' : 'justify-start'}`}
                                             >
                                                 <div
-                                                    className={`relative max-w-[78%] rounded-[24px] px-3 py-2.5 text-sm leading-7 ${
+                                                    className={`relative max-w-[78%] rounded-[20px] px-3 py-2 text-[13px] leading-6 2xl:rounded-[24px] 2xl:px-3 2xl:py-2.5 2xl:text-sm 2xl:leading-7 ${
                                                         own
                                                             ? 'app-button-primary'
                                                             : 'app-panel-inset'
@@ -779,7 +779,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                                                 : message.id,
                                                                     )
                                                                 }
-                                                                className="text-current/75 inline-flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-white/10 hover:text-current"
+                                                                className="text-current/75 inline-flex h-7 w-7 items-center justify-center rounded-full transition hover:bg-white/10 hover:text-current 2xl:h-8 2xl:w-8"
                                                                 aria-label="Message options"
                                                             >
                                                                 <Ellipsis
@@ -788,7 +788,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                                 />
                                                             </button>
                                                             {openMenuMessageId === message.id && (
-                                                                <div className="app-panel-inset absolute right-0 top-full z-20 mt-2 w-36 rounded-2xl p-2 shadow-[var(--vynce-shadow-md)]">
+                                                                <div className="app-panel-inset absolute right-0 top-full z-20 mt-2 w-32 rounded-[18px] p-2 shadow-[var(--vynce-shadow-md)] 2xl:w-36 2xl:rounded-2xl">
                                                                     <button
                                                                         type="button"
                                                                         onClick={() =>
@@ -796,7 +796,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                                                 message.body,
                                                                             )
                                                                         }
-                                                                        className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm"
+                                                                        className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[13px] 2xl:text-sm"
                                                                     >
                                                                         <Copy
                                                                             className="h-4 w-4"
@@ -816,7 +816,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                                                         null,
                                                                                     );
                                                                                 }}
-                                                                                className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm"
+                                                                                className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[13px] 2xl:text-sm"
                                                                             >
                                                                                 <Pencil
                                                                                     className="h-4 w-4"
@@ -836,7 +836,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                                                 disabled={
                                                                                     isDeleting
                                                                                 }
-                                                                                className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-rose-200 disabled:opacity-60"
+                                                                                className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[13px] text-rose-200 disabled:opacity-60 2xl:text-sm"
                                                                             >
                                                                                 <Trash2
                                                                                     className="h-4 w-4"
@@ -870,7 +870,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                                 onChange={(event) =>
                                                                     setEditDraft(event.target.value)
                                                                 }
-                                                                className="app-scrollbar-hidden min-h-20 w-full resize-none overflow-y-auto border-0 bg-transparent pb-12 pl-10 pr-16 text-sm focus:border-0 focus:shadow-none focus:outline-none focus:ring-0 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0"
+                                                                className="app-scrollbar-hidden min-h-20 w-full resize-none overflow-y-auto border-0 bg-transparent pb-11 pl-9 pr-14 text-[13px] focus:border-0 focus:shadow-none focus:outline-none focus:ring-0 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0 2xl:pb-12 2xl:pl-10 2xl:pr-16 2xl:text-sm"
                                                                 style={{
                                                                     outline: 'none',
                                                                     boxShadow: 'none',
@@ -893,7 +893,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                             </div>
                                                         </div>
                                                     ) : (
-                                                        <div className="space-y-3">
+                                                        <div className="space-y-2.5 2xl:space-y-3">
                                                             {message.attachment && (
                                                                 <div>
                                                                     {message.attachment.is_image ? (
@@ -932,9 +932,9 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                                             }
                                                                             target="_blank"
                                                                             rel="noreferrer"
-                                                                            className="app-panel-inset flex items-center gap-3 rounded-[18px] px-3 py-3"
+                                                                            className="app-panel-inset flex items-center gap-3 rounded-[18px] px-3 py-2.5 2xl:py-3"
                                                                         >
-                                                                            <div className="app-avatar-fallback flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-semibold">
+                                                                            <div className="app-avatar-fallback flex h-9 w-9 items-center justify-center rounded-[18px] text-[13px] font-semibold 2xl:h-10 2xl:w-10 2xl:rounded-2xl 2xl:text-sm">
                                                                                 <File
                                                                                     className="h-4 w-4"
                                                                                     strokeWidth={
@@ -943,14 +943,14 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                                                 />
                                                                             </div>
                                                                             <div className="min-w-0 flex-1">
-                                                                                <div className="truncate text-sm font-semibold">
+                                                                                <div className="truncate text-[13px] font-semibold 2xl:text-sm">
                                                                                     {
                                                                                         message
                                                                                             .attachment
                                                                                             .name
                                                                                     }
                                                                                 </div>
-                                                                                <div className="app-text-soft text-xs">
+                                                                                <div className="app-text-soft text-[11px] 2xl:text-xs">
                                                                                     {formatFileSize(
                                                                                         message
                                                                                             .attachment
@@ -960,8 +960,8 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                                             </div>
                                                                         </a>
                                                                     ) : (
-                                                                        <div className="app-panel-inset flex items-center gap-3 rounded-[18px] px-3 py-3">
-                                                                            <div className="app-avatar-fallback flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-semibold">
+                                                                        <div className="app-panel-inset flex items-center gap-3 rounded-[18px] px-3 py-2.5 2xl:py-3">
+                                                                            <div className="app-avatar-fallback flex h-9 w-9 items-center justify-center rounded-[18px] text-[13px] font-semibold 2xl:h-10 2xl:w-10 2xl:rounded-2xl 2xl:text-sm">
                                                                                 <File
                                                                                     className="h-4 w-4"
                                                                                     strokeWidth={
@@ -970,14 +970,14 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                                                 />
                                                                             </div>
                                                                             <div className="min-w-0 flex-1">
-                                                                                <div className="truncate text-sm font-semibold">
+                                                                                <div className="truncate text-[13px] font-semibold 2xl:text-sm">
                                                                                     {
                                                                                         message
                                                                                             .attachment
                                                                                             .name
                                                                                     }
                                                                                 </div>
-                                                                                <div className="app-text-soft text-xs">
+                                                                                <div className="app-text-soft text-[11px] 2xl:text-xs">
                                                                                     {formatFileSize(
                                                                                         message
                                                                                             .attachment
@@ -997,7 +997,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                         </div>
                                                     )}
                                                     {!isEditing && (
-                                                        <div className="app-text-soft mt-2 flex items-center gap-2 text-xs">
+                                                        <div className="app-text-soft mt-2 flex items-center gap-2 text-[11px] 2xl:text-xs">
                                                             {isEdited && (
                                                                 <span className="bg-white/8 text-current/75 rounded-full px-2 py-0.5 text-[11px] uppercase tracking-[0.16em]">
                                                                     Edited
@@ -1017,7 +1017,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                 </div>
                             </div>
 
-                            <form onSubmit={submit} className="relative mt-5">
+                            <form onSubmit={submit} className="relative mt-4 2xl:mt-5">
                                 <input
                                     ref={imageInputRef}
                                     type="file"
@@ -1034,7 +1034,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                 <textarea
                                     value={draft}
                                     onChange={(event) => setDraft(event.target.value)}
-                                    className="field app-scrollbar-hidden min-h-24 w-full resize-none overflow-y-auto pb-14 pr-16 text-sm"
+                                    className="field app-scrollbar-hidden min-h-24 w-full resize-none overflow-y-auto pb-12 pr-14 text-[13px] 2xl:pb-14 2xl:pr-16 2xl:text-sm"
                                     placeholder={`Message ${displayedConversation.participant?.name}...`}
                                 />
                                 {draftAttachment && (
@@ -1057,14 +1057,14 @@ export default function Index({ conversations, activeConversation, contacts = []
                                             </div>
                                         ) : (
                                             <div className="app-panel-inset flex items-center gap-3 rounded-[18px] px-3 py-2">
-                                                <div className="app-avatar-fallback flex h-9 w-9 items-center justify-center rounded-2xl text-sm font-semibold">
+                                                <div className="app-avatar-fallback flex h-8 w-8 items-center justify-center rounded-[18px] text-[13px] font-semibold 2xl:h-9 2xl:w-9 2xl:rounded-2xl 2xl:text-sm">
                                                     <File className="h-4 w-4" strokeWidth={1.9} />
                                                 </div>
                                                 <div className="min-w-0 flex-1">
-                                                    <div className="truncate text-sm font-semibold">
+                                                    <div className="truncate text-[13px] font-semibold 2xl:text-sm">
                                                         {draftAttachment.name}
                                                     </div>
-                                                    <div className="app-text-soft text-xs">
+                                                    <div className="app-text-soft text-[11px] 2xl:text-xs">
                                                         {formatFileSize(draftAttachment.size)}
                                                     </div>
                                                 </div>
@@ -1084,7 +1084,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                     <button
                                         type="button"
                                         onClick={() => imageInputRef.current?.click()}
-                                        className="app-button-secondary inline-flex h-9 w-9 items-center justify-center rounded-full p-0"
+                                        className="app-button-secondary inline-flex h-8 w-8 items-center justify-center rounded-full p-0 2xl:h-9 2xl:w-9"
                                         aria-label="Attach image"
                                     >
                                         <ImageIcon className="h-4 w-4" strokeWidth={1.9} />
@@ -1092,7 +1092,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                     <button
                                         type="button"
                                         onClick={() => fileInputRef.current?.click()}
-                                        className="app-button-secondary inline-flex h-9 w-9 items-center justify-center rounded-full p-0"
+                                        className="app-button-secondary inline-flex h-8 w-8 items-center justify-center rounded-full p-0 2xl:h-9 2xl:w-9"
                                         aria-label="Attach file"
                                     >
                                         <Paperclip className="h-4 w-4" strokeWidth={1.9} />
@@ -1101,7 +1101,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                 <button
                                     type="submit"
                                     disabled={isSending || (!draft.trim() && !draftAttachment)}
-                                    className="app-button-primary absolute bottom-4 right-3 inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full disabled:opacity-60"
+                                    className="app-button-primary absolute bottom-3.5 right-3 inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full disabled:opacity-60 2xl:bottom-4 2xl:h-10 2xl:w-10"
                                     aria-label="Send message"
                                 >
                                     <SendHorizonal className="h-4 w-4" strokeWidth={1.9} />
@@ -1113,32 +1113,34 @@ export default function Index({ conversations, activeConversation, contacts = []
             </div>
 
             <Modal show={pickerOpen} onClose={() => setPickerOpen(false)} maxWidth="md">
-                <div className="space-y-5 p-6">
+                <div className="space-y-4 p-5 2xl:space-y-5 2xl:p-6">
                     <div>
-                        <div className="text-lg font-semibold">Start a new conversation</div>
-                        <p className="app-text-soft mt-2 text-sm leading-6">
+                        <div className="text-base font-semibold 2xl:text-lg">
+                            Start a new conversation
+                        </div>
+                        <p className="app-text-soft mt-2 text-[13px] leading-5 2xl:text-sm 2xl:leading-6">
                             Pick one of your contacts to open a direct chat.
                         </p>
                     </div>
 
                     {availableContacts.length === 0 ? (
-                        <div className="app-dashed-panel app-text-muted rounded-[24px] p-5 text-sm">
+                        <div className="app-dashed-panel app-text-muted rounded-[20px] p-4 text-[13px] 2xl:rounded-[24px] 2xl:p-5 2xl:text-sm">
                             You’ve already started conversations with all available contacts.
                         </div>
                     ) : (
-                        <div className="max-h-[24rem] space-y-3 overflow-y-auto pr-1">
+                        <div className="max-h-[24rem] space-y-2.5 overflow-y-auto pr-1 2xl:space-y-3">
                             {availableContacts.map((contact) => (
                                 <button
                                     key={contact.id}
                                     type="button"
                                     onClick={() => startConversation(contact.id)}
-                                    className="app-card-inset flex w-full items-center gap-3 rounded-[24px] p-4 text-left transition hover:bg-[var(--vynce-surface-muted)]"
+                                    className="app-card-inset flex w-full items-center gap-3 rounded-[20px] p-3.5 text-left transition hover:bg-[var(--vynce-surface-muted)] 2xl:rounded-[24px] 2xl:p-4"
                                 >
                                     {contact.avatar_url ? (
                                         <img
                                             src={contact.avatar_url}
                                             alt={contact.name}
-                                            className="h-11 w-11 rounded-2xl object-cover"
+                                            className="h-10 w-10 rounded-[18px] object-cover 2xl:h-11 2xl:w-11 2xl:rounded-2xl"
                                             style={{
                                                 objectPosition: `${contact.avatar_position_x}% ${contact.avatar_position_y}%`,
                                                 transform: `scale(${contact.avatar_zoom})`,
@@ -1146,15 +1148,15 @@ export default function Index({ conversations, activeConversation, contacts = []
                                             }}
                                         />
                                     ) : (
-                                        <div className="app-avatar-fallback flex h-11 w-11 items-center justify-center rounded-2xl text-sm font-semibold">
+                                        <div className="app-avatar-fallback flex h-10 w-10 items-center justify-center rounded-[18px] text-[13px] font-semibold 2xl:h-11 2xl:w-11 2xl:rounded-2xl 2xl:text-sm">
                                             {initialsFor(contact.name)}
                                         </div>
                                     )}
                                     <div className="min-w-0 flex-1">
-                                        <div className="truncate text-sm font-semibold">
+                                        <div className="truncate text-[13px] font-semibold 2xl:text-sm">
                                             {contact.name}
                                         </div>
-                                        <div className="app-text-soft truncate text-xs">
+                                        <div className="app-text-soft truncate text-[11px] 2xl:text-xs">
                                             @{contact.username}
                                         </div>
                                     </div>
@@ -1166,10 +1168,10 @@ export default function Index({ conversations, activeConversation, contacts = []
             </Modal>
 
             <Modal show={Boolean(messageToDelete)} onClose={closeDeleteModal} maxWidth="md">
-                <div className="space-y-5 p-6">
+                <div className="space-y-4 p-5 2xl:space-y-5 2xl:p-6">
                     <div>
-                        <div className="text-lg font-semibold">Delete message?</div>
-                        <p className="app-text-soft mt-2 text-sm leading-6">
+                        <div className="text-base font-semibold 2xl:text-lg">Delete message?</div>
+                        <p className="app-text-soft mt-2 text-[13px] leading-5 2xl:text-sm 2xl:leading-6">
                             This message will be removed from the conversation for everyone.
                         </p>
                     </div>
@@ -1181,7 +1183,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                             disabled={Boolean(
                                 messageToDelete && deletingMessageIds.includes(messageToDelete.id),
                             )}
-                            className="app-button-secondary rounded-full px-4 py-2 text-sm disabled:opacity-60"
+                            className="app-button-secondary rounded-full px-3.5 py-1.5 text-[13px] disabled:opacity-60 2xl:px-4 2xl:py-2 2xl:text-sm"
                         >
                             Cancel
                         </button>
@@ -1191,7 +1193,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                             disabled={Boolean(
                                 messageToDelete && deletingMessageIds.includes(messageToDelete.id),
                             )}
-                            className="app-button-primary rounded-full px-4 py-2 text-sm disabled:opacity-60"
+                            className="app-button-primary rounded-full px-3.5 py-1.5 text-[13px] disabled:opacity-60 2xl:px-4 2xl:py-2 2xl:text-sm"
                         >
                             Delete
                         </button>
@@ -1204,10 +1206,12 @@ export default function Index({ conversations, activeConversation, contacts = []
                 onClose={closeClearConversationModal}
                 maxWidth="md"
             >
-                <div className="space-y-5 p-6">
+                <div className="space-y-4 p-5 2xl:space-y-5 2xl:p-6">
                     <div>
-                        <div className="text-lg font-semibold">Clear conversation?</div>
-                        <p className="app-text-soft mt-2 text-sm leading-6">
+                        <div className="text-base font-semibold 2xl:text-lg">
+                            Clear conversation?
+                        </div>
+                        <p className="app-text-soft mt-2 text-[13px] leading-5 2xl:text-sm 2xl:leading-6">
                             This will remove every message from this thread and keep the
                             conversation itself in your inbox.
                         </p>
@@ -1221,7 +1225,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                 conversationToClear &&
                                 clearingConversationIds.includes(conversationToClear.id),
                             )}
-                            className="app-button-secondary rounded-full px-4 py-2 text-sm disabled:opacity-60"
+                            className="app-button-secondary rounded-full px-3.5 py-1.5 text-[13px] disabled:opacity-60 2xl:px-4 2xl:py-2 2xl:text-sm"
                         >
                             Cancel
                         </button>
@@ -1232,7 +1236,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                 conversationToClear &&
                                 clearingConversationIds.includes(conversationToClear.id),
                             )}
-                            className="app-button-primary rounded-full px-4 py-2 text-sm disabled:opacity-60"
+                            className="app-button-primary rounded-full px-3.5 py-1.5 text-[13px] disabled:opacity-60 2xl:px-4 2xl:py-2 2xl:text-sm"
                         >
                             Clear
                         </button>
@@ -1245,10 +1249,12 @@ export default function Index({ conversations, activeConversation, contacts = []
                 onClose={closeDeleteConversationModal}
                 maxWidth="md"
             >
-                <div className="space-y-5 p-6">
+                <div className="space-y-4 p-5 2xl:space-y-5 2xl:p-6">
                     <div>
-                        <div className="text-lg font-semibold">Delete conversation?</div>
-                        <p className="app-text-soft mt-2 text-sm leading-6">
+                        <div className="text-base font-semibold 2xl:text-lg">
+                            Delete conversation?
+                        </div>
+                        <p className="app-text-soft mt-2 text-[13px] leading-5 2xl:text-sm 2xl:leading-6">
                             This will remove the thread from your inbox.
                         </p>
                     </div>
@@ -1261,7 +1267,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                 conversationToDelete &&
                                 deletingConversationIds.includes(conversationToDelete.id),
                             )}
-                            className="app-button-secondary rounded-full px-4 py-2 text-sm disabled:opacity-60"
+                            className="app-button-secondary rounded-full px-3.5 py-1.5 text-[13px] disabled:opacity-60 2xl:px-4 2xl:py-2 2xl:text-sm"
                         >
                             Cancel
                         </button>
@@ -1272,7 +1278,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                 conversationToDelete &&
                                 deletingConversationIds.includes(conversationToDelete.id),
                             )}
-                            className="app-button-primary rounded-full px-4 py-2 text-sm disabled:opacity-60"
+                            className="app-button-primary rounded-full px-3.5 py-1.5 text-[13px] disabled:opacity-60 2xl:px-4 2xl:py-2 2xl:text-sm"
                         >
                             Delete
                         </button>
