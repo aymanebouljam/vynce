@@ -67,18 +67,20 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
     };
 
     const sidebar = (
-        <div className="space-y-4">
+        <div className="space-y-3 2xl:space-y-4">
             {!isDiscover && (
-                <div className="app-panel rounded-[28px] p-5">
-                    <div className="flex items-center gap-2 text-sm font-semibold">
+                <div className="app-panel rounded-[24px] p-4 2xl:rounded-[28px] 2xl:p-5">
+                    <div className="flex items-center gap-2 text-[13px] font-semibold 2xl:text-sm">
                         <TrendingUp className="h-4 w-4" strokeWidth={1.9} />
                         Trending now
                     </div>
-                    <div className="mt-4 space-y-4">
+                    <div className="mt-3 space-y-3 2xl:mt-4 2xl:space-y-4">
                         {trends.map((trend) => (
                             <div key={trend.label}>
-                                <div className="text-sm">#{trend.label}</div>
-                                <div className="app-text-soft text-xs">{trend.posts}</div>
+                                <div className="text-[13px] 2xl:text-sm">#{trend.label}</div>
+                                <div className="app-text-soft text-[11px] 2xl:text-xs">
+                                    {trend.posts}
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -86,24 +88,31 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
             )}
 
             {pendingRequests.length > 0 && (
-                <div className="app-panel rounded-[28px] p-5">
+                <div className="app-panel rounded-[24px] p-4 2xl:rounded-[28px] 2xl:p-5">
                     <div className="flex items-center justify-between gap-3">
-                        <div className="text-sm font-semibold">Invitations</div>
-                        <div className="app-text-soft text-xs">
+                        <div className="text-[13px] font-semibold 2xl:text-sm">Invitations</div>
+                        <div className="app-text-soft text-[11px] 2xl:text-xs">
                             {pendingRequests.length} pending
                         </div>
                     </div>
-                    <div className="mt-4 space-y-3">
+                    <div className="mt-3 space-y-2.5 2xl:mt-4 2xl:space-y-3">
                         {pendingRequests.map((person) => (
-                            <div key={person.id} className="app-card-inset rounded-2xl p-3">
-                                <div className="text-sm font-medium">{person.name}</div>
-                                <div className="app-text-muted text-xs">@{person.username}</div>
-                                <div className="mt-3 flex gap-2">
+                            <div
+                                key={person.id}
+                                className="app-card-inset rounded-[18px] p-2.5 2xl:rounded-2xl 2xl:p-3"
+                            >
+                                <div className="text-[13px] font-medium 2xl:text-sm">
+                                    {person.name}
+                                </div>
+                                <div className="app-text-muted text-[11px] 2xl:text-xs">
+                                    @{person.username}
+                                </div>
+                                <div className="mt-2.5 flex gap-2 2xl:mt-3">
                                     <Link
                                         href={route('users.follow-requests.accept', person.id)}
                                         method="post"
                                         as="button"
-                                        className="app-button-primary rounded-full px-3 py-2 text-xs font-semibold"
+                                        className="app-button-primary rounded-full px-3 py-1.5 text-[11px] font-semibold 2xl:py-2 2xl:text-xs"
                                     >
                                         Accept
                                     </Link>
@@ -111,7 +120,7 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
                                         href={route('users.follow-requests.reject', person.id)}
                                         method="delete"
                                         as="button"
-                                        className="app-button-secondary rounded-full px-3 py-2 text-xs"
+                                        className="app-button-secondary rounded-full px-3 py-1.5 text-[11px] 2xl:py-2 2xl:text-xs"
                                     >
                                         Refuse
                                     </Link>
@@ -123,14 +132,14 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
             )}
 
             {!isDiscover && (
-                <div className="app-panel rounded-[28px] p-5">
-                    <div className="flex items-center gap-2 text-sm font-semibold">
+                <div className="app-panel rounded-[24px] p-4 2xl:rounded-[28px] 2xl:p-5">
+                    <div className="flex items-center gap-2 text-[13px] font-semibold 2xl:text-sm">
                         <UserPlus className="h-4 w-4" strokeWidth={1.9} />
                         Add people
                     </div>
-                    <div className="mt-4 space-y-4">
+                    <div className="mt-3 space-y-3 2xl:mt-4 2xl:space-y-4">
                         {visibleSuggestions.length === 0 ? (
-                            <div className="app-text-soft text-sm leading-6">
+                            <div className="app-text-soft text-[13px] leading-5 2xl:text-sm 2xl:leading-6">
                                 You’re caught up for now. As more people join your orbit, they’ll
                                 show up here.
                             </div>
@@ -143,7 +152,7 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
                                 return (
                                     <div
                                         key={person.id}
-                                        className={`app-card-inset rounded-2xl p-3 transition-all duration-500 ${
+                                        className={`app-card-inset rounded-[18px] p-2.5 transition-all duration-500 2xl:rounded-2xl 2xl:p-3 ${
                                             isExiting
                                                 ? 'translate-y-2 scale-[0.98] opacity-0'
                                                 : 'translate-y-0 scale-100 opacity-100'
@@ -155,7 +164,7 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
                                                     <img
                                                         src={person.avatar_url}
                                                         alt={person.name}
-                                                        className="h-12 w-12 rounded-2xl object-cover"
+                                                        className="h-10 w-10 rounded-[18px] object-cover 2xl:h-12 2xl:w-12 2xl:rounded-2xl"
                                                         style={{
                                                             objectPosition: `${person.avatar_position_x}% ${person.avatar_position_y}%`,
                                                             transform: `scale(${person.avatar_zoom})`,
@@ -163,16 +172,16 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
                                                         }}
                                                     />
                                                 ) : (
-                                                    <div className="app-avatar-fallback flex h-12 w-12 items-center justify-center rounded-2xl text-xs font-semibold">
+                                                    <div className="app-avatar-fallback flex h-10 w-10 items-center justify-center rounded-[18px] text-[11px] font-semibold 2xl:h-12 2xl:w-12 2xl:rounded-2xl 2xl:text-xs">
                                                         {initialsFor(person.name)}
                                                     </div>
                                                 )}
 
                                                 <div className="min-w-0 flex-1">
-                                                    <div className="truncate text-sm font-medium leading-6">
+                                                    <div className="truncate text-[13px] font-medium leading-5 2xl:text-sm 2xl:leading-6">
                                                         {person.name}
                                                     </div>
-                                                    <div className="app-text-muted mt-0.5 truncate text-xs">
+                                                    <div className="app-text-muted mt-0.5 truncate text-[11px] 2xl:text-xs">
                                                         @{person.username}
                                                     </div>
                                                 </div>
@@ -182,7 +191,7 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
                                                 type="button"
                                                 onClick={() => addSuggestion(person)}
                                                 disabled={isProcessing || isConfirmed}
-                                                className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all duration-200 ${
+                                                className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all duration-200 2xl:h-10 2xl:w-10 ${
                                                     isConfirmed
                                                         ? 'app-panel-inset text-emerald-200'
                                                         : 'app-button-primary'
@@ -212,16 +221,16 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
 
     return (
         <AuthenticatedLayout title="Feed" sidebar={isDiscover ? null : sidebar}>
-            <section className="space-y-6">
+            <section className="space-y-5 2xl:space-y-6">
                 {isDiscover ? (
                     <DiscoverExperience posts={feed.data} newPostId={newPostId} />
                 ) : (
                     <>
                         <PostComposer compact />
 
-                        <div className="space-y-4">
+                        <div className="space-y-3 2xl:space-y-4">
                             {feed.data.length === 0 ? (
-                                <div className="app-dashed-panel app-text-muted rounded-[28px] p-8 text-sm">
+                                <div className="app-dashed-panel app-text-muted rounded-[24px] p-6 text-[13px] 2xl:rounded-[28px] 2xl:p-8 2xl:text-sm">
                                     Nothing has landed here yet. Follow a few people, post an
                                     update, or switch to Discover to find voices worth bringing into
                                     your feed.
@@ -250,7 +259,7 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
                                       : 'feed.home',
                                 { page: feed.meta.current_page + 1 },
                             )}
-                            className="app-button-secondary inline-flex rounded-full px-5 py-3 text-sm"
+                            className="app-button-secondary inline-flex rounded-full px-4 py-2.5 text-[13px] 2xl:px-5 2xl:py-3 2xl:text-sm"
                         >
                             Load more
                         </Link>
@@ -293,11 +302,11 @@ function DiscoverExperience({ posts, newPostId }) {
         );
     });
     return (
-        <div className="space-y-6">
-            <section className="app-panel rounded-[32px] p-6">
-                <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-                    <div className="flex items-center gap-2 text-lg font-semibold">
-                        <Flame className="h-5 w-5" strokeWidth={1.9} />
+        <div className="space-y-4 2xl:space-y-6">
+            <section className="app-panel rounded-[24px] p-4 2xl:rounded-[32px] 2xl:p-6">
+                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between 2xl:gap-4">
+                    <div className="flex items-center gap-2 text-[15px] font-semibold 2xl:text-lg">
+                        <Flame className="h-4 w-4 2xl:h-5 2xl:w-5" strokeWidth={1.9} />
                         Trending filters
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -310,7 +319,7 @@ function DiscoverExperience({ posts, newPostId }) {
                                 key={option.key}
                                 type="button"
                                 onClick={() => setContentType(option.key)}
-                                className={`rounded-full px-4 py-2 text-sm ${
+                                className={`rounded-full px-3 py-1.5 text-[12px] 2xl:px-4 2xl:py-2 2xl:text-sm ${
                                     contentType === option.key
                                         ? 'app-button-primary'
                                         : 'app-button-secondary'
@@ -321,7 +330,7 @@ function DiscoverExperience({ posts, newPostId }) {
                         ))}
                     </div>
                 </div>
-                <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                <div className="mt-3 grid gap-2.5 md:grid-cols-2 xl:grid-cols-4 2xl:mt-5 2xl:gap-3">
                     <FilterGroup
                         label="Language"
                         value={languageFilter}
@@ -367,17 +376,17 @@ function DiscoverExperience({ posts, newPostId }) {
             </section>
 
             {(contentType === 'all' || contentType === 'posts') && (
-                <section className="space-y-4">
-                    <div className="flex items-center gap-2 text-lg font-semibold">
-                        <TrendingUp className="h-5 w-5" strokeWidth={1.9} />
+                <section className="space-y-3 2xl:space-y-4">
+                    <div className="flex items-center gap-2 text-[15px] font-semibold 2xl:text-lg">
+                        <TrendingUp className="h-4 w-4 2xl:h-5 2xl:w-5" strokeWidth={1.9} />
                         Trending posts
                     </div>
                     {filteredPosts.length === 0 ? (
-                        <div className="app-dashed-panel app-text-muted rounded-[28px] p-8 text-sm">
+                        <div className="app-dashed-panel app-text-muted rounded-[24px] p-6 text-[13px] 2xl:rounded-[28px] 2xl:p-8 2xl:text-sm">
                             No public posts match the current discovery filters.
                         </div>
                     ) : (
-                        <div className="space-y-4">
+                        <div className="space-y-3 2xl:space-y-4">
                             {filteredPosts.map((post) => (
                                 <PostCard
                                     key={post.id}
@@ -395,14 +404,14 @@ function DiscoverExperience({ posts, newPostId }) {
 
 function FilterGroup({ label, value, onChange, options }) {
     return (
-        <label className="space-y-2">
-            <div className="app-text-soft text-xs font-medium uppercase tracking-[0.18em]">
+        <label className="space-y-1.5 2xl:space-y-2">
+            <div className="app-text-soft text-[10px] font-medium uppercase tracking-[0.18em] 2xl:text-xs">
                 {label}
             </div>
             <select
                 value={value}
                 onChange={(event) => onChange(event.target.value)}
-                className="app-select-field w-full rounded-full px-4 py-3 text-sm"
+                className="app-select-field w-full rounded-full px-3 py-2 text-[12px] 2xl:px-4 2xl:py-3 2xl:text-sm"
             >
                 {options.map(([optionValue, optionLabel]) => (
                     <option key={optionValue} value={optionValue}>

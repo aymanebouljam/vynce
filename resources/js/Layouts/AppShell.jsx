@@ -336,24 +336,27 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                 maxWidth="xl"
                 centered
             >
-                <div className="space-y-5 p-6">
+                <div className="space-y-4 p-5 2xl:space-y-5 2xl:p-6">
                     <div>
-                        <div className="text-lg font-semibold">Search</div>
-                        <p className="app-text-soft mt-2 text-sm leading-6">
+                        <div className="text-base font-semibold 2xl:text-lg">Search</div>
+                        <p className="app-text-soft mt-2 text-[13px] leading-5 2xl:text-sm 2xl:leading-6">
                             Search people here, or continue to the full search page.
                         </p>
                     </div>
 
-                    <form onSubmit={submitFeedSearch} className="space-y-4">
-                        <label className="app-search flex items-center gap-3 rounded-[24px] px-4 py-3 backdrop-blur transition">
-                            <Search className="app-text-muted h-5 w-5 shrink-0" strokeWidth={1.8} />
+                    <form onSubmit={submitFeedSearch} className="space-y-3 2xl:space-y-4">
+                        <label className="app-search flex items-center gap-2.5 rounded-[20px] px-3.5 py-2.5 backdrop-blur transition 2xl:gap-3 2xl:rounded-[24px] 2xl:px-4 2xl:py-3">
+                            <Search
+                                className="app-text-muted h-4 w-4 shrink-0 2xl:h-5 2xl:w-5"
+                                strokeWidth={1.8}
+                            />
                             <input
                                 ref={feedSearchInputRef}
                                 type="search"
                                 value={feedSearchValue}
                                 onChange={(event) => setFeedSearchValue(event.target.value)}
                                 placeholder="Search people"
-                                className="app-search-input w-full bg-transparent text-sm focus:outline-none"
+                                className="app-search-input w-full bg-transparent text-[13px] focus:outline-none 2xl:text-sm"
                             />
                         </label>
 
@@ -361,7 +364,7 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                             <button
                                 type="submit"
                                 disabled={!feedSearchValue.trim()}
-                                className="app-button-primary rounded-full px-4 py-2 text-sm disabled:opacity-60"
+                                className="app-button-primary rounded-full px-3.5 py-1.5 text-[13px] disabled:opacity-60 2xl:px-4 2xl:py-2 2xl:text-sm"
                             >
                                 Search
                             </button>
@@ -369,29 +372,29 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                     </form>
 
                     {feedSearchLoading ? (
-                        <div className="app-panel-inset rounded-[24px] px-4 py-4 text-sm">
+                        <div className="app-panel-inset rounded-[20px] px-3.5 py-3 text-[13px] 2xl:rounded-[24px] 2xl:px-4 2xl:py-4 2xl:text-sm">
                             Searching...
                         </div>
                     ) : feedSearchValue.trim() ? (
-                        <div className="space-y-4">
+                        <div className="space-y-3 2xl:space-y-4">
                             {feedSearchResults.users.length > 0 && (
-                                <div className="space-y-3">
-                                    <div className="app-text-soft text-xs uppercase tracking-[0.18em]">
+                                <div className="space-y-2.5 2xl:space-y-3">
+                                    <div className="app-text-soft text-[11px] uppercase tracking-[0.18em] 2xl:text-xs">
                                         People
                                     </div>
-                                    <div className="space-y-3">
+                                    <div className="space-y-2.5 2xl:space-y-3">
                                         {feedSearchResults.users.map((person) => (
                                             <Link
                                                 key={person.id}
                                                 href={route('users.show', person.username)}
                                                 onClick={() => setFeedSearchOpen(false)}
-                                                className="app-card-inset flex items-center gap-3 rounded-[22px] px-4 py-3 transition hover:bg-[var(--vynce-surface-muted)]"
+                                                className="app-card-inset flex items-center gap-2.5 rounded-[18px] px-3.5 py-2.5 transition hover:bg-[var(--vynce-surface-muted)] 2xl:gap-3 2xl:rounded-[22px] 2xl:px-4 2xl:py-3"
                                             >
                                                 {person.avatar_url ? (
                                                     <img
                                                         src={person.avatar_url}
                                                         alt={person.name}
-                                                        className="h-11 w-11 rounded-2xl object-cover"
+                                                        className="h-10 w-10 rounded-[18px] object-cover 2xl:h-11 2xl:w-11 2xl:rounded-2xl"
                                                         style={{
                                                             objectPosition: `${person.avatar_position_x}% ${person.avatar_position_y}%`,
                                                             transform: `scale(${person.avatar_zoom})`,
@@ -399,15 +402,15 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                                                         }}
                                                     />
                                                 ) : (
-                                                    <div className="app-avatar-fallback flex h-11 w-11 items-center justify-center rounded-2xl text-sm font-semibold">
+                                                    <div className="app-avatar-fallback flex h-10 w-10 items-center justify-center rounded-[18px] text-[13px] font-semibold 2xl:h-11 2xl:w-11 2xl:rounded-2xl 2xl:text-sm">
                                                         {initialsFor(person.name)}
                                                     </div>
                                                 )}
                                                 <div className="min-w-0 flex-1">
-                                                    <div className="truncate text-sm font-semibold">
+                                                    <div className="truncate text-[13px] font-semibold 2xl:text-sm">
                                                         {person.name}
                                                     </div>
-                                                    <div className="app-text-soft truncate text-xs">
+                                                    <div className="app-text-soft truncate text-[11px] 2xl:text-xs">
                                                         @{person.username}
                                                     </div>
                                                 </div>
@@ -417,7 +420,7 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                                 </div>
                             )}
                             {feedSearchResults.users.length === 0 && (
-                                <div className="app-dashed-panel app-text-muted rounded-[24px] p-5 text-sm leading-6">
+                                <div className="app-dashed-panel app-text-muted rounded-[20px] p-4 text-[13px] leading-5 2xl:rounded-[24px] 2xl:p-5 2xl:text-sm 2xl:leading-6">
                                     No results match “{feedSearchValue.trim()}”.
                                 </div>
                             )}

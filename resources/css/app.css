@@ -1052,6 +1052,79 @@
         font-weight: 600;
     }
 
+    @media (min-width: 1246px) and (max-width: 1535px) {
+        .feed-composer-card {
+            gap: 0.8rem;
+        }
+
+        .feed-composer-avatar {
+            width: 2.4rem;
+            height: 2.4rem;
+        }
+
+        .feed-composer-pill {
+            padding: 0.78rem 0.9rem;
+            border-radius: 0.95rem;
+        }
+
+        .feed-composer-textarea {
+            min-height: 4rem;
+            font-size: 0.84rem;
+            line-height: 1.65;
+        }
+
+        .feed-composer-actions {
+            gap: 0.65rem;
+            margin-top: 0.7rem;
+            padding-inline: 0.35rem;
+        }
+
+        .feed-composer-action {
+            gap: 0.4rem;
+            padding: 0.34rem 0.68rem;
+            font-size: 0.76rem;
+        }
+
+        .feed-composer-send {
+            width: 2rem;
+            height: 2rem;
+        }
+
+        .feed-post-card {
+            border-radius: 1.45rem;
+        }
+
+        .feed-post-card__inner {
+            padding: 1rem;
+        }
+
+        .feed-post-card__avatar {
+            width: 2.4rem;
+            height: 2.4rem;
+        }
+
+        .feed-post-card__visibility {
+            padding: 0.34rem 0.6rem;
+            font-size: 0.64rem;
+        }
+
+        .feed-post-card__media {
+            height: 16rem;
+            border-radius: 1.2rem;
+        }
+
+        .feed-post-card__media--single {
+            min-height: 16rem;
+        }
+
+        .feed-post-card__media-badge {
+            top: 0.75rem;
+            left: 0.75rem;
+            padding: 0.38rem 0.65rem;
+            font-size: 0.72rem;
+        }
+    }
+
     .auth-post-card {
         padding: 1.1rem;
         animation: authSlideIn 900ms ease both;
