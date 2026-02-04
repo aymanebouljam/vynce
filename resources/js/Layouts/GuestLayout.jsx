@@ -30,18 +30,20 @@ export default function GuestLayout({ children }) {
                     <div className="auth-ambient auth-ambient--two" />
                     <div className="auth-grid-pattern" />
 
-                    <div className="relative z-10 flex min-h-screen w-full flex-col px-10 pb-6 pt-4 xl:px-16 xl:pb-8 xl:pt-5">
+                    <div className="relative z-10 flex min-h-screen w-full flex-col px-8 pb-5 pt-4 xl:px-16 xl:pb-8 xl:pt-5">
                         <Link
                             href="/"
                             className="auth-brand-lockup inline-flex items-center gap-0 self-start"
                         >
-                            <ApplicationLogo className="auth-wordmark-icon h-12 w-12 fill-current" />
+                            <ApplicationLogo className="auth-wordmark-icon h-11 w-11 fill-current xl:h-12 xl:w-12" />
                             <div>
-                                <div className="auth-wordmark text-3xl font-semibold">ynce</div>
+                                <div className="auth-wordmark text-[1.8rem] font-semibold xl:text-3xl">
+                                    ynce
+                                </div>
                             </div>
                         </Link>
 
-                        <div className="relative mt-5 flex-1">
+                        <div className="relative mt-4 flex-1 xl:mt-5">
                             <div className="auth-app-stage">
                                 <div className="auth-app-window">
                                     <div className="auth-app-window__topbar">
@@ -194,16 +196,16 @@ export default function GuestLayout({ children }) {
                     </div>
                 </div>
 
-                <div className="auth-form-panel flex min-h-screen items-start justify-center px-4 pb-8 pt-8 sm:px-6 lg:rounded-none lg:px-10 lg:pt-14 xl:px-14 xl:pt-[4.5rem] 2xl:pt-32">
+                <div className="auth-form-panel flex min-h-screen items-start justify-center px-4 pb-8 pt-8 sm:px-6 lg:rounded-none lg:px-8 lg:pt-12 xl:px-14 xl:pt-[4.5rem] 2xl:pt-32">
                     <div className="auth-form-floating max-w-xl">
-                        <div className="mb-8 lg:hidden">
+                        <div className="mb-6 lg:hidden">
                             <Link
                                 href="/"
                                 className="auth-brand-lockup auth-brand-lockup--mobile inline-flex items-center gap-0"
                             >
-                                <ApplicationLogo className="auth-wordmark-icon auth-wordmark-icon--mobile h-10 w-10 fill-current" />
+                                <ApplicationLogo className="auth-wordmark-icon auth-wordmark-icon--mobile h-9 w-9 fill-current sm:h-10 sm:w-10" />
                                 <div>
-                                    <div className="auth-wordmark auth-wordmark--mobile text-2xl font-semibold">
+                                    <div className="auth-wordmark auth-wordmark--mobile text-[1.7rem] font-semibold sm:text-2xl">
                                         ynce
                                     </div>
                                 </div>
