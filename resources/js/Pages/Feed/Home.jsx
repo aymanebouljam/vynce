@@ -159,7 +159,10 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
                                         }`}
                                     >
                                         <div className="flex items-center gap-3">
-                                            <div className="flex min-w-0 flex-1 items-start gap-3">
+                                            <Link
+                                                href={route('users.show', person.username)}
+                                                className="flex min-w-0 flex-1 items-start gap-3 rounded-[18px] transition-opacity hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+                                            >
                                                 {person.avatar_url ? (
                                                     <img
                                                         src={person.avatar_url}
@@ -185,7 +188,7 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
                                                         @{person.username}
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </Link>
 
                                             <button
                                                 type="button"

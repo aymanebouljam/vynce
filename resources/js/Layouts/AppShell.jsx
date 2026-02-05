@@ -16,10 +16,7 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
         .join('')
         .slice(0, 2)
         .toUpperCase();
-    const showFeedSearch =
-        route().current('feed.home') ||
-        route().current('feed.following') ||
-        route().current('feed.search');
+    const showFeedSearch = true;
     const [feedSearchOpen, setFeedSearchOpen] = useState(false);
     const [feedSearchValue, setFeedSearchValue] = useState('');
     const [feedSearchResults, setFeedSearchResults] = useState({
