@@ -90,6 +90,32 @@ class PostTest extends TestCase
         $this->assertSame(['julia'], $post->mentions);
     }
 
+    public function test_users_can_toggle_post_visibility_over_json_and_persist_it(): void
+    {
+        $user = User::factory()->create();
+        $post = Post::factory()->for($user)->create([
+            'body' => 'Original thought',
+            'visibility' => 'public',
+            'hashtags' => [],
+            'mentions' => [],
+        ]);
+
+        $response = $this->actingAs($user)
+            ->patchJson(route('posts.update', $post), [
+                'body' => 'Original thought',
+                'visibility' => 'followers',
+            ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('post.id', $post->id)
+            ->assertJsonPath('post.visibility', 'followers');
+
+        $post->refresh();
+
+        $this->assertSame('followers', $post->visibility->value);
+    }
+
     public function test_users_can_delete_their_own_posts(): void
     {
         $user = User::factory()->create();

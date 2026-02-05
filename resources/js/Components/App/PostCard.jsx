@@ -41,6 +41,7 @@ export default function PostCard({
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [viewerIndex, setViewerIndex] = useState(null);
     const [selectedVisibility, setSelectedVisibility] = useState(post.visibility);
+    const [isVisibilitySaving, setIsVisibilitySaving] = useState(false);
     const menuButtonRef = useRef(null);
     const menuPanelRef = useRef(null);
     const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
@@ -261,7 +262,7 @@ export default function PostCard({
     };
 
     const updateVisibility = (visibility) => {
-        if (editForm.processing || currentVisibility === visibility) {
+        if (editForm.processing || isVisibilitySaving || currentVisibility === visibility) {
             return;
         }
 
@@ -269,24 +270,39 @@ export default function PostCard({
         setVisibilityMenuOpen(false);
         setSelectedVisibility(visibility);
         editForm.setData('visibility', visibility);
+        setIsVisibilitySaving(true);
 
-        editForm
-            .transform((data) => ({
-                ...data,
-                visibility,
-            }))
-            .patch(route('posts.update', post.id), {
-                preserveScroll: true,
-                onSuccess: () => {
-                    setVisibilityMenuOpen(false);
+        window.axios
+            .patch(
+                route('posts.update', post.id),
+                {
+                    body: editForm.data.body,
+                    visibility,
                 },
-                onError: () => {
-                    setSelectedVisibility(previousVisibility);
-                    editForm.setData('visibility', previousVisibility);
+                {
+                    headers: {
+                        Accept: 'application/json',
+                    },
                 },
-                onFinish: () => {
-                    editForm.transform((data) => data);
-                },
+            )
+            .then(({ data }) => {
+                const persistedVisibility = data.post?.visibility ?? visibility;
+
+                setSelectedVisibility(persistedVisibility);
+                editForm.setData((current) => ({
+                    ...current,
+                    visibility: persistedVisibility,
+                }));
+            })
+            .catch(() => {
+                setSelectedVisibility(previousVisibility);
+                editForm.setData((current) => ({
+                    ...current,
+                    visibility: previousVisibility,
+                }));
+            })
+            .finally(() => {
+                setIsVisibilitySaving(false);
             });
     };
 

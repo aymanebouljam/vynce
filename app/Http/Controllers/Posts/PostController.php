@@ -6,7 +6,9 @@ use App\Actions\Posts\CreatePostAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Posts\StorePostRequest;
 use App\Http\Requests\Posts\UpdatePostRequest;
+use App\Http\Resources\PostResource;
 use App\Models\Post;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 
@@ -23,7 +25,7 @@ class PostController extends Controller
         return back()->with('new_post_id', $post->id);
     }
 
-    public function update(UpdatePostRequest $request, Post $post): RedirectResponse
+    public function update(UpdatePostRequest $request, Post $post): RedirectResponse|JsonResponse
     {
         $this->authorize('update', $post);
 
@@ -36,6 +38,14 @@ class PostController extends Controller
             'hashtags' => array_values(array_unique(array_map('mb_strtolower', $hashtags[1] ?? []))),
             'mentions' => array_values(array_unique(array_map('strtolower', $mentions[1] ?? []))),
         ]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'post' => PostResource::make(
+                    $post->fresh(['user', 'media', 'comments.user', 'likes', 'reposts']),
+                )->resolve($request),
+            ]);
+        }
 
         return back();
     }
