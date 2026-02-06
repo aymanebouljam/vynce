@@ -4,11 +4,34 @@ import PostComposer from '@/Components/App/PostComposer';
 import PostCard from '@/Components/App/PostCard';
 import SecondaryButton from '@/Components/SecondaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Camera, Eye, ImagePlus, Move, Pencil, SlidersHorizontal, Trash2 } from 'lucide-react';
+import {
+    Camera,
+    Check,
+    Eye,
+    ImagePlus,
+    Move,
+    Pencil,
+    SlidersHorizontal,
+    Trash2,
+    TrendingUp,
+    UserPlus,
+} from 'lucide-react';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 
-export default function Show({ profile, relationship, feed }) {
+const trends = [
+    { label: 'Design systems', posts: '1,284 posts today' },
+    { label: 'Launch notes', posts: '842 posts today' },
+    { label: 'Creator workflow', posts: '511 posts today' },
+];
+
+export default function Show({
+    profile,
+    relationship,
+    feed,
+    pendingRequests = [],
+    suggestions = [],
+}) {
     const { auth, errors, flash } = usePage().props;
     const followForm = useForm({});
     const isOwnProfile = auth.user.id === profile.id;
@@ -16,6 +39,17 @@ export default function Show({ profile, relationship, feed }) {
     const [composerOpen, setComposerOpen] = useState(false);
     const [avatarManagerOpen, setAvatarManagerOpen] = useState(false);
     const [coverManagerOpen, setCoverManagerOpen] = useState(false);
+    const [visibleSuggestions, setVisibleSuggestions] = useState(suggestions);
+    const [processingSuggestionIds, setProcessingSuggestionIds] = useState([]);
+    const [confirmedSuggestionIds, setConfirmedSuggestionIds] = useState([]);
+    const [exitingSuggestionIds, setExitingSuggestionIds] = useState([]);
+    const [removedSuggestionIds, setRemovedSuggestionIds] = useState([]);
+
+    useEffect(() => {
+        setVisibleSuggestions(
+            suggestions.filter((person) => !removedSuggestionIds.includes(person.id)),
+        );
+    }, [suggestions, removedSuggestionIds]);
 
     const submitFollow = () => {
         if (relationship.is_following || relationship.has_pending_request) {
@@ -35,6 +69,45 @@ export default function Show({ profile, relationship, feed }) {
         : relationship.is_following
           ? 'Unfollow'
           : 'Follow';
+
+    const addSuggestion = async (person) => {
+        if (processingSuggestionIds.includes(person.id)) {
+            return;
+        }
+
+        setProcessingSuggestionIds((current) => [...current, person.id]);
+
+        try {
+            await window.axios.post(route('users.follow', person.id), null, {
+                headers: {
+                    Accept: 'application/json',
+                },
+            });
+
+            setConfirmedSuggestionIds((current) => [...current, person.id]);
+
+            window.setTimeout(() => {
+                setExitingSuggestionIds((current) => [...current, person.id]);
+            }, 180);
+
+            window.setTimeout(() => {
+                setVisibleSuggestions((current) =>
+                    current.filter((suggestion) => suggestion.id !== person.id),
+                );
+                setRemovedSuggestionIds((current) => [...current, person.id]);
+                setConfirmedSuggestionIds((current) => current.filter((id) => id !== person.id));
+                setExitingSuggestionIds((current) => current.filter((id) => id !== person.id));
+
+                router.reload({
+                    only: ['suggestions', 'pendingRequests'],
+                    preserveScroll: true,
+                    preserveState: true,
+                });
+            }, 560);
+        } finally {
+            setProcessingSuggestionIds((current) => current.filter((id) => id !== person.id));
+        }
+    };
 
     return (
         <AuthenticatedLayout title={`${profile.name}`}>
@@ -264,28 +337,207 @@ export default function Show({ profile, relationship, feed }) {
                 </>
             )}
 
-            <section className="mt-5 space-y-3 2xl:mt-6 2xl:space-y-4">
-                {feed.data.length === 0 ? (
-                    <div className="app-dashed-panel app-text-muted rounded-[24px] p-6 text-[13px] 2xl:rounded-[28px] 2xl:p-8 2xl:text-sm">
-                        No posts yet. This space will fill with updates, threads, and media as soon
-                        as the first post goes live.
+            <section className="mt-5 grid gap-5 min-[1246px]:grid-cols-[minmax(0,1fr)_20rem] 2xl:min-[1246px]:grid-cols-[minmax(0,1fr)_22rem] 2xl:mt-6 2xl:gap-6">
+                <div className="space-y-3 2xl:space-y-4">
+                    {feed.data.length === 0 ? (
+                        <div className="app-dashed-panel app-text-muted rounded-[24px] p-6 text-[13px] 2xl:rounded-[28px] 2xl:p-8 2xl:text-sm">
+                            No posts yet. This space will fill with updates, threads, and media as
+                            soon as the first post goes live.
+                        </div>
+                    ) : (
+                        feed.data.map((post) => (
+                            <PostCard
+                                key={post.id}
+                                post={post}
+                                profileUsername={profile.username}
+                                showProfileRepostLabel
+                                highlighted={Number(newPostId) === post.id}
+                                profileRepostLabel={
+                                    isOwnProfile ? 'Reposted' : `Reposted by @${profile.username}`
+                                }
+                            />
+                        ))
+                    )}
+                </div>
+
+                <div className="space-y-3 min-[1246px]:sticky min-[1246px]:top-6 min-[1246px]:h-fit min-[1246px]:self-start 2xl:space-y-4">
+                    <div className="app-panel rounded-[24px] p-4 2xl:rounded-[28px] 2xl:p-5">
+                        <div className="flex items-center gap-2 text-[13px] font-semibold 2xl:text-sm">
+                            <TrendingUp className="h-4 w-4" strokeWidth={1.9} />
+                            Trending now
+                        </div>
+                        <div className="mt-3 space-y-3 2xl:mt-4 2xl:space-y-4">
+                            {trends.map((trend) => (
+                                <div key={trend.label}>
+                                    <div className="text-[13px] 2xl:text-sm">#{trend.label}</div>
+                                    <div className="app-text-soft text-[11px] 2xl:text-xs">
+                                        {trend.posts}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                ) : (
-                    feed.data.map((post) => (
-                        <PostCard
-                            key={post.id}
-                            post={post}
-                            profileUsername={profile.username}
-                            showProfileRepostLabel
-                            highlighted={Number(newPostId) === post.id}
-                            profileRepostLabel={
-                                isOwnProfile ? 'Reposted' : `Reposted by @${profile.username}`
-                            }
-                        />
-                    ))
-                )}
+
+                    {pendingRequests.length > 0 && (
+                        <div className="app-panel rounded-[24px] p-4 2xl:rounded-[28px] 2xl:p-5">
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="text-[13px] font-semibold 2xl:text-sm">
+                                    Invitations
+                                </div>
+                                <div className="app-text-soft text-[11px] 2xl:text-xs">
+                                    {pendingRequests.length} pending
+                                </div>
+                            </div>
+                            <div className="mt-3 space-y-2.5 2xl:mt-4 2xl:space-y-3">
+                                {pendingRequests.map((person) => (
+                                    <div
+                                        key={person.id}
+                                        className="app-card-inset rounded-[18px] p-2.5 2xl:rounded-2xl 2xl:p-3"
+                                    >
+                                        <div className="text-[13px] font-medium 2xl:text-sm">
+                                            {person.name}
+                                        </div>
+                                        <div className="app-text-muted text-[11px] 2xl:text-xs">
+                                            @{person.username}
+                                        </div>
+                                        <div className="mt-2.5 flex gap-2 2xl:mt-3">
+                                            <Link
+                                                href={route(
+                                                    'users.follow-requests.accept',
+                                                    person.id,
+                                                )}
+                                                method="post"
+                                                as="button"
+                                                className="app-button-primary rounded-full px-3 py-1.5 text-[11px] font-semibold 2xl:py-2 2xl:text-xs"
+                                            >
+                                                Accept
+                                            </Link>
+                                            <Link
+                                                href={route(
+                                                    'users.follow-requests.reject',
+                                                    person.id,
+                                                )}
+                                                method="delete"
+                                                as="button"
+                                                className="app-button-secondary rounded-full px-3 py-1.5 text-[11px] 2xl:py-2 2xl:text-xs"
+                                            >
+                                                Refuse
+                                            </Link>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="app-panel rounded-[24px] p-4 2xl:rounded-[28px] 2xl:p-5">
+                        <div className="flex items-center gap-2 text-[13px] font-semibold 2xl:text-sm">
+                            <UserPlus className="h-4 w-4" strokeWidth={1.9} />
+                            Add people
+                        </div>
+                        <div className="mt-3 space-y-3 2xl:mt-4 2xl:space-y-4">
+                            {visibleSuggestions.length === 0 ? (
+                                <div className="app-text-soft text-[13px] leading-5 2xl:text-sm 2xl:leading-6">
+                                    You’re caught up for now. As more people join your orbit,
+                                    they’ll show up here.
+                                </div>
+                            ) : (
+                                visibleSuggestions.map((person) => {
+                                    const isProcessing = processingSuggestionIds.includes(
+                                        person.id,
+                                    );
+                                    const isConfirmed = confirmedSuggestionIds.includes(person.id);
+                                    const isExiting = exitingSuggestionIds.includes(person.id);
+
+                                    return (
+                                        <div
+                                            key={person.id}
+                                            className={`app-card-inset rounded-[18px] p-2.5 transition-all duration-500 2xl:rounded-2xl 2xl:p-3 ${
+                                                isExiting
+                                                    ? 'translate-y-2 scale-[0.98] opacity-0'
+                                                    : 'translate-y-0 scale-100 opacity-100'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <Link
+                                                    href={route('users.show', person.username)}
+                                                    className="flex min-w-0 flex-1 items-start gap-3 rounded-[18px] transition-opacity hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+                                                >
+                                                    {person.avatar_url ? (
+                                                        <img
+                                                            src={person.avatar_url}
+                                                            alt={person.name}
+                                                            className="h-10 w-10 rounded-[18px] object-cover 2xl:h-12 2xl:w-12 2xl:rounded-2xl"
+                                                            style={{
+                                                                objectPosition: `${person.avatar_position_x}% ${person.avatar_position_y}%`,
+                                                                transform: `scale(${person.avatar_zoom})`,
+                                                                transformOrigin: `${person.avatar_position_x}% ${person.avatar_position_y}%`,
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        <div className="app-avatar-fallback flex h-10 w-10 items-center justify-center rounded-[18px] text-[11px] font-semibold 2xl:h-12 2xl:w-12 2xl:rounded-2xl 2xl:text-xs">
+                                                            {personInitials(person.name)}
+                                                        </div>
+                                                    )}
+
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="truncate text-[13px] font-medium leading-5 2xl:text-sm 2xl:leading-6">
+                                                            {person.name}
+                                                        </div>
+                                                        <div className="app-text-muted mt-0.5 truncate text-[11px] 2xl:text-xs">
+                                                            @{person.username}
+                                                        </div>
+                                                    </div>
+                                                </Link>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => addSuggestion(person)}
+                                                    disabled={isProcessing || isConfirmed}
+                                                    className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all duration-200 2xl:h-10 2xl:w-10 ${
+                                                        isConfirmed
+                                                            ? 'app-panel-inset text-emerald-200'
+                                                            : 'app-button-primary'
+                                                    } disabled:opacity-100`}
+                                                    aria-label={
+                                                        person.is_private
+                                                            ? `Add ${person.name}`
+                                                            : `Follow ${person.name}`
+                                                    }
+                                                >
+                                                    {isConfirmed ? (
+                                                        <Check
+                                                            className="h-4 w-4"
+                                                            strokeWidth={2.2}
+                                                        />
+                                                    ) : (
+                                                        <UserPlus
+                                                            className="h-4 w-4"
+                                                            strokeWidth={2}
+                                                        />
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                    </div>
+                </div>
             </section>
         </AuthenticatedLayout>
+    );
+}
+
+function personInitials(name) {
+    return (
+        name
+            ?.split(' ')
+            .map((part) => part[0])
+            .join('')
+            .slice(0, 2)
+            .toUpperCase() ?? 'U'
     );
 }
 

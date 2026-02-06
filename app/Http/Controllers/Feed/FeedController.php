@@ -128,6 +128,12 @@ class FeedController extends Controller
                 $feedService->profile(request()->user(), $user),
                 PostResource::class,
             ),
+            'pendingRequests' => UserResource::collection(
+                $socialGraphService->pendingRequests(request()->user()),
+            )->resolve(),
+            'suggestions' => UserResource::collection(
+                $socialGraphService->suggestions(request()->user()),
+            )->resolve(),
         ]);
     }
 }
