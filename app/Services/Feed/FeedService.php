@@ -18,15 +18,6 @@ class FeedService
     public function home(User $user, int $perPage = 10): LengthAwarePaginator
     {
         return $this->baseQuery($user)
-            ->where(function (Builder $query) use ($user) {
-                $query->where('posts.user_id', $user->id)
-                    ->orWhereIn('posts.user_id', function ($subQuery) use ($user) {
-                        $subQuery->select('followed_id')
-                            ->from('follows')
-                            ->where('follower_id', $user->id)
-                            ->where('status', FollowStatus::Accepted);
-                    });
-            })
             ->latest('published_at')
             ->paginate($perPage);
     }

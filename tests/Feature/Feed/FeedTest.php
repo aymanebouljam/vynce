@@ -15,7 +15,7 @@ class FeedTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_home_feed_includes_own_posts_and_followed_posts(): void
+    public function test_home_feed_includes_visible_public_posts_alongside_own_and_followed_posts(): void
     {
         $viewer = User::factory()->create();
         $followed = User::factory()->create();
@@ -37,7 +37,7 @@ class FeedTest extends TestCase
         $response->assertOk();
         $response->assertSee($ownPost->body);
         $response->assertSee($followedPost->body);
-        $response->assertDontSee($outsiderPost->body);
+        $response->assertSee($outsiderPost->body);
     }
 
     public function test_home_feed_keeps_own_followers_only_posts_visible(): void
