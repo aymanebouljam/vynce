@@ -345,7 +345,7 @@ export default function PostCard({
                 className={`feed-post-card ${highlighted ? 'feed-post-card--highlighted' : ''}`}
             >
                 <div className="feed-post-card__inner">
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-start gap-2.5">
                         {post.user?.avatar_url ? (
                             <div className="feed-post-card__avatar overflow-hidden">
                                 <img
@@ -367,31 +367,33 @@ export default function PostCard({
 
                         <div className="min-w-0 flex-1">
                             {isProfileRepost && (
-                                <div className="app-text-soft mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em]">
+                                <div className="app-text-soft mb-2.5 flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.16em]">
                                     <Repeat2 className="h-3.5 w-3.5" strokeWidth={1.9} />
                                     {profileRepostLabel ?? `Reposted by @${profileUsername}`}
                                 </div>
                             )}
 
-                            <div className="flex items-start justify-between gap-4">
+                            <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
                                     {authorHref ? (
                                         <Link
                                             href={authorHref}
-                                            className="app-link text-sm font-semibold"
+                                            className="app-link text-[13px] font-semibold"
                                         >
                                             {authorName}
                                         </Link>
                                     ) : (
-                                        <div className="text-sm font-semibold">{authorName}</div>
+                                        <div className="text-[13px] font-semibold">
+                                            {authorName}
+                                        </div>
                                     )}
-                                    <div className="app-text-muted mt-1 text-xs">
+                                    <div className="app-text-muted mt-0.5 text-[11px]">
                                         {authorUsername ? `@${authorUsername} · ` : ''}
                                         {publishedAt}
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1.5">
                                     <button
                                         ref={visibilityButtonRef}
                                         type="button"
@@ -410,7 +412,7 @@ export default function PostCard({
                                                 ref={menuButtonRef}
                                                 type="button"
                                                 onClick={() => setMenuOpen((open) => !open)}
-                                                className="app-button-secondary inline-flex h-9 w-9 items-center justify-center rounded-full"
+                                                className="app-button-secondary inline-flex h-8 w-8 items-center justify-center rounded-full"
                                                 aria-label="Post options"
                                             >
                                                 <Ellipsis className="h-4 w-4" strokeWidth={1.9} />
@@ -421,14 +423,14 @@ export default function PostCard({
                             </div>
 
                             {post.body ? (
-                                <p className="mt-4 whitespace-pre-wrap break-words text-sm leading-7 text-[rgba(241,235,251,0.9)]">
+                                <p className="mt-3 whitespace-pre-wrap break-words text-[13px] leading-6 text-[rgba(241,235,251,0.9)]">
                                     {post.body}
                                 </p>
                             ) : null}
 
                             {post.media?.length > 0 && (
                                 <div
-                                    className={`mt-4 grid gap-3 ${
+                                    className={`mt-3 grid gap-2.5 ${
                                         post.media.length > 1 ? 'md:grid-cols-2' : ''
                                     }`}
                                 >
@@ -468,16 +470,19 @@ export default function PostCard({
                             )}
 
                             {(post.hashtags?.length > 0 || post.mentions?.length > 0) && (
-                                <div className="mt-4 flex flex-wrap gap-2 text-xs">
+                                <div className="mt-3 flex flex-wrap gap-1.5 text-[11px]">
                                     {post.hashtags?.map((tag) => (
-                                        <span key={tag} className="app-chip rounded-full px-3 py-1">
+                                        <span
+                                            key={tag}
+                                            className="app-chip rounded-full px-2.5 py-1"
+                                        >
                                             #{tag}
                                         </span>
                                     ))}
                                     {post.mentions?.map((mention) => (
                                         <span
                                             key={mention}
-                                            className="app-pill-muted rounded-full px-3 py-1"
+                                            className="app-pill-muted rounded-full px-2.5 py-1"
                                         >
                                             @{mention}
                                         </span>
@@ -485,11 +490,11 @@ export default function PostCard({
                                 </div>
                             )}
 
-                            <div className="mt-4 flex flex-wrap items-center gap-2">
+                            <div className="mt-3 flex flex-wrap items-center gap-1.5">
                                 <button
                                     type="button"
                                     onClick={toggleLike}
-                                    className={`app-button-secondary inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm ${
+                                    className={`app-button-secondary inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] ${
                                         isLiked
                                             ? 'border-rose-400/30 bg-rose-500/15 text-rose-200'
                                             : ''
@@ -505,7 +510,7 @@ export default function PostCard({
                                 <button
                                     type="button"
                                     onClick={() => setCommentsOpen((open) => !open)}
-                                    className={`app-button-secondary inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm ${
+                                    className={`app-button-secondary inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] ${
                                         commentsOpen ? 'app-nav-link-active' : ''
                                     }`}
                                 >
@@ -517,7 +522,7 @@ export default function PostCard({
                                     href={route('posts.reposts.toggle', post.id)}
                                     method="post"
                                     as="button"
-                                    className={`app-button-secondary inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm ${
+                                    className={`app-button-secondary inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] ${
                                         post.is_reposted ? 'app-nav-link-active' : ''
                                     }`}
                                 >

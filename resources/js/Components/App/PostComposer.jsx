@@ -15,7 +15,7 @@ const visibilityOptions = [
     { value: 'public', label: 'Public' },
     { value: 'followers', label: 'Followers' },
 ];
-const cropAspectRatio = 4 / 5;
+const cropAspectRatio = 505 / 600;
 const minimumCropWidth = 160;
 const cropHandles = [
     {
@@ -422,14 +422,14 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
                             {mediaPreviews.map((preview, index) => (
                                 <div
                                     key={preview.id}
-                                    className="app-panel-inset relative overflow-hidden rounded-3xl"
+                                    className="app-panel-inset relative aspect-[505/600] overflow-hidden rounded-3xl"
                                 >
                                     <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-20 bg-gradient-to-b from-[rgba(10,7,18,0.82)] via-[rgba(10,7,18,0.28)] to-transparent" />
                                     <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-24 bg-gradient-to-t from-[rgba(10,7,18,0.88)] via-[rgba(10,7,18,0.36)] to-transparent" />
                                     <img
                                         src={preview.url}
                                         alt={preview.name}
-                                        className="h-40 w-full object-cover"
+                                        className="h-full w-full object-cover"
                                         style={{
                                             objectPosition: `${data.media_transform[index]?.position_x ?? 50}% ${data.media_transform[index]?.position_y ?? 50}%`,
                                         }}
@@ -540,7 +540,8 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
                         <div>
                             <div className="text-lg font-semibold">Crop image</div>
                             <p className="app-text-soft mt-2 text-sm leading-6">
-                                Move the selection frame to choose exactly what will be published.
+                                Move the selection frame to choose exactly what will be published in
+                                the 505:600 post format.
                             </p>
                         </div>
 
