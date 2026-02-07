@@ -109,7 +109,7 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
                                 </div>
                                 <div className="mt-2.5 flex gap-2 2xl:mt-3">
                                     <Link
-                                        href={route('users.follow-requests.accept', person.id)}
+                                        href={route('users.friend-requests.accept', person.id)}
                                         method="post"
                                         as="button"
                                         className="app-button-primary rounded-full px-3 py-1.5 text-[11px] font-semibold 2xl:py-2 2xl:text-xs"
@@ -117,7 +117,7 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
                                         Accept
                                     </Link>
                                     <Link
-                                        href={route('users.follow-requests.reject', person.id)}
+                                        href={route('users.friend-requests.reject', person.id)}
                                         method="delete"
                                         as="button"
                                         className="app-button-secondary rounded-full px-3 py-1.5 text-[11px] 2xl:py-2 2xl:text-xs"

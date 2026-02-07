@@ -1,11 +1,21 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import Modal from '@/Components/Modal';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Compass, House, LogOut, MessageCircle, Search, Settings, Users } from 'lucide-react';
+import {
+    Bell,
+    Compass,
+    House,
+    LogOut,
+    MessageCircle,
+    Search,
+    Settings,
+    UserPlus,
+    Users,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 export default function AppShell({ children, title, sidebar, navSearch = null }) {
-    const { auth } = usePage().props;
+    const { auth, topbar } = usePage().props;
     const ownProfileActive =
         route().current('users.show') && route().params.user === auth.user.username;
     const ownFriendsActive =
@@ -26,6 +36,11 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
     const feedSearchInputRef = useRef(null);
     const [navSearchOpen, setNavSearchOpen] = useState(false);
     const navSearchInputRef = useRef(null);
+    const [requestsOpen, setRequestsOpen] = useState(false);
+    const pendingRequests = topbar?.pending_requests ?? [];
+    const pendingRequestsCount = topbar?.pending_requests_count ?? 0;
+    const unreadMessagesCount = topbar?.unread_messages_count ?? 0;
+    const notificationsCount = topbar?.notifications_count ?? 0;
 
     useEffect(() => {
         if (navSearch && navSearchOpen) {
@@ -312,7 +327,57 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                         </div>
                     </aside>
 
-                    <main className="min-w-0 flex-1 space-y-6">{children}</main>
+                    <main className="min-w-0 flex-1 space-y-6">
+                        <div className="sticky top-0 z-30">
+                            <div className="flex items-center gap-2 rounded-[24px] border border-[var(--vynce-border)] bg-transparent px-8 py-2.5 shadow-[var(--vynce-shadow-md)] backdrop-blur 2xl:rounded-[28px] 2xl:px-8 2xl:py-2.5">
+                                <form onSubmit={submitFeedSearch} className="min-w-0 flex-1">
+                                    <label className="flex items-center gap-0.5 rounded-full bg-[rgba(17,11,28,0.34)] py-2 pl-5 pr-3 2xl:gap-1 2xl:py-2.5 2xl:pl-[1.375rem] 2xl:pr-3.5">
+                                        <Search
+                                            className="app-text-muted h-4 w-4 shrink-0 2xl:h-5 2xl:w-5"
+                                            strokeWidth={1.8}
+                                        />
+                                        <input
+                                            type="search"
+                                            value={feedSearchValue}
+                                            onChange={(event) =>
+                                                setFeedSearchValue(event.target.value)
+                                            }
+                                            placeholder="Search Vynce"
+                                            className="-ml-0.5 w-full min-w-0 appearance-none border-0 bg-transparent text-[13px] shadow-none outline-none ring-0 focus:border-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 2xl:ml-0 2xl:text-sm"
+                                        />
+                                    </label>
+                                </form>
+                                <TopbarLinkButton
+                                    label="Messages"
+                                    ariaLabel="Open messages"
+                                    href={route('messages.index')}
+                                    active={
+                                        route().current('messages.index') ||
+                                        route().current('messages.show')
+                                    }
+                                    icon={MessageCircle}
+                                    count={unreadMessagesCount}
+                                />
+                                <TopbarIconButton
+                                    label="Notifications"
+                                    ariaLabel="Notifications coming soon"
+                                    onClick={() => {}}
+                                    icon={Bell}
+                                    count={notificationsCount}
+                                    disabled
+                                />
+                                <TopbarIconButton
+                                    label="Friend requests"
+                                    ariaLabel="Open friendship requests"
+                                    onClick={() => setRequestsOpen(true)}
+                                    icon={UserPlus}
+                                    count={pendingRequestsCount}
+                                />
+                            </div>
+                        </div>
+
+                        {children}
+                    </main>
 
                     {sidebar && (
                         <aside className="min-[1246px]:sticky min-[1246px]:top-6 min-[1246px]:h-fit min-[1246px]:w-80">
@@ -425,7 +490,136 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                     ) : null}
                 </div>
             </Modal>
+
+            <Modal
+                show={requestsOpen}
+                onClose={() => setRequestsOpen(false)}
+                maxWidth="lg"
+                centered
+            >
+                <div className="space-y-4 p-5 2xl:space-y-5 2xl:p-6">
+                    <div>
+                        <div className="text-base font-semibold 2xl:text-lg">
+                            Friendship requests
+                        </div>
+                        <p className="app-text-soft mt-2 text-[13px] leading-5 2xl:text-sm 2xl:leading-6">
+                            Review pending requests from people who want to connect with you.
+                        </p>
+                    </div>
+
+                    {pendingRequests.length === 0 ? (
+                        <div className="app-dashed-panel app-text-muted rounded-[20px] p-4 text-[13px] leading-5 2xl:rounded-[24px] 2xl:p-5 2xl:text-sm 2xl:leading-6">
+                            No pending friendship requests right now.
+                        </div>
+                    ) : (
+                        <div className="space-y-3 2xl:space-y-4">
+                            {pendingRequests.map((person) => (
+                                <div
+                                    key={person.id}
+                                    className="app-card-inset rounded-[18px] p-3 2xl:rounded-2xl 2xl:p-4"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <Link
+                                            href={route('users.show', person.username)}
+                                            onClick={() => setRequestsOpen(false)}
+                                            className="flex min-w-0 flex-1 items-center gap-3 rounded-[18px] transition-opacity hover:opacity-80"
+                                        >
+                                            {person.avatar_url ? (
+                                                <img
+                                                    src={person.avatar_url}
+                                                    alt={person.name}
+                                                    className="h-11 w-11 rounded-[18px] object-cover 2xl:h-12 2xl:w-12 2xl:rounded-2xl"
+                                                    style={{
+                                                        objectPosition: `${person.avatar_position_x}% ${person.avatar_position_y}%`,
+                                                        transform: `scale(${person.avatar_zoom})`,
+                                                        transformOrigin: `${person.avatar_position_x}% ${person.avatar_position_y}%`,
+                                                    }}
+                                                />
+                                            ) : (
+                                                <div className="app-avatar-fallback flex h-11 w-11 items-center justify-center rounded-[18px] text-[12px] font-semibold 2xl:h-12 2xl:w-12 2xl:rounded-2xl">
+                                                    {initialsFor(person.name)}
+                                                </div>
+                                            )}
+                                            <div className="min-w-0 flex-1">
+                                                <div className="truncate text-[13px] font-semibold 2xl:text-sm">
+                                                    {person.name}
+                                                </div>
+                                                <div className="app-text-soft truncate text-[11px] 2xl:text-xs">
+                                                    @{person.username}
+                                                </div>
+                                            </div>
+                                        </Link>
+
+                                        <div className="flex gap-2">
+                                            <Link
+                                                href={route(
+                                                    'users.friend-requests.accept',
+                                                    person.id,
+                                                )}
+                                                method="post"
+                                                as="button"
+                                                className="app-button-primary rounded-full px-3 py-1.5 text-[11px] font-semibold 2xl:py-2 2xl:text-xs"
+                                            >
+                                                Accept
+                                            </Link>
+                                            <Link
+                                                href={route(
+                                                    'users.friend-requests.reject',
+                                                    person.id,
+                                                )}
+                                                method="delete"
+                                                as="button"
+                                                className="app-button-secondary rounded-full px-3 py-1.5 text-[11px] 2xl:py-2 2xl:text-xs"
+                                            >
+                                                Refuse
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </Modal>
         </>
+    );
+}
+
+function TopbarLinkButton({ href, icon: Icon, count = 0, active = false, ariaLabel }) {
+    return (
+        <Link
+            href={href}
+            className={`app-nav-link relative inline-flex h-10 w-10 items-center justify-center rounded-full 2xl:h-11 2xl:w-11 ${
+                active ? 'app-nav-link-active' : ''
+            }`}
+            aria-label={ariaLabel}
+        >
+            <Icon className="h-4 w-4 2xl:h-5 2xl:w-5" strokeWidth={1.9} />
+            {count > 0 ? <TopbarBadge count={count} /> : null}
+        </Link>
+    );
+}
+
+function TopbarIconButton({ onClick, icon: Icon, count = 0, ariaLabel, disabled = false }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            disabled={disabled}
+            className="app-nav-link relative inline-flex h-10 w-10 items-center justify-center rounded-full disabled:cursor-default disabled:opacity-70 2xl:h-11 2xl:w-11"
+            aria-label={ariaLabel}
+        >
+            <Icon className="h-4 w-4 2xl:h-5 2xl:w-5" strokeWidth={1.9} />
+            {count > 0 ? <TopbarBadge count={count} /> : null}
+        </button>
+    );
+}
+
+function TopbarBadge({ count }) {
+    return (
+        <span className="app-button-primary absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-semibold leading-none">
+            {count > 99 ? '99+' : count}
+        </span>
     );
 }
 
