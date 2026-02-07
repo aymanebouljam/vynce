@@ -8,6 +8,7 @@ use App\Http\Controllers\Posts\PostEngagementController;
 use App\Http\Controllers\PublicMediaController;
 use App\Http\Controllers\SocialGraph\ConnectionController;
 use App\Http\Controllers\SocialGraph\FollowController;
+use App\Http\Controllers\SocialGraph\FriendshipController;
 use App\Http\Controllers\SocialGraph\RelationshipController;
 use App\Http\Controllers\Users\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -62,6 +63,10 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/users/{user}/follow', [FollowController::class, 'destroy'])->middleware('throttle:60,1')->name('users.unfollow');
     Route::post('/users/{user}/accept-follow-request', [FollowController::class, 'accept'])->middleware('throttle:60,1')->name('users.follow-requests.accept');
     Route::delete('/users/{user}/reject-follow-request', [FollowController::class, 'reject'])->middleware('throttle:60,1')->name('users.follow-requests.reject');
+    Route::post('/users/{user}/friend-request', [FriendshipController::class, 'store'])->middleware('throttle:60,1')->name('users.friend-requests.store');
+    Route::delete('/users/{user}/friend-request', [FriendshipController::class, 'destroy'])->middleware('throttle:60,1')->name('users.friend-requests.destroy');
+    Route::post('/users/{user}/accept-friend-request', [FriendshipController::class, 'accept'])->middleware('throttle:60,1')->name('users.friend-requests.accept');
+    Route::delete('/users/{user}/reject-friend-request', [FriendshipController::class, 'reject'])->middleware('throttle:60,1')->name('users.friend-requests.reject');
     Route::post('/users/{user}/block', [RelationshipController::class, 'block'])->name('users.block');
     Route::delete('/users/{user}/block', [RelationshipController::class, 'unblock'])->name('users.unblock');
     Route::post('/users/{user}/mute', [RelationshipController::class, 'mute'])->name('users.mute');
