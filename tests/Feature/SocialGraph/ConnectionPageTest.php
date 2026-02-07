@@ -4,6 +4,7 @@ namespace Tests\Feature\SocialGraph;
 
 use App\Enums\FollowStatus;
 use App\Models\Follow;
+use App\Models\Friendship;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -54,17 +55,10 @@ class ConnectionPageTest extends TestCase
         $friend = User::factory()->create(['name' => 'Mutual Friend']);
         $oneWay = User::factory()->create(['name' => 'One Way Follow']);
 
-        Follow::query()->create([
-            'follower_id' => $owner->id,
-            'followed_id' => $friend->id,
-            'status' => FollowStatus::Accepted,
-            'accepted_at' => now(),
-        ]);
-
-        Follow::query()->create([
-            'follower_id' => $friend->id,
-            'followed_id' => $owner->id,
-            'status' => FollowStatus::Accepted,
+        Friendship::query()->create([
+            'requester_id' => $owner->id,
+            'addressee_id' => $friend->id,
+            'status' => 'accepted',
             'accepted_at' => now(),
         ]);
 

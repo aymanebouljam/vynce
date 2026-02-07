@@ -60,6 +60,20 @@ export default function Show({
         followForm.post(route('users.follow', profile.id));
     };
 
+    const submitFriendRequest = () => {
+        if (relationship.is_friend || relationship.has_pending_friend_request) {
+            followForm.delete(route('users.friend-requests.destroy', profile.id));
+            return;
+        }
+
+        if (relationship.has_incoming_friend_request) {
+            followForm.post(route('users.friend-requests.accept', profile.id));
+            return;
+        }
+
+        followForm.post(route('users.friend-requests.store', profile.id));
+    };
+
     const relationshipLabel = profile.is_private
         ? relationship.is_following
             ? 'Friends'
@@ -69,6 +83,13 @@ export default function Show({
         : relationship.is_following
           ? 'Unfollow'
           : 'Follow';
+    const friendshipLabel = relationship.is_friend
+        ? 'Friends'
+        : relationship.has_incoming_friend_request
+          ? 'Accept friend'
+          : relationship.has_pending_friend_request
+            ? 'Cancel request'
+            : 'Add friend';
 
     const addSuggestion = async (person) => {
         if (processingSuggestionIds.includes(person.id)) {
@@ -287,6 +308,15 @@ export default function Show({
                                             {relationshipLabel}
                                         </button>
                                     )}
+                                    {relationship.can_friend && (
+                                        <button
+                                            type="button"
+                                            onClick={submitFriendRequest}
+                                            className="app-button-secondary rounded-full px-4 py-2.5 text-[13px] font-semibold 2xl:px-5 2xl:py-3 2xl:text-sm"
+                                        >
+                                            {friendshipLabel}
+                                        </button>
+                                    )}
                                     {relationship.can_message && (
                                         <Link
                                             href={route('messages.start', profile.id)}
@@ -403,7 +433,7 @@ export default function Show({
                                         <div className="mt-2.5 flex gap-2 2xl:mt-3">
                                             <Link
                                                 href={route(
-                                                    'users.follow-requests.accept',
+                                                    'users.friend-requests.accept',
                                                     person.id,
                                                 )}
                                                 method="post"
@@ -414,7 +444,7 @@ export default function Show({
                                             </Link>
                                             <Link
                                                 href={route(
-                                                    'users.follow-requests.reject',
+                                                    'users.friend-requests.reject',
                                                     person.id,
                                                 )}
                                                 method="delete"

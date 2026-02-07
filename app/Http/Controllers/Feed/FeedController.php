@@ -119,7 +119,12 @@ class FeedController extends Controller
             'relationship' => [
                 'is_following' => $socialGraphService->follows(request()->user(), $user),
                 'has_pending_request' => $socialGraphService->hasPendingRequest(request()->user(), $user),
+                'is_friend' => $socialGraphService->areFriends(request()->user(), $user),
+                'has_pending_friend_request' => $socialGraphService->hasPendingFriendRequest(request()->user(), $user),
+                'has_incoming_friend_request' => $socialGraphService->hasIncomingFriendRequest(request()->user(), $user),
                 'can_follow' => request()->user()->id !== $user->id
+                    && ! $socialGraphService->hasBlockBetween(request()->user(), $user),
+                'can_friend' => request()->user()->id !== $user->id
                     && ! $socialGraphService->hasBlockBetween(request()->user(), $user),
                 'can_message' => request()->user()->id !== $user->id
                     && ! $socialGraphService->hasBlockBetween(request()->user(), $user),
