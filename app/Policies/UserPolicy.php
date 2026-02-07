@@ -27,6 +27,12 @@ class UserPolicy
             && ! $this->socialGraphService->hasBlockBetween($viewer, $user);
     }
 
+    public function friend(User $viewer, User $user): bool
+    {
+        return ! $viewer->is($user)
+            && ! $this->socialGraphService->hasBlockBetween($viewer, $user);
+    }
+
     public function message(User $viewer, User $user): bool
     {
         return ! $viewer->is($user)

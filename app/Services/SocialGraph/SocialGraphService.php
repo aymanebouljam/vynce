@@ -3,7 +3,9 @@
 namespace App\Services\SocialGraph;
 
 use App\Enums\FollowStatus;
+use App\Enums\FriendshipStatus;
 use App\Models\Follow;
+use App\Models\Friendship;
 use App\Models\User;
 use App\Models\UserBlock;
 use App\Models\UserMute;
@@ -14,6 +16,76 @@ use Illuminate\Support\Facades\DB;
 
 class SocialGraphService
 {
+    public function sendFriendRequest(User $actor, User $target): Friendship
+    {
+        return DB::transaction(function () use ($actor, $target) {
+            $existing = Friendship::query()
+                ->where(function (Builder $query) use ($actor, $target) {
+                    $query->where('requester_id', $actor->id)
+                        ->where('addressee_id', $target->id);
+                })
+                ->orWhere(function (Builder $query) use ($actor, $target) {
+                    $query->where('requester_id', $target->id)
+                        ->where('addressee_id', $actor->id);
+                })
+                ->first();
+
+            if ($existing) {
+                return $existing;
+            }
+
+            $friendship = Friendship::query()->create(
+                [
+                    'requester_id' => $actor->id,
+                    'addressee_id' => $target->id,
+                    'status' => FriendshipStatus::Pending,
+                    'accepted_at' => null,
+                ],
+            );
+
+            return $friendship->refresh();
+        });
+    }
+
+    public function removeFriendship(User $actor, User $target): void
+    {
+        Friendship::query()
+            ->where(function (Builder $query) use ($actor, $target) {
+                $query->where('requester_id', $actor->id)
+                    ->where('addressee_id', $target->id);
+            })
+            ->orWhere(function (Builder $query) use ($actor, $target) {
+                $query->where('requester_id', $target->id)
+                    ->where('addressee_id', $actor->id);
+            })
+            ->delete();
+    }
+
+    public function acceptFriendRequest(User $actor, User $requester): Friendship
+    {
+        $friendship = Friendship::query()
+            ->where('requester_id', $requester->id)
+            ->where('addressee_id', $actor->id)
+            ->where('status', FriendshipStatus::Pending)
+            ->firstOrFail();
+
+        $friendship->update([
+            'status' => FriendshipStatus::Accepted,
+            'accepted_at' => now(),
+        ]);
+
+        return $friendship->refresh();
+    }
+
+    public function rejectFriendRequest(User $actor, User $requester): void
+    {
+        Friendship::query()
+            ->where('requester_id', $requester->id)
+            ->where('addressee_id', $actor->id)
+            ->where('status', FriendshipStatus::Pending)
+            ->delete();
+    }
+
     public function follow(User $actor, User $target): Follow
     {
         return DB::transaction(function () use ($actor, $target) {
@@ -81,6 +153,15 @@ class SocialGraphService
                     ->where('follower_id', $target->id)
                     ->where('followed_id', $actor->id))
                 ->delete();
+
+            Friendship::query()
+                ->where(fn ($query) => $query
+                    ->where('requester_id', $actor->id)
+                    ->where('addressee_id', $target->id))
+                ->orWhere(fn ($query) => $query
+                    ->where('requester_id', $target->id)
+                    ->where('addressee_id', $actor->id))
+                ->delete();
         });
     }
 
@@ -123,6 +204,40 @@ class SocialGraphService
             ->where('follower_id', $actor->id)
             ->where('followed_id', $target->id)
             ->where('status', FollowStatus::Pending)
+            ->exists();
+    }
+
+    public function areFriends(User $first, User $second): bool
+    {
+        return Friendship::query()
+            ->where(function (Builder $query) use ($first, $second) {
+                $query->where(function (Builder $forward) use ($first, $second) {
+                    $forward->where('requester_id', $first->id)
+                        ->where('addressee_id', $second->id);
+                })->orWhere(function (Builder $reverse) use ($first, $second) {
+                    $reverse->where('requester_id', $second->id)
+                        ->where('addressee_id', $first->id);
+                });
+            })
+            ->where('status', FriendshipStatus::Accepted)
+            ->exists();
+    }
+
+    public function hasPendingFriendRequest(User $actor, User $target): bool
+    {
+        return Friendship::query()
+            ->where('requester_id', $actor->id)
+            ->where('addressee_id', $target->id)
+            ->where('status', FriendshipStatus::Pending)
+            ->exists();
+    }
+
+    public function hasIncomingFriendRequest(User $actor, User $target): bool
+    {
+        return Friendship::query()
+            ->where('requester_id', $target->id)
+            ->where('addressee_id', $actor->id)
+            ->where('status', FriendshipStatus::Pending)
             ->exists();
     }
 
@@ -185,15 +300,18 @@ class SocialGraphService
     {
         return User::query()
             ->select('users.*')
-            ->join('follows as outbound_follows', 'users.id', '=', 'outbound_follows.followed_id')
-            ->where('outbound_follows.follower_id', $user->id)
-            ->where('outbound_follows.status', FollowStatus::Accepted)
-            ->whereExists(function ($query) use ($user) {
-                $query->selectRaw('1')
-                    ->from('follows as inbound_follows')
-                    ->whereColumn('inbound_follows.follower_id', 'users.id')
-                    ->where('inbound_follows.followed_id', $user->id)
-                    ->where('inbound_follows.status', FollowStatus::Accepted);
+            ->where(function (Builder $query) use ($user) {
+                $query->whereIn('users.id', function ($subQuery) use ($user) {
+                    $subQuery->select('addressee_id')
+                        ->from('friendships')
+                        ->where('requester_id', $user->id)
+                        ->where('status', FriendshipStatus::Accepted);
+                })->orWhereIn('users.id', function ($subQuery) use ($user) {
+                    $subQuery->select('requester_id')
+                        ->from('friendships')
+                        ->where('addressee_id', $user->id)
+                        ->where('status', FriendshipStatus::Accepted);
+                });
             })
             ->when($search, fn (Builder $query) => $this->applyUserSearch($query, $search))
             ->paginate($perPage);
@@ -214,10 +332,10 @@ class SocialGraphService
     {
         return User::query()
             ->select('users.*')
-            ->join('follows', 'users.id', '=', 'follows.follower_id')
-            ->where('follows.followed_id', $user->id)
-            ->where('follows.status', FollowStatus::Pending)
-            ->orderByDesc('follows.created_at')
+            ->join('friendships', 'users.id', '=', 'friendships.requester_id')
+            ->where('friendships.addressee_id', $user->id)
+            ->where('friendships.status', FriendshipStatus::Pending)
+            ->orderByDesc('friendships.created_at')
             ->limit(6)
             ->get();
     }
@@ -249,15 +367,12 @@ class SocialGraphService
 
     public function friendsCount(User $user): int
     {
-        return Follow::query()
-            ->where('follower_id', $user->id)
-            ->where('status', FollowStatus::Accepted)
-            ->whereIn('followed_id', function ($query) use ($user) {
-                $query->select('follower_id')
-                    ->from('follows')
-                    ->where('followed_id', $user->id)
-                    ->where('status', FollowStatus::Accepted);
+        return Friendship::query()
+            ->where(function (Builder $query) use ($user) {
+                $query->where('requester_id', $user->id)
+                    ->orWhere('addressee_id', $user->id);
             })
+            ->where('status', FriendshipStatus::Accepted)
             ->count();
     }
 }

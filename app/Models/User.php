@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FollowStatus;
+use App\Enums\FriendshipStatus;
 use App\Enums\UserRole;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -110,6 +111,31 @@ class User extends Authenticatable implements MustVerifyEmail
     public function pendingFollowRequests(): HasMany
     {
         return $this->followerRelations()->where('status', FollowStatus::Pending);
+    }
+
+    public function sentFriendships(): HasMany
+    {
+        return $this->hasMany(Friendship::class, 'requester_id');
+    }
+
+    public function receivedFriendships(): HasMany
+    {
+        return $this->hasMany(Friendship::class, 'addressee_id');
+    }
+
+    public function acceptedFriendshipsSent(): HasMany
+    {
+        return $this->sentFriendships()->where('status', FriendshipStatus::Accepted);
+    }
+
+    public function acceptedFriendshipsReceived(): HasMany
+    {
+        return $this->receivedFriendships()->where('status', FriendshipStatus::Accepted);
+    }
+
+    public function pendingFriendRequests(): HasMany
+    {
+        return $this->receivedFriendships()->where('status', FriendshipStatus::Pending);
     }
 
     public function mediaPosts(): HasManyThrough
