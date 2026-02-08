@@ -9,6 +9,7 @@ use App\Models\Friendship;
 use App\Models\User;
 use App\Models\UserBlock;
 use App\Models\UserMute;
+use App\Notifications\DatabaseActivityNotification;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -42,6 +43,14 @@ class SocialGraphService
                     'accepted_at' => null,
                 ],
             );
+
+            $target->notify(new DatabaseActivityNotification([
+                'type' => 'friend_request',
+                'title' => "{$actor->name} sent you a friend request",
+                'body' => "Open {$actor->name}'s profile to accept or decline.",
+                'href' => route('users.show', $actor->username),
+                'actor' => $this->actorPayload($actor),
+            ]));
 
             return $friendship->refresh();
         });
@@ -89,16 +98,37 @@ class SocialGraphService
     public function follow(User $actor, User $target): Follow
     {
         return DB::transaction(function () use ($actor, $target) {
+            $existing = Follow::query()
+                ->where('follower_id', $actor->id)
+                ->where('followed_id', $target->id)
+                ->first();
+
+            $status = $target->is_private ? FollowStatus::Pending : FollowStatus::Accepted;
+
             $follow = Follow::query()->updateOrCreate(
                 [
                     'follower_id' => $actor->id,
                     'followed_id' => $target->id,
                 ],
                 [
-                    'status' => $target->is_private ? FollowStatus::Pending : FollowStatus::Accepted,
-                    'accepted_at' => $target->is_private ? null : now(),
+                    'status' => $status,
+                    'accepted_at' => $status === FollowStatus::Accepted ? now() : null,
                 ],
             );
+
+            if (! $existing || $existing->status !== $status) {
+                $target->notify(new DatabaseActivityNotification([
+                    'type' => $status === FollowStatus::Accepted ? 'follow' : 'follow_request',
+                    'title' => $status === FollowStatus::Accepted
+                        ? "{$actor->name} followed you"
+                        : "{$actor->name} requested to follow you",
+                    'body' => $status === FollowStatus::Accepted
+                        ? "Visit {$actor->name}'s profile to follow back or send a message."
+                        : "Review {$actor->name}'s profile to accept or reject the request.",
+                    'href' => route('users.show', $actor->username),
+                    'actor' => $this->actorPayload($actor),
+                ]));
+            }
 
             return $follow->refresh();
         });
@@ -374,5 +404,20 @@ class SocialGraphService
             })
             ->where('status', FriendshipStatus::Accepted)
             ->count();
+    }
+
+    private function actorPayload(User $actor): array
+    {
+        return [
+            'id' => $actor->id,
+            'name' => $actor->name,
+            'username' => $actor->username,
+            'avatar_url' => $actor->avatar_path
+                ? route('media.public', ['path' => $actor->avatar_path])
+                : null,
+            'avatar_position_x' => $actor->avatar_position_x ?? 50,
+            'avatar_position_y' => $actor->avatar_position_y ?? 50,
+            'avatar_zoom' => $actor->avatar_zoom ?? 1,
+        ];
     }
 }

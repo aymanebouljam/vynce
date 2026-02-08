@@ -5,6 +5,7 @@ namespace App\Services\Messaging;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
+use App\Notifications\DatabaseActivityNotification;
 use App\Services\SocialGraph\SocialGraphService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
@@ -95,6 +96,17 @@ class ConversationService
                 'last_received_at' => $message->created_at,
                 'updated_at' => now(),
             ]);
+
+            $conversation->participants()
+                ->whereKeyNot($sender->id)
+                ->get()
+                ->each(fn (User $recipient) => $recipient->notify(new DatabaseActivityNotification([
+                    'type' => 'message',
+                    'title' => "{$sender->name} sent you a message",
+                    'body' => str($body)->limit(100)->toString(),
+                    'href' => route('messages.show', $conversation),
+                    'actor' => $this->actorPayload($sender),
+                ])));
 
             return $message->load('sender');
         });
@@ -224,6 +236,21 @@ class ConversationService
             'attachment_name' => $attachment->getClientOriginalName(),
             'attachment_mime_type' => $attachment->getMimeType() ?? 'application/octet-stream',
             'attachment_size' => $attachment->getSize(),
+        ];
+    }
+
+    private function actorPayload(User $actor): array
+    {
+        return [
+            'id' => $actor->id,
+            'name' => $actor->name,
+            'username' => $actor->username,
+            'avatar_url' => $actor->avatar_path
+                ? route('media.public', ['path' => $actor->avatar_path])
+                : null,
+            'avatar_position_x' => $actor->avatar_position_x ?? 50,
+            'avatar_position_y' => $actor->avatar_position_y ?? 50,
+            'avatar_zoom' => $actor->avatar_zoom ?? 1,
         ];
     }
 }
