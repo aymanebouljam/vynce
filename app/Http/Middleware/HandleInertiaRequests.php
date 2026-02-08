@@ -40,7 +40,23 @@ class HandleInertiaRequests extends Middleware
                             ->orWhereColumn('conversations.latest_message_at', '>', 'conversation_participants.last_read_at');
                     })
                     ->count(),
-                'notifications_count' => 0,
+                'notifications' => $user->notifications()
+                    ->latest()
+                    ->limit(8)
+                    ->get()
+                    ->map(fn ($notification) => [
+                        'id' => $notification->id,
+                        'type' => $notification->data['type'] ?? 'activity',
+                        'title' => $notification->data['title'] ?? 'Activity',
+                        'body' => $notification->data['body'] ?? '',
+                        'href' => $notification->data['href'] ?? route('feed.home'),
+                        'actor' => $notification->data['actor'] ?? null,
+                        'created_at' => $notification->created_at?->toISOString(),
+                        'created_at_human' => $notification->created_at?->diffForHumans(),
+                        'read_at' => $notification->read_at?->toISOString(),
+                    ])
+                    ->values(),
+                'notifications_count' => $user->unreadNotifications()->count(),
             ] : null,
             'flash' => [
                 'new_post_id' => fn () => $request->session()->get('new_post_id'),

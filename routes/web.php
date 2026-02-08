@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Feed\FeedController;
 use App\Http\Controllers\Messaging\ConversationController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\Posts\PostController;
 use App\Http\Controllers\Posts\PostEngagementController;
@@ -41,6 +42,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/messages/{conversation}/messages', [ConversationController::class, 'storeMessage'])->middleware('throttle:120,1')->name('messages.messages.store');
     Route::patch('/messages/{conversation}/messages/{message}', [ConversationController::class, 'updateMessage'])->middleware('throttle:120,1')->name('messages.messages.update');
     Route::delete('/messages/{conversation}/messages/{message}', [ConversationController::class, 'destroyMessage'])->middleware('throttle:120,1')->name('messages.messages.destroy');
+    Route::post('/notifications/read', [NotificationController::class, 'markRead'])->middleware('throttle:120,1')->name('notifications.read');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
