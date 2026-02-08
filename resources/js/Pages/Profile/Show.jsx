@@ -9,12 +9,14 @@ import {
     Check,
     Eye,
     ImagePlus,
+    MessageCircle,
     Move,
     Pencil,
     SlidersHorizontal,
     Trash2,
     TrendingUp,
     UserPlus,
+    Users,
 } from 'lucide-react';
 import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
@@ -303,18 +305,28 @@ export default function Show({
                                         <button
                                             type="button"
                                             onClick={submitFollow}
-                                            className="app-button-primary rounded-full px-4 py-2.5 text-[13px] font-semibold 2xl:px-5 2xl:py-3 2xl:text-sm"
+                                            className="app-button-primary inline-flex h-11 w-11 items-center justify-center rounded-full 2xl:h-12 2xl:w-12"
+                                            aria-label={relationshipLabel}
+                                            title={relationshipLabel}
                                         >
-                                            {relationshipLabel}
+                                            <Eye
+                                                className="h-4 w-4 2xl:h-5 2xl:w-5"
+                                                strokeWidth={1.9}
+                                            />
                                         </button>
                                     )}
                                     {relationship.can_friend && (
                                         <button
                                             type="button"
                                             onClick={submitFriendRequest}
-                                            className="app-button-secondary rounded-full px-4 py-2.5 text-[13px] font-semibold 2xl:px-5 2xl:py-3 2xl:text-sm"
+                                            className="app-button-secondary inline-flex h-11 w-11 items-center justify-center rounded-full 2xl:h-12 2xl:w-12"
+                                            aria-label={friendshipLabel}
+                                            title={friendshipLabel}
                                         >
-                                            {friendshipLabel}
+                                            <Users
+                                                className="h-4 w-4 2xl:h-5 2xl:w-5"
+                                                strokeWidth={1.9}
+                                            />
                                         </button>
                                     )}
                                     {relationship.can_message && (
@@ -322,9 +334,14 @@ export default function Show({
                                             href={route('messages.start', profile.id)}
                                             method="post"
                                             as="button"
-                                            className="app-button-secondary rounded-full px-4 py-2.5 text-[13px] 2xl:px-5 2xl:py-3 2xl:text-sm"
+                                            className="app-button-secondary inline-flex h-11 w-11 items-center justify-center rounded-full 2xl:h-12 2xl:w-12"
+                                            aria-label="Message"
+                                            title="Message"
                                         >
-                                            Message
+                                            <MessageCircle
+                                                className="h-4 w-4 2xl:h-5 2xl:w-5"
+                                                strokeWidth={1.9}
+                                            />
                                         </Link>
                                     )}
                                 </>
