@@ -11,6 +11,7 @@ import {
     Settings,
     UserPlus,
     Users,
+    X,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -34,13 +35,17 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
     });
     const [feedSearchLoading, setFeedSearchLoading] = useState(false);
     const feedSearchInputRef = useRef(null);
+    const topbarSearchInputRef = useRef(null);
+    const [topbarSearchOpen, setTopbarSearchOpen] = useState(false);
     const [navSearchOpen, setNavSearchOpen] = useState(false);
     const navSearchInputRef = useRef(null);
+    const [notificationsOpen, setNotificationsOpen] = useState(false);
     const [requestsOpen, setRequestsOpen] = useState(false);
     const pendingRequests = topbar?.pending_requests ?? [];
     const pendingRequestsCount = topbar?.pending_requests_count ?? 0;
     const unreadMessagesCount = topbar?.unread_messages_count ?? 0;
-    const notificationsCount = topbar?.notifications_count ?? 0;
+    const [notificationsCount, setNotificationsCount] = useState(topbar?.notifications_count ?? 0);
+    const [notifications, setNotifications] = useState(topbar?.notifications ?? []);
 
     useEffect(() => {
         if (navSearch && navSearchOpen) {
@@ -55,6 +60,12 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
     }, [showFeedSearch, feedSearchOpen]);
 
     useEffect(() => {
+        if (topbarSearchOpen) {
+            topbarSearchInputRef.current?.focus();
+        }
+    }, [topbarSearchOpen]);
+
+    useEffect(() => {
         if (!feedSearchOpen) {
             return;
         }
@@ -67,7 +78,7 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
     }, [feedSearchOpen]);
 
     useEffect(() => {
-        if (!showFeedSearch || !feedSearchOpen) {
+        if (!showFeedSearch || (!feedSearchOpen && !topbarSearchOpen)) {
             return undefined;
         }
 
@@ -121,7 +132,7 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
             cancelled = true;
             window.clearTimeout(timeoutId);
         };
-    }, [showFeedSearch, feedSearchOpen, feedSearchValue]);
+    }, [showFeedSearch, feedSearchOpen, topbarSearchOpen, feedSearchValue]);
 
     useEffect(() => {
         if (!navSearch) {
@@ -129,18 +140,73 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
         }
     }, [navSearch]);
 
-    const submitFeedSearch = (event) => {
-        event.preventDefault();
+    useEffect(() => {
+        setNotificationsCount(topbar?.notifications_count ?? 0);
+        setNotifications(topbar?.notifications ?? []);
+    }, [topbar?.notifications, topbar?.notifications_count]);
 
+    const runFeedSearch = () => {
         const term = feedSearchValue.trim();
 
         if (!term) {
-            return;
+            return false;
         }
 
         setFeedSearchOpen(false);
+        setTopbarSearchOpen(false);
         router.visit(route('feed.search', { q: term, filter: 'people' }));
+
+        return true;
     };
+
+    const submitFeedSearch = (event) => {
+        event.preventDefault();
+        runFeedSearch();
+    };
+
+    const handleTopbarSearchButton = () => {
+        if (!topbarSearchOpen) {
+            setTopbarSearchOpen(true);
+            return;
+        }
+
+        runFeedSearch();
+    };
+
+    const openNotifications = () => {
+        setNotificationsOpen(true);
+
+        if (notificationsCount === 0) {
+            return;
+        }
+
+        setNotificationsCount(0);
+        setNotifications((current) =>
+            current.map((notification) => ({
+                ...notification,
+                read_at: notification.read_at ?? new Date().toISOString(),
+            })),
+        );
+
+        window.axios
+            .post(
+                route('notifications.read'),
+                {},
+                {
+                    headers: {
+                        Accept: 'application/json',
+                    },
+                },
+            )
+            .catch(() => {
+                router.reload({
+                    only: ['topbar'],
+                    preserveScroll: true,
+                    preserveState: true,
+                });
+            });
+    };
+
     const navigation = [
         {
             label: 'Home',
@@ -328,51 +394,162 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                     </aside>
 
                     <main className="min-w-0 flex-1 space-y-6">
-                        <div className="sticky top-0 z-30">
-                            <div className="flex items-center gap-2 rounded-[24px] border border-[var(--vynce-border)] bg-transparent px-8 py-2.5 shadow-[var(--vynce-shadow-md)] backdrop-blur 2xl:rounded-[28px] 2xl:px-8 2xl:py-2.5">
-                                <form onSubmit={submitFeedSearch} className="min-w-0 flex-1">
-                                    <label className="flex items-center gap-0.5 rounded-full bg-[rgba(17,11,28,0.34)] py-2 pl-5 pr-3 2xl:gap-1 2xl:py-2.5 2xl:pl-[1.375rem] 2xl:pr-3.5">
-                                        <Search
-                                            className="app-text-muted h-4 w-4 shrink-0 2xl:h-5 2xl:w-5"
-                                            strokeWidth={1.8}
-                                        />
-                                        <input
-                                            type="search"
-                                            value={feedSearchValue}
-                                            onChange={(event) =>
-                                                setFeedSearchValue(event.target.value)
-                                            }
-                                            placeholder="Search Vynce"
-                                            className="-ml-0.5 w-full min-w-0 appearance-none border-0 bg-transparent text-[13px] shadow-none outline-none ring-0 focus:border-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 2xl:ml-0 2xl:text-sm"
-                                        />
-                                    </label>
-                                </form>
-                                <TopbarLinkButton
-                                    label="Messages"
-                                    ariaLabel="Open messages"
-                                    href={route('messages.index')}
-                                    active={
-                                        route().current('messages.index') ||
-                                        route().current('messages.show')
-                                    }
-                                    icon={MessageCircle}
-                                    count={unreadMessagesCount}
-                                />
-                                <TopbarIconButton
-                                    label="Notifications"
-                                    ariaLabel="Notifications coming soon"
-                                    onClick={() => {}}
-                                    icon={Bell}
-                                    count={notificationsCount}
-                                    disabled
-                                />
-                                <TopbarIconButton
-                                    label="Friend requests"
-                                    ariaLabel="Open friendship requests"
-                                    onClick={() => setRequestsOpen(true)}
-                                    icon={UserPlus}
-                                    count={pendingRequestsCount}
-                                />
+                        <div className="sticky top-6 z-30">
+                            <div
+                                className={`mx-auto w-full space-y-2 transition-all duration-200 ${
+                                    topbarSearchOpen
+                                        ? 'max-w-[32rem] 2xl:max-w-[36rem]'
+                                        : 'max-w-[22rem] 2xl:max-w-[26rem]'
+                                }`}
+                            >
+                                <div className="flex items-center justify-center gap-2 rounded-[22px] border border-[var(--vynce-border)] bg-[var(--vynce-surface-subtle)] px-3 py-2 shadow-[var(--vynce-shadow-md)] backdrop-blur 2xl:rounded-[26px] 2xl:px-3.5 2xl:py-2.5">
+                                    <form
+                                        onSubmit={submitFeedSearch}
+                                        className={`min-w-0 transition-all duration-200 ${
+                                            topbarSearchOpen
+                                                ? 'w-full max-w-[20rem] flex-1 sm:max-w-[24rem]'
+                                                : 'w-auto'
+                                        }`}
+                                    >
+                                        {topbarSearchOpen ? (
+                                            <div className="2xl:pl-5.5 2xl:pr-5.5 flex items-center gap-2 rounded-full bg-[rgba(17,11,28,0.34)] py-2 pl-5 pr-5 2xl:py-2.5">
+                                                <button
+                                                    type="submit"
+                                                    className="app-text-muted inline-flex h-4 w-4 shrink-0 items-center justify-center 2xl:h-5 2xl:w-5"
+                                                    aria-label="Search Vynce"
+                                                >
+                                                    <Search
+                                                        className="h-4 w-4 2xl:h-5 2xl:w-5"
+                                                        strokeWidth={1.8}
+                                                    />
+                                                </button>
+                                                <input
+                                                    ref={topbarSearchInputRef}
+                                                    type="search"
+                                                    value={feedSearchValue}
+                                                    onChange={(event) =>
+                                                        setFeedSearchValue(event.target.value)
+                                                    }
+                                                    onKeyDown={(event) => {
+                                                        if (
+                                                            event.key === 'Escape' &&
+                                                            !feedSearchValue.trim()
+                                                        ) {
+                                                            setTopbarSearchOpen(false);
+                                                        }
+                                                    }}
+                                                    onBlur={() => {
+                                                        if (!feedSearchValue.trim()) {
+                                                            setTopbarSearchOpen(false);
+                                                        }
+                                                    }}
+                                                    placeholder="Search Vynce"
+                                                    className="app-search-input w-full min-w-0 appearance-none border-0 bg-transparent text-[13px] shadow-none outline-none ring-0 focus:border-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 2xl:text-sm"
+                                                />
+                                                {feedSearchValue.trim() ? (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFeedSearchValue('')}
+                                                        className="app-text-muted inline-flex h-4 w-4 shrink-0 items-center justify-center 2xl:h-5 2xl:w-5"
+                                                        aria-label="Clear search"
+                                                    >
+                                                        <X
+                                                            className="h-4 w-4 2xl:h-5 2xl:w-5"
+                                                            strokeWidth={1.8}
+                                                        />
+                                                    </button>
+                                                ) : null}
+                                            </div>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={handleTopbarSearchButton}
+                                                className="app-nav-link inline-flex h-10 w-10 items-center justify-center rounded-[16px] 2xl:h-11 2xl:w-11 2xl:rounded-[18px]"
+                                                aria-label="Open search"
+                                            >
+                                                <Search
+                                                    className="h-4 w-4 shrink-0 2xl:h-5 2xl:w-5"
+                                                    strokeWidth={1.8}
+                                                />
+                                            </button>
+                                        )}
+                                    </form>
+                                    <TopbarLinkButton
+                                        label="Messages"
+                                        ariaLabel="Open messages"
+                                        href={route('messages.index')}
+                                        active={
+                                            route().current('messages.index') ||
+                                            route().current('messages.show')
+                                        }
+                                        icon={MessageCircle}
+                                        count={unreadMessagesCount}
+                                    />
+                                    <TopbarIconButton
+                                        label="Notifications"
+                                        ariaLabel="Open notifications"
+                                        onClick={openNotifications}
+                                        icon={Bell}
+                                        count={notificationsCount}
+                                    />
+                                    <TopbarIconButton
+                                        label="Friend requests"
+                                        ariaLabel="Open friendship requests"
+                                        onClick={() => setRequestsOpen(true)}
+                                        icon={UserPlus}
+                                        count={pendingRequestsCount}
+                                    />
+                                </div>
+
+                                {topbarSearchOpen && feedSearchValue.trim() ? (
+                                    <div className="px-1 pt-1">
+                                        {feedSearchLoading ? (
+                                            <div className="app-panel-inset rounded-[18px] px-3.5 py-3 text-[13px] 2xl:rounded-[22px] 2xl:px-4 2xl:py-4 2xl:text-sm">
+                                                Searching...
+                                            </div>
+                                        ) : feedSearchResults.users.length > 0 ? (
+                                            <div className="space-y-2">
+                                                {feedSearchResults.users.map((person) => (
+                                                    <Link
+                                                        key={person.id}
+                                                        href={route('users.show', person.username)}
+                                                        onClick={() => setTopbarSearchOpen(false)}
+                                                        className="app-card-inset flex items-center gap-2.5 rounded-[18px] px-3.5 py-2.5 transition hover:bg-[var(--vynce-surface-muted)] 2xl:gap-3 2xl:rounded-[22px] 2xl:px-4 2xl:py-3"
+                                                    >
+                                                        {person.avatar_url ? (
+                                                            <img
+                                                                src={person.avatar_url}
+                                                                alt={person.name}
+                                                                className="h-10 w-10 rounded-[18px] object-cover 2xl:h-11 2xl:w-11 2xl:rounded-2xl"
+                                                                style={{
+                                                                    objectPosition: `${person.avatar_position_x}% ${person.avatar_position_y}%`,
+                                                                    transform: `scale(${person.avatar_zoom})`,
+                                                                    transformOrigin: `${person.avatar_position_x}% ${person.avatar_position_y}%`,
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <div className="app-avatar-fallback flex h-10 w-10 items-center justify-center rounded-[18px] text-[13px] font-semibold 2xl:h-11 2xl:w-11 2xl:rounded-2xl 2xl:text-sm">
+                                                                {initialsFor(person.name)}
+                                                            </div>
+                                                        )}
+                                                        <div className="min-w-0 flex-1">
+                                                            <div className="truncate text-[13px] font-semibold 2xl:text-sm">
+                                                                {person.name}
+                                                            </div>
+                                                            <div className="app-text-soft truncate text-[11px] 2xl:text-xs">
+                                                                @{person.username}
+                                                            </div>
+                                                        </div>
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="app-dashed-panel app-text-muted rounded-[18px] p-4 text-[13px] leading-5 2xl:rounded-[22px] 2xl:p-5 2xl:text-sm 2xl:leading-6">
+                                                No results match “{feedSearchValue.trim()}”.
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : null}
                             </div>
                         </div>
 
@@ -488,6 +665,74 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                             )}
                         </div>
                     ) : null}
+                </div>
+            </Modal>
+
+            <Modal
+                show={notificationsOpen}
+                onClose={() => setNotificationsOpen(false)}
+                maxWidth="lg"
+                centered
+            >
+                <div className="space-y-4 p-5 2xl:space-y-5 2xl:p-6">
+                    <div>
+                        <div className="text-base font-semibold 2xl:text-lg">Notifications</div>
+                        <p className="app-text-soft mt-2 text-[13px] leading-5 2xl:text-sm 2xl:leading-6">
+                            Recent activity across messages, follows, comments, and requests.
+                        </p>
+                    </div>
+
+                    {notifications.length === 0 ? (
+                        <div className="app-dashed-panel app-text-muted rounded-[20px] p-4 text-[13px] leading-5 2xl:rounded-[24px] 2xl:p-5 2xl:text-sm 2xl:leading-6">
+                            You’re all caught up.
+                        </div>
+                    ) : (
+                        <div className="space-y-3 2xl:space-y-4">
+                            {notifications.map((notification) => (
+                                <Link
+                                    key={notification.id}
+                                    href={notification.href}
+                                    onClick={() => setNotificationsOpen(false)}
+                                    className="app-card-inset flex items-start gap-3 rounded-[18px] p-3 transition hover:bg-[var(--vynce-surface-muted)] 2xl:rounded-2xl 2xl:p-4"
+                                >
+                                    {notification.actor?.avatar_url ? (
+                                        <img
+                                            src={notification.actor.avatar_url}
+                                            alt={notification.actor.name}
+                                            className="h-11 w-11 rounded-[18px] object-cover 2xl:h-12 2xl:w-12 2xl:rounded-2xl"
+                                            style={{
+                                                objectPosition: `${notification.actor.avatar_position_x}% ${notification.actor.avatar_position_y}%`,
+                                                transform: `scale(${notification.actor.avatar_zoom})`,
+                                                transformOrigin: `${notification.actor.avatar_position_x}% ${notification.actor.avatar_position_y}%`,
+                                            }}
+                                        />
+                                    ) : (
+                                        <div className="app-avatar-fallback flex h-11 w-11 items-center justify-center rounded-[18px] text-[12px] font-semibold 2xl:h-12 2xl:w-12 2xl:rounded-2xl">
+                                            {initialsFor(notification.actor?.name)}
+                                        </div>
+                                    )}
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="min-w-0">
+                                                <div className="truncate text-[13px] font-semibold 2xl:text-sm">
+                                                    {notification.title}
+                                                </div>
+                                                <div className="app-text-soft mt-1 text-[12px] leading-5 2xl:text-[13px]">
+                                                    {notification.body}
+                                                </div>
+                                            </div>
+                                            {!notification.read_at ? (
+                                                <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--vynce-accent)]" />
+                                            ) : null}
+                                        </div>
+                                        <div className="app-text-muted mt-2 text-[11px] 2xl:text-xs">
+                                            {notification.created_at_human}
+                                        </div>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </Modal>
 
