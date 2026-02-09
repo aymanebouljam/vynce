@@ -46,8 +46,8 @@ jobs:
       - name: Install JavaScript dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Run ESLint
+      - name: Run Biome lint
         run: pnpm lint
 
-      - name: Run Prettier
+      - name: Run Biome format check
         run: pnpm format:check

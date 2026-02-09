@@ -19,7 +19,7 @@ filter_files() {
 }
 
 PHP_FILES=$(filter_files '\.php$')
-PRETTIER_FILES=$(filter_files '\.(js|jsx|ts|tsx|json|md|css|scss|html|yml|yaml)$')
+BIOME_FILES=$(filter_files '\.(js|jsx|ts|tsx|json|jsonc|css)$')
 
 if [ -n "$PHP_FILES" ]; then
     if [ ! -x vendor/bin/pint ]; then
@@ -32,15 +32,15 @@ if [ -n "$PHP_FILES" ]; then
     git add $PHP_FILES
 fi
 
-if [ -n "$PRETTIER_FILES" ]; then
+if [ -n "$BIOME_FILES" ]; then
     if ! command -v pnpm >/dev/null 2>&1; then
         echo "pre-commit: pnpm is not installed."
         exit 1
     fi
 
-    echo "Running Prettier on staged frontend files..."
-    pnpm prettier --write $PRETTIER_FILES
-    git add $PRETTIER_FILES
+    echo "Running Biome on staged frontend files..."
+    pnpm biome check --write $BIOME_FILES
+    git add $BIOME_FILES
 fi
 
 if ! command -v pnpm >/dev/null 2>&1; then
@@ -48,6 +48,6 @@ if ! command -v pnpm >/dev/null 2>&1; then
     exit 1
 fi
 
-echo "Running ESLint..."
-pnpm lint:fix
+echo "Running Biome lint..."
+pnpm lint
 git add $STAGED_FILES
