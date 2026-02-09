@@ -40,7 +40,7 @@
     }
 
     body {
-        font-family: 'Avenir Next', 'Segoe UI', sans-serif;
+        font-family: "Avenir Next", "Segoe UI", sans-serif;
         color: var(--vynce-text);
         background: var(--vynce-bg);
     }
@@ -535,7 +535,7 @@
     }
 
     .auth-kicker::before {
-        content: '';
+        content: "";
         width: 0.6rem;
         height: 0.6rem;
         border-radius: 9999px;

@@ -1,23 +1,23 @@
-import Modal from '@/Components/Modal';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
-    File,
-    Image as ImageIcon,
     Check,
     Copy,
-    Eraser,
     Ellipsis,
+    Eraser,
+    File,
+    Image as ImageIcon,
     Paperclip,
     Pencil,
     PenSquare,
-    X,
     SendHorizonal,
     Trash2,
     User,
+    X,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Modal from '@/Components/Modal';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 export default function Index({ conversations, activeConversation, contacts = [], messages }) {
     const { auth } = usePage().props;
@@ -744,8 +744,8 @@ export default function Index({ conversations, activeConversation, contacts = []
                                         const timestamp = message.updated_at ?? message.created_at;
                                         const isEdited = Boolean(
                                             message.updated_at &&
-                                            message.created_at &&
-                                            message.updated_at !== message.created_at,
+                                                message.created_at &&
+                                                message.updated_at !== message.created_at,
                                         );
 
                                         return (
@@ -1223,7 +1223,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                             onClick={closeClearConversationModal}
                             disabled={Boolean(
                                 conversationToClear &&
-                                clearingConversationIds.includes(conversationToClear.id),
+                                    clearingConversationIds.includes(conversationToClear.id),
                             )}
                             className="app-button-secondary rounded-full px-3.5 py-1.5 text-[13px] disabled:opacity-60 2xl:px-4 2xl:py-2 2xl:text-sm"
                         >
@@ -1234,7 +1234,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                             onClick={confirmClearConversation}
                             disabled={Boolean(
                                 conversationToClear &&
-                                clearingConversationIds.includes(conversationToClear.id),
+                                    clearingConversationIds.includes(conversationToClear.id),
                             )}
                             className="app-button-primary rounded-full px-3.5 py-1.5 text-[13px] disabled:opacity-60 2xl:px-4 2xl:py-2 2xl:text-sm"
                         >
@@ -1265,7 +1265,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                             onClick={closeDeleteConversationModal}
                             disabled={Boolean(
                                 conversationToDelete &&
-                                deletingConversationIds.includes(conversationToDelete.id),
+                                    deletingConversationIds.includes(conversationToDelete.id),
                             )}
                             className="app-button-secondary rounded-full px-3.5 py-1.5 text-[13px] disabled:opacity-60 2xl:px-4 2xl:py-2 2xl:text-sm"
                         >
@@ -1276,7 +1276,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                             onClick={confirmDeleteConversation}
                             disabled={Boolean(
                                 conversationToDelete &&
-                                deletingConversationIds.includes(conversationToDelete.id),
+                                    deletingConversationIds.includes(conversationToDelete.id),
                             )}
                             className="app-button-primary rounded-full px-3.5 py-1.5 text-[13px] disabled:opacity-60 2xl:px-4 2xl:py-2 2xl:text-sm"
                         >

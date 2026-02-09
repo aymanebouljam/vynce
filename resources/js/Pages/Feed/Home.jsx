@@ -1,9 +1,9 @@
+import { Link, router, usePage } from '@inertiajs/react';
+import { Check, Flame, TrendingUp, UserPlus } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import PostCard from '@/Components/App/PostCard';
 import PostComposer from '@/Components/App/PostComposer';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Check, Flame, TrendingUp, UserPlus } from 'lucide-react';
-import { Link, router, usePage } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
 
 const trends = [
     { label: 'Design systems', posts: '1,284 posts today' },
