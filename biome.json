@@ -1,0 +1,71 @@
+{
+    "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+    "vcs": {
+        "enabled": true,
+        "clientKind": "git",
+        "useIgnoreFile": true
+    },
+    "files": {
+        "ignoreUnknown": true,
+        "includes": [
+            "**",
+            "!bootstrap/cache",
+            "!node_modules",
+            "!public/build",
+            "!public/hot",
+            "!storage",
+            "!vendor"
+        ]
+    },
+    "formatter": {
+        "enabled": true,
+        "indentStyle": "space",
+        "indentWidth": 4,
+        "lineWidth": 100
+    },
+    "linter": {
+        "enabled": true,
+        "rules": {
+            "recommended": true,
+            "a11y": {
+                "recommended": false
+            },
+            "complexity": {
+                "noImportantStyles": "off",
+                "noUselessFragments": "off"
+            },
+            "correctness": {
+                "useExhaustiveDependencies": "off"
+            },
+            "style": {
+                "useTemplate": "off"
+            },
+            "suspicious": {
+                "useIterableCallbackReturn": "off"
+            }
+        }
+    },
+    "css": {
+        "parser": {
+            "tailwindDirectives": true
+        },
+        "linter": {
+            "enabled": false
+        }
+    },
+    "javascript": {
+        "formatter": {
+            "quoteStyle": "single",
+            "semicolons": "always",
+            "trailingCommas": "all"
+        }
+    },
+    "assist": {
+        "enabled": true,
+        "actions": {
+            "source": {
+                "organizeImports": "on"
+            }
+        }
+    }
+}
