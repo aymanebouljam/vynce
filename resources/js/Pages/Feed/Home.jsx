@@ -1,5 +1,5 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { Check, Flame, TrendingUp, UserPlus } from 'lucide-react';
+import { Check, Flame, TrendingUp, UserRoundPlus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import PostCard from '@/Components/App/PostCard';
 import PostComposer from '@/Components/App/PostComposer';
@@ -11,7 +11,7 @@ const trends = [
     { label: 'Creator workflow', posts: '511 posts today' },
 ];
 
-export default function Home({ feed, activeTab, pendingRequests = [], suggestions = [] }) {
+export default function Home({ feed, activeTab, suggestions = [] }) {
     const { flash } = usePage().props;
     const newPostId = flash?.new_post_id;
     const isDiscover = activeTab === 'discover';
@@ -56,7 +56,7 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
                 setExitingSuggestionIds((current) => current.filter((id) => id !== person.id));
 
                 router.reload({
-                    only: ['suggestions', 'pendingRequests'],
+                    only: ['suggestions'],
                     preserveScroll: true,
                     preserveState: true,
                 });
@@ -87,54 +87,10 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
                 </div>
             )}
 
-            {pendingRequests.length > 0 && (
-                <div className="app-panel rounded-[24px] p-4 2xl:rounded-[28px] 2xl:p-5">
-                    <div className="flex items-center justify-between gap-3">
-                        <div className="text-[13px] font-semibold 2xl:text-sm">Invitations</div>
-                        <div className="app-text-soft text-[11px] 2xl:text-xs">
-                            {pendingRequests.length} pending
-                        </div>
-                    </div>
-                    <div className="mt-3 space-y-2.5 2xl:mt-4 2xl:space-y-3">
-                        {pendingRequests.map((person) => (
-                            <div
-                                key={person.id}
-                                className="app-card-inset rounded-[18px] p-2.5 2xl:rounded-2xl 2xl:p-3"
-                            >
-                                <div className="text-[13px] font-medium 2xl:text-sm">
-                                    {person.name}
-                                </div>
-                                <div className="app-text-muted text-[11px] 2xl:text-xs">
-                                    @{person.username}
-                                </div>
-                                <div className="mt-2.5 flex gap-2 2xl:mt-3">
-                                    <Link
-                                        href={route('users.friend-requests.accept', person.id)}
-                                        method="post"
-                                        as="button"
-                                        className="app-button-primary rounded-full px-3 py-1.5 text-[11px] font-semibold 2xl:py-2 2xl:text-xs"
-                                    >
-                                        Accept
-                                    </Link>
-                                    <Link
-                                        href={route('users.friend-requests.reject', person.id)}
-                                        method="delete"
-                                        as="button"
-                                        className="app-button-secondary rounded-full px-3 py-1.5 text-[11px] 2xl:py-2 2xl:text-xs"
-                                    >
-                                        Refuse
-                                    </Link>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
             {!isDiscover && (
                 <div className="app-panel rounded-[24px] p-4 2xl:rounded-[28px] 2xl:p-5">
                     <div className="flex items-center gap-2 text-[13px] font-semibold 2xl:text-sm">
-                        <UserPlus className="h-4 w-4" strokeWidth={1.9} />
+                        <UserRoundPlus className="h-4 w-4" strokeWidth={1.9} />
                         Add people
                     </div>
                     <div className="mt-3 space-y-3 2xl:mt-4 2xl:space-y-4">
@@ -208,7 +164,10 @@ export default function Home({ feed, activeTab, pendingRequests = [], suggestion
                                                 {isConfirmed ? (
                                                     <Check className="h-4 w-4" strokeWidth={2.2} />
                                                 ) : (
-                                                    <UserPlus className="h-4 w-4" strokeWidth={2} />
+                                                    <UserRoundPlus
+                                                        className="h-4 w-4"
+                                                        strokeWidth={2}
+                                                    />
                                                 )}
                                             </button>
                                         </div>

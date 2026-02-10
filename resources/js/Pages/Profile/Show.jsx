@@ -1,25 +1,31 @@
-import DangerButton from '@/Components/DangerButton';
-import Modal from '@/Components/Modal';
-import PostComposer from '@/Components/App/PostComposer';
-import PostCard from '@/Components/App/PostCard';
-import SecondaryButton from '@/Components/SecondaryButton';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Link, router, useForm, usePage } from '@inertiajs/react';
 import {
+    BadgeX,
     Camera,
     Check,
+    ChevronDown,
     Eye,
+    Handshake,
     ImagePlus,
     MessageCircle,
     Move,
     Pencil,
+    Rss,
     SlidersHorizontal,
     Trash2,
     TrendingUp,
-    UserPlus,
-    Users,
+    UserRoundCheck,
+    UserRoundPlus,
+    UserRoundX,
 } from 'lucide-react';
-import { Link, router, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
+import PostCard from '@/Components/App/PostCard';
+import PostComposer from '@/Components/App/PostComposer';
+import DangerButton from '@/Components/DangerButton';
+import Dropdown from '@/Components/Dropdown';
+import Modal from '@/Components/Modal';
+import SecondaryButton from '@/Components/SecondaryButton';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 const trends = [
     { label: 'Design systems', posts: '1,284 posts today' },
@@ -27,13 +33,7 @@ const trends = [
     { label: 'Creator workflow', posts: '511 posts today' },
 ];
 
-export default function Show({
-    profile,
-    relationship,
-    feed,
-    pendingRequests = [],
-    suggestions = [],
-}) {
+export default function Show({ profile, relationship, feed, suggestions = [] }) {
     const { auth, errors, flash } = usePage().props;
     const followForm = useForm({});
     const isOwnProfile = auth.user.id === profile.id;
@@ -83,7 +83,7 @@ export default function Show({
               ? 'Cancel invite'
               : 'Add'
         : relationship.is_following
-          ? 'Unfollow'
+          ? 'Following'
           : 'Follow';
     const friendshipLabel = relationship.is_friend
         ? 'Friends'
@@ -134,8 +134,8 @@ export default function Show({
 
     return (
         <AuthenticatedLayout title={`${profile.name}`}>
-            <section className="app-panel overflow-hidden rounded-[28px] 2xl:rounded-[32px]">
-                <div className="relative h-40 overflow-hidden 2xl:h-44">
+            <section className="app-panel rounded-[28px] 2xl:rounded-[32px]">
+                <div className="relative h-40 overflow-hidden rounded-t-[28px] 2xl:h-44 2xl:rounded-t-[32px]">
                     {profile.cover_url ? (
                         <img
                             src={profile.cover_url}
@@ -301,40 +301,125 @@ export default function Show({
                                 </>
                             ) : (
                                 <>
-                                    {relationship.can_follow && (
-                                        <button
-                                            type="button"
-                                            onClick={submitFollow}
-                                            className="app-button-primary inline-flex h-11 w-11 items-center justify-center rounded-full 2xl:h-12 2xl:w-12"
-                                            aria-label={relationshipLabel}
-                                            title={relationshipLabel}
-                                        >
-                                            <Eye
-                                                className="h-4 w-4 2xl:h-5 2xl:w-5"
-                                                strokeWidth={1.9}
-                                            />
-                                        </button>
-                                    )}
-                                    {relationship.can_friend && (
-                                        <button
-                                            type="button"
-                                            onClick={submitFriendRequest}
-                                            className="app-button-secondary inline-flex h-11 w-11 items-center justify-center rounded-full 2xl:h-12 2xl:w-12"
-                                            aria-label={friendshipLabel}
-                                            title={friendshipLabel}
-                                        >
-                                            <Users
-                                                className="h-4 w-4 2xl:h-5 2xl:w-5"
-                                                strokeWidth={1.9}
-                                            />
-                                        </button>
-                                    )}
+                                    {relationship.can_follow &&
+                                        (relationship.is_following ? (
+                                            <Dropdown>
+                                                <Dropdown.Trigger>
+                                                    <button
+                                                        type="button"
+                                                        className="app-button-primary inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[13px] font-semibold 2xl:px-5 2xl:py-3 2xl:text-sm"
+                                                        aria-label={relationshipLabel}
+                                                        title={relationshipLabel}
+                                                    >
+                                                        <UserRoundCheck
+                                                            className="h-4 w-4 2xl:h-5 2xl:w-5"
+                                                            strokeWidth={1.9}
+                                                        />
+                                                        {relationshipLabel}
+                                                        <ChevronDown
+                                                            className="h-4 w-4 2xl:h-5 2xl:w-5"
+                                                            strokeWidth={1.9}
+                                                        />
+                                                    </button>
+                                                </Dropdown.Trigger>
+                                                <Dropdown.Content
+                                                    align="left"
+                                                    width="40"
+                                                    contentClasses="app-panel-inset rounded-[18px] p-1.5 2xl:rounded-[20px]"
+                                                >
+                                                    <Dropdown.Link
+                                                        href={route('users.unfollow', profile.id)}
+                                                        method="delete"
+                                                        as="button"
+                                                        className="!flex !items-center !gap-2 !rounded-[14px] !bg-transparent !px-4 !py-2.5 !text-[13px] !text-white hover:!bg-[var(--vynce-surface-muted)] focus:!bg-[var(--vynce-surface-muted)] 2xl:!text-sm"
+                                                    >
+                                                        <UserRoundX
+                                                            className="h-4 w-4"
+                                                            strokeWidth={1.9}
+                                                        />
+                                                        Unfollow
+                                                    </Dropdown.Link>
+                                                </Dropdown.Content>
+                                            </Dropdown>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={submitFollow}
+                                                className="app-button-primary inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[13px] font-semibold 2xl:px-5 2xl:py-3 2xl:text-sm"
+                                                aria-label={relationshipLabel}
+                                                title={relationshipLabel}
+                                            >
+                                                <Rss
+                                                    className="h-4 w-4 2xl:h-5 2xl:w-5"
+                                                    strokeWidth={1.9}
+                                                />
+                                                {relationshipLabel}
+                                            </button>
+                                        ))}
+                                    {relationship.can_friend &&
+                                        (relationship.is_friend ? (
+                                            <Dropdown>
+                                                <Dropdown.Trigger>
+                                                    <button
+                                                        type="button"
+                                                        className="app-button-secondary inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[13px] font-semibold 2xl:px-5 2xl:py-3 2xl:text-sm"
+                                                        aria-label={friendshipLabel}
+                                                        title={friendshipLabel}
+                                                    >
+                                                        <Handshake
+                                                            className="h-4 w-4 2xl:h-5 2xl:w-5"
+                                                            strokeWidth={1.9}
+                                                        />
+                                                        {friendshipLabel}
+                                                        <ChevronDown
+                                                            className="h-4 w-4 2xl:h-5 2xl:w-5"
+                                                            strokeWidth={1.9}
+                                                        />
+                                                    </button>
+                                                </Dropdown.Trigger>
+                                                <Dropdown.Content
+                                                    align="left"
+                                                    width="40"
+                                                    contentClasses="app-panel-inset rounded-[18px] p-1.5 2xl:rounded-[20px]"
+                                                >
+                                                    <Dropdown.Link
+                                                        href={route(
+                                                            'users.friend-requests.destroy',
+                                                            profile.id,
+                                                        )}
+                                                        method="delete"
+                                                        as="button"
+                                                        className="!flex !items-center !gap-2 !rounded-[14px] !bg-transparent !px-4 !py-2.5 !text-[13px] !text-white hover:!bg-[var(--vynce-surface-muted)] focus:!bg-[var(--vynce-surface-muted)] 2xl:!text-sm"
+                                                    >
+                                                        <BadgeX
+                                                            className="h-4 w-4"
+                                                            strokeWidth={1.9}
+                                                        />
+                                                        Unfriend
+                                                    </Dropdown.Link>
+                                                </Dropdown.Content>
+                                            </Dropdown>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={submitFriendRequest}
+                                                className="app-button-secondary inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[13px] font-semibold 2xl:px-5 2xl:py-3 2xl:text-sm"
+                                                aria-label={friendshipLabel}
+                                                title={friendshipLabel}
+                                            >
+                                                <UserRoundPlus
+                                                    className="h-4 w-4 2xl:h-5 2xl:w-5"
+                                                    strokeWidth={1.9}
+                                                />
+                                                {friendshipLabel}
+                                            </button>
+                                        ))}
                                     {relationship.can_message && (
                                         <Link
                                             href={route('messages.start', profile.id)}
                                             method="post"
                                             as="button"
-                                            className="app-button-secondary inline-flex h-11 w-11 items-center justify-center rounded-full 2xl:h-12 2xl:w-12"
+                                            className="app-button-secondary inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[13px] 2xl:px-5 2xl:py-3 2xl:text-sm"
                                             aria-label="Message"
                                             title="Message"
                                         >
@@ -342,6 +427,7 @@ export default function Show({
                                                 className="h-4 w-4 2xl:h-5 2xl:w-5"
                                                 strokeWidth={1.9}
                                             />
+                                            Message
                                         </Link>
                                     )}
                                 </>
@@ -425,61 +511,9 @@ export default function Show({
                         </div>
                     </div>
 
-                    {pendingRequests.length > 0 && (
-                        <div className="app-panel rounded-[24px] p-4 2xl:rounded-[28px] 2xl:p-5">
-                            <div className="flex items-center justify-between gap-3">
-                                <div className="text-[13px] font-semibold 2xl:text-sm">
-                                    Invitations
-                                </div>
-                                <div className="app-text-soft text-[11px] 2xl:text-xs">
-                                    {pendingRequests.length} pending
-                                </div>
-                            </div>
-                            <div className="mt-3 space-y-2.5 2xl:mt-4 2xl:space-y-3">
-                                {pendingRequests.map((person) => (
-                                    <div
-                                        key={person.id}
-                                        className="app-card-inset rounded-[18px] p-2.5 2xl:rounded-2xl 2xl:p-3"
-                                    >
-                                        <div className="text-[13px] font-medium 2xl:text-sm">
-                                            {person.name}
-                                        </div>
-                                        <div className="app-text-muted text-[11px] 2xl:text-xs">
-                                            @{person.username}
-                                        </div>
-                                        <div className="mt-2.5 flex gap-2 2xl:mt-3">
-                                            <Link
-                                                href={route(
-                                                    'users.friend-requests.accept',
-                                                    person.id,
-                                                )}
-                                                method="post"
-                                                as="button"
-                                                className="app-button-primary rounded-full px-3 py-1.5 text-[11px] font-semibold 2xl:py-2 2xl:text-xs"
-                                            >
-                                                Accept
-                                            </Link>
-                                            <Link
-                                                href={route(
-                                                    'users.friend-requests.reject',
-                                                    person.id,
-                                                )}
-                                                method="delete"
-                                                as="button"
-                                                className="app-button-secondary rounded-full px-3 py-1.5 text-[11px] 2xl:py-2 2xl:text-xs"
-                                            >
-                                                Refuse
-                                            </Link>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
                     <div className="app-panel rounded-[24px] p-4 2xl:rounded-[28px] 2xl:p-5">
                         <div className="flex items-center gap-2 text-[13px] font-semibold 2xl:text-sm">
-                            <UserPlus className="h-4 w-4" strokeWidth={1.9} />
+                            <UserRoundPlus className="h-4 w-4" strokeWidth={1.9} />
                             Add people
                         </div>
                         <div className="mt-3 space-y-3 2xl:mt-4 2xl:space-y-4">
@@ -558,7 +592,7 @@ export default function Show({
                                                             strokeWidth={2.2}
                                                         />
                                                     ) : (
-                                                        <UserPlus
+                                                        <UserRoundPlus
                                                             className="h-4 w-4"
                                                             strokeWidth={2}
                                                         />
