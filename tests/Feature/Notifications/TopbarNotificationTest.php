@@ -4,6 +4,7 @@ namespace Tests\Feature\Notifications;
 
 use App\Models\Post;
 use App\Models\User;
+use App\Notifications\DatabaseActivityNotification;
 use App\Services\Messaging\ConversationService;
 use App\Services\SocialGraph\SocialGraphService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -97,5 +98,72 @@ class TopbarNotificationTest extends TestCase
             ->assertOk();
 
         $this->assertSame(0, $target->fresh()->unreadNotifications()->count());
+    }
+
+    public function test_a_user_can_remove_a_single_notification(): void
+    {
+        $actor = User::factory()->create();
+        $target = User::factory()->create();
+
+        app(SocialGraphService::class)->follow($actor, $target);
+        $notificationId = $target->notifications()->firstOrFail()->id;
+
+        $this->actingAs($target)
+            ->deleteJson(route('notifications.destroy', $notificationId))
+            ->assertOk();
+
+        $this->assertSame(0, $target->fresh()->notifications()->count());
+    }
+
+    public function test_a_user_can_clear_all_notifications(): void
+    {
+        $owner = User::factory()->create();
+        $commenter = User::factory()->create();
+        $friendRequester = User::factory()->create();
+        $post = Post::factory()->for($owner)->create([
+            'visibility' => 'public',
+        ]);
+
+        $this->actingAs($commenter)
+            ->post(route('posts.comments.store', $post), [
+                'body' => 'Love this update.',
+            ])
+            ->assertRedirect();
+
+        $this->actingAs($friendRequester)
+            ->post(route('users.friend-requests.store', $owner))
+            ->assertRedirect();
+
+        $this->assertSame(2, $owner->notifications()->count());
+
+        $this->actingAs($owner)
+            ->deleteJson(route('notifications.clear'))
+            ->assertOk();
+
+        $this->assertSame(0, $owner->fresh()->notifications()->count());
+    }
+
+    public function test_notifications_index_returns_paginated_results(): void
+    {
+        $user = User::factory()->create();
+
+        foreach (range(1, 9) as $index) {
+            $user->notify(new DatabaseActivityNotification([
+                'type' => 'follow',
+                'title' => "Notification {$index}",
+                'body' => 'Body',
+                'href' => route('feed.home'),
+                'actor' => null,
+            ]));
+        }
+
+        $this->actingAs($user)
+            ->getJson(route('notifications.index', ['page' => 2]))
+            ->assertOk()
+            ->assertJsonCount(1, 'notifications')
+            ->assertJson([
+                'page' => 2,
+                'has_more' => false,
+            ]);
     }
 }
