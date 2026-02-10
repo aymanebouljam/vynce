@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Http\Controllers\NotificationController;
 use App\Http\Resources\UserResource;
 use App\Models\Conversation;
 use Illuminate\Http\Request;
@@ -19,6 +20,10 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
+        $notificationLimit = 8;
+        $notifications = $user
+            ? $user->notifications()->latest()->limit($notificationLimit)->get()
+            : collect();
 
         return [
             ...parent::share($request),
@@ -40,22 +45,9 @@ class HandleInertiaRequests extends Middleware
                             ->orWhereColumn('conversations.latest_message_at', '>', 'conversation_participants.last_read_at');
                     })
                     ->count(),
-                'notifications' => $user->notifications()
-                    ->latest()
-                    ->limit(8)
-                    ->get()
-                    ->map(fn ($notification) => [
-                        'id' => $notification->id,
-                        'type' => $notification->data['type'] ?? 'activity',
-                        'title' => $notification->data['title'] ?? 'Activity',
-                        'body' => $notification->data['body'] ?? '',
-                        'href' => $notification->data['href'] ?? route('feed.home'),
-                        'actor' => $notification->data['actor'] ?? null,
-                        'created_at' => $notification->created_at?->toISOString(),
-                        'created_at_human' => $notification->created_at?->diffForHumans(),
-                        'read_at' => $notification->read_at?->toISOString(),
-                    ])
-                    ->values(),
+                'notifications' => NotificationController::serializeNotifications($notifications),
+                'notifications_page' => 1,
+                'notifications_has_more' => $user->notifications()->count() > $notificationLimit,
                 'notifications_count' => $user->unreadNotifications()->count(),
             ] : null,
             'flash' => [

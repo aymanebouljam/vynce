@@ -42,7 +42,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/messages/{conversation}/messages', [ConversationController::class, 'storeMessage'])->middleware('throttle:120,1')->name('messages.messages.store');
     Route::patch('/messages/{conversation}/messages/{message}', [ConversationController::class, 'updateMessage'])->middleware('throttle:120,1')->name('messages.messages.update');
     Route::delete('/messages/{conversation}/messages/{message}', [ConversationController::class, 'destroyMessage'])->middleware('throttle:120,1')->name('messages.messages.destroy');
+    Route::get('/notifications', [NotificationController::class, 'index'])->middleware('throttle:120,1')->name('notifications.index');
     Route::post('/notifications/read', [NotificationController::class, 'markRead'])->middleware('throttle:120,1')->name('notifications.read');
+    Route::delete('/notifications', [NotificationController::class, 'clear'])->middleware('throttle:120,1')->name('notifications.clear');
+    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->middleware('throttle:120,1')->name('notifications.destroy');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
