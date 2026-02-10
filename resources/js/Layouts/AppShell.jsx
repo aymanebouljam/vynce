@@ -1,5 +1,3 @@
-import ApplicationLogo from '@/Components/ApplicationLogo';
-import Modal from '@/Components/Modal';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     Bell,
@@ -9,11 +7,14 @@ import {
     MessageCircle,
     Search,
     Settings,
-    UserPlus,
+    Trash2,
+    UserRoundPlus,
     Users,
     X,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import ApplicationLogo from '@/Components/ApplicationLogo';
+import Modal from '@/Components/Modal';
 
 export default function AppShell({ children, title, sidebar, navSearch = null }) {
     const { auth, topbar } = usePage().props;
@@ -46,6 +47,12 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
     const unreadMessagesCount = topbar?.unread_messages_count ?? 0;
     const [notificationsCount, setNotificationsCount] = useState(topbar?.notifications_count ?? 0);
     const [notifications, setNotifications] = useState(topbar?.notifications ?? []);
+    const [notificationsPage, setNotificationsPage] = useState(topbar?.notifications_page ?? 1);
+    const [notificationsHasMore, setNotificationsHasMore] = useState(
+        topbar?.notifications_has_more ?? false,
+    );
+    const [notificationsLoadingMore, setNotificationsLoadingMore] = useState(false);
+    const [notificationConfirm, setNotificationConfirm] = useState(null);
 
     useEffect(() => {
         if (navSearch && navSearchOpen) {
@@ -143,7 +150,14 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
     useEffect(() => {
         setNotificationsCount(topbar?.notifications_count ?? 0);
         setNotifications(topbar?.notifications ?? []);
-    }, [topbar?.notifications, topbar?.notifications_count]);
+        setNotificationsPage(topbar?.notifications_page ?? 1);
+        setNotificationsHasMore(topbar?.notifications_has_more ?? false);
+    }, [
+        topbar?.notifications,
+        topbar?.notifications_count,
+        topbar?.notifications_has_more,
+        topbar?.notifications_page,
+    ]);
 
     const runFeedSearch = () => {
         const term = feedSearchValue.trim();
@@ -204,6 +218,110 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                     preserveScroll: true,
                     preserveState: true,
                 });
+            });
+    };
+
+    const closeNotifications = () => {
+        setNotificationsOpen(false);
+        setNotificationConfirm(null);
+    };
+
+    const removeNotification = (notificationId) => {
+        const previousNotifications = notifications;
+        const previousCount = notificationsCount;
+        const nextNotifications = notifications.filter(
+            (notification) => notification.id !== notificationId,
+        );
+
+        setNotifications(nextNotifications);
+        setNotificationsCount(
+            Math.max(
+                0,
+                previousCount -
+                    (previousNotifications.find(
+                        (notification) =>
+                            notification.id === notificationId && !notification.read_at,
+                    )
+                        ? 1
+                        : 0),
+            ),
+        );
+
+        window.axios
+            .delete(route('notifications.destroy', notificationId), {
+                headers: {
+                    Accept: 'application/json',
+                },
+            })
+            .catch(() => {
+                setNotifications(previousNotifications);
+                setNotificationsCount(previousCount);
+            });
+    };
+
+    const clearNotifications = () => {
+        const previousNotifications = notifications;
+        const previousCount = notificationsCount;
+        const previousHasMore = notificationsHasMore;
+        const previousPage = notificationsPage;
+
+        setNotifications([]);
+        setNotificationsCount(0);
+        setNotificationsHasMore(false);
+        setNotificationsPage(1);
+
+        window.axios
+            .delete(route('notifications.clear'), {
+                headers: {
+                    Accept: 'application/json',
+                },
+            })
+            .catch(() => {
+                setNotifications(previousNotifications);
+                setNotificationsCount(previousCount);
+                setNotificationsHasMore(previousHasMore);
+                setNotificationsPage(previousPage);
+            });
+    };
+
+    const confirmNotificationAction = () => {
+        if (!notificationConfirm) {
+            return;
+        }
+
+        if (notificationConfirm.type === 'clear_all') {
+            clearNotifications();
+        }
+
+        if (notificationConfirm.type === 'remove_one') {
+            removeNotification(notificationConfirm.notificationId);
+        }
+
+        setNotificationConfirm(null);
+    };
+
+    const loadMoreNotifications = () => {
+        if (notificationsLoadingMore || !notificationsHasMore) {
+            return;
+        }
+
+        const nextPage = notificationsPage + 1;
+        setNotificationsLoadingMore(true);
+
+        window.axios
+            .get(route('notifications.index'), {
+                params: { page: nextPage },
+                headers: {
+                    Accept: 'application/json',
+                },
+            })
+            .then(({ data }) => {
+                setNotifications((current) => [...current, ...(data.notifications ?? [])]);
+                setNotificationsPage(data.page ?? nextPage);
+                setNotificationsHasMore(Boolean(data.has_more));
+            })
+            .finally(() => {
+                setNotificationsLoadingMore(false);
             });
     };
 
@@ -496,7 +614,7 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                                         label="Friend requests"
                                         ariaLabel="Open friendship requests"
                                         onClick={() => setRequestsOpen(true)}
-                                        icon={UserPlus}
+                                        icon={UserRoundPlus}
                                         count={pendingRequestsCount}
                                     />
                                 </div>
@@ -668,19 +786,62 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                 </div>
             </Modal>
 
-            <Modal
-                show={notificationsOpen}
-                onClose={() => setNotificationsOpen(false)}
-                maxWidth="lg"
-                centered
-            >
+            <Modal show={notificationsOpen} onClose={closeNotifications} maxWidth="lg" centered>
                 <div className="space-y-4 p-5 2xl:space-y-5 2xl:p-6">
-                    <div>
-                        <div className="text-base font-semibold 2xl:text-lg">Notifications</div>
-                        <p className="app-text-soft mt-2 text-[13px] leading-5 2xl:text-sm 2xl:leading-6">
-                            Recent activity across messages, follows, comments, and requests.
-                        </p>
+                    <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                            <div className="text-base font-semibold 2xl:text-lg">Notifications</div>
+                            <p className="app-text-soft mt-2 text-[13px] leading-5 2xl:text-sm 2xl:leading-6">
+                                Recent activity across messages, follows, comments, and requests.
+                            </p>
+                        </div>
+                        {notifications.length > 0 ? (
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setNotificationConfirm({
+                                        type: 'clear_all',
+                                        title: 'Clear all notifications?',
+                                        body: 'This will remove every notification from this list.',
+                                        confirmLabel: 'Clear all',
+                                    })
+                                }
+                                className="app-button-secondary inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 text-[12px] 2xl:text-[13px]"
+                            >
+                                <Trash2 className="h-4 w-4" strokeWidth={1.9} />
+                                Clear all
+                            </button>
+                        ) : null}
                     </div>
+
+                    {notificationConfirm ? (
+                        <div className="app-panel-inset flex items-center justify-between gap-3 rounded-[18px] px-4 py-3 2xl:rounded-[20px]">
+                            <div className="min-w-0">
+                                <div className="text-[13px] font-semibold 2xl:text-sm">
+                                    {notificationConfirm.title}
+                                </div>
+                                <div className="app-text-soft mt-1 text-[12px] leading-5 2xl:text-[13px]">
+                                    {notificationConfirm.body}
+                                </div>
+                            </div>
+                            <div className="flex shrink-0 items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setNotificationConfirm(null)}
+                                    className="app-button-secondary rounded-full px-3 py-1.5 text-[12px] 2xl:text-[13px]"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={confirmNotificationAction}
+                                    className="app-button-primary rounded-full px-3 py-1.5 text-[12px] 2xl:text-[13px]"
+                                >
+                                    {notificationConfirm.confirmLabel}
+                                </button>
+                            </div>
+                        </div>
+                    ) : null}
 
                     {notifications.length === 0 ? (
                         <div className="app-dashed-panel app-text-muted rounded-[20px] p-4 text-[13px] leading-5 2xl:rounded-[24px] 2xl:p-5 2xl:text-sm 2xl:leading-6">
@@ -689,48 +850,83 @@ export default function AppShell({ children, title, sidebar, navSearch = null })
                     ) : (
                         <div className="space-y-3 2xl:space-y-4">
                             {notifications.map((notification) => (
-                                <Link
+                                <div
                                     key={notification.id}
-                                    href={notification.href}
-                                    onClick={() => setNotificationsOpen(false)}
                                     className="app-card-inset flex items-start gap-3 rounded-[18px] p-3 transition hover:bg-[var(--vynce-surface-muted)] 2xl:rounded-2xl 2xl:p-4"
                                 >
-                                    {notification.actor?.avatar_url ? (
-                                        <img
-                                            src={notification.actor.avatar_url}
-                                            alt={notification.actor.name}
-                                            className="h-11 w-11 rounded-[18px] object-cover 2xl:h-12 2xl:w-12 2xl:rounded-2xl"
-                                            style={{
-                                                objectPosition: `${notification.actor.avatar_position_x}% ${notification.actor.avatar_position_y}%`,
-                                                transform: `scale(${notification.actor.avatar_zoom})`,
-                                                transformOrigin: `${notification.actor.avatar_position_x}% ${notification.actor.avatar_position_y}%`,
-                                            }}
-                                        />
-                                    ) : (
-                                        <div className="app-avatar-fallback flex h-11 w-11 items-center justify-center rounded-[18px] text-[12px] font-semibold 2xl:h-12 2xl:w-12 2xl:rounded-2xl">
-                                            {initialsFor(notification.actor?.name)}
-                                        </div>
-                                    )}
-                                    <div className="min-w-0 flex-1">
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div className="min-w-0">
-                                                <div className="truncate text-[13px] font-semibold 2xl:text-sm">
-                                                    {notification.title}
-                                                </div>
-                                                <div className="app-text-soft mt-1 text-[12px] leading-5 2xl:text-[13px]">
-                                                    {notification.body}
-                                                </div>
+                                    <Link
+                                        href={notification.href}
+                                        onClick={() => setNotificationsOpen(false)}
+                                        className="flex min-w-0 flex-1 items-start gap-3"
+                                    >
+                                        {notification.actor?.avatar_url ? (
+                                            <img
+                                                src={notification.actor.avatar_url}
+                                                alt={notification.actor.name}
+                                                className="h-11 w-11 rounded-[18px] object-cover 2xl:h-12 2xl:w-12 2xl:rounded-2xl"
+                                                style={{
+                                                    objectPosition: `${notification.actor.avatar_position_x}% ${notification.actor.avatar_position_y}%`,
+                                                    transform: `scale(${notification.actor.avatar_zoom})`,
+                                                    transformOrigin: `${notification.actor.avatar_position_x}% ${notification.actor.avatar_position_y}%`,
+                                                }}
+                                            />
+                                        ) : (
+                                            <div className="app-avatar-fallback flex h-11 w-11 items-center justify-center rounded-[18px] text-[12px] font-semibold 2xl:h-12 2xl:w-12 2xl:rounded-2xl">
+                                                {initialsFor(notification.actor?.name)}
                                             </div>
-                                            {!notification.read_at ? (
-                                                <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--vynce-accent)]" />
-                                            ) : null}
+                                        )}
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="min-w-0">
+                                                    <div className="truncate text-[13px] font-semibold 2xl:text-sm">
+                                                        {notification.title}
+                                                    </div>
+                                                    <div className="app-text-soft mt-1 text-[12px] leading-5 2xl:text-[13px]">
+                                                        {notification.body}
+                                                    </div>
+                                                </div>
+                                                {!notification.read_at ? (
+                                                    <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--vynce-accent)]" />
+                                                ) : null}
+                                            </div>
+                                            <div className="app-text-muted mt-2 text-[11px] 2xl:text-xs">
+                                                {notification.created_at_human}
+                                            </div>
                                         </div>
-                                        <div className="app-text-muted mt-2 text-[11px] 2xl:text-xs">
-                                            {notification.created_at_human}
-                                        </div>
-                                    </div>
-                                </Link>
+                                    </Link>
+                                    <button
+                                        type="button"
+                                        onClick={(event) => {
+                                            event.preventDefault();
+                                            event.stopPropagation();
+                                            setNotificationConfirm({
+                                                type: 'remove_one',
+                                                notificationId: notification.id,
+                                                title: 'Remove this notification?',
+                                                body: 'This item will be removed from your notifications list.',
+                                                confirmLabel: 'Remove',
+                                            });
+                                        }}
+                                        className="app-text-muted inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition hover:bg-[var(--vynce-surface-muted)] hover:text-white"
+                                        aria-label="Remove notification"
+                                        title="Remove notification"
+                                    >
+                                        <X className="h-4 w-4" strokeWidth={1.9} />
+                                    </button>
+                                </div>
                             ))}
+                            {notificationsHasMore ? (
+                                <div className="flex justify-center pt-1">
+                                    <button
+                                        type="button"
+                                        onClick={loadMoreNotifications}
+                                        disabled={notificationsLoadingMore}
+                                        className="app-button-secondary rounded-full px-4 py-2 text-[13px] disabled:opacity-60 2xl:text-sm"
+                                    >
+                                        {notificationsLoadingMore ? 'Loading...' : 'Load more'}
+                                    </button>
+                                </div>
+                            ) : null}
                         </div>
                     )}
                 </div>
