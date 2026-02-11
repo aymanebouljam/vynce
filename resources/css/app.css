@@ -103,6 +103,14 @@
         background: var(--vynce-surface-inset);
     }
 
+    .app-sidebar-banner {
+        border: 1px solid rgba(241, 235, 251, 0.14);
+        background: rgba(17, 11, 28, 0.46);
+        box-shadow:
+            0 14px 34px rgba(10, 12, 16, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
     .app-card-inset {
         background: var(--vynce-surface-inset);
     }
