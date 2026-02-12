@@ -364,7 +364,8 @@
     }
 
     .app-input-check:focus {
-        --tw-ring-color: var(--vynce-accent);
+        outline: none;
+        box-shadow: none;
     }
 
     .app-file-input {
