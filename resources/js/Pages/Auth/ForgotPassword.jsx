@@ -1,6 +1,6 @@
+import { Head, Link, useForm } from '@inertiajs/react';
 import InputError from '@/Components/InputError';
 import GuestLayout from '@/Layouts/GuestLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
 
 export default function ForgotPassword({ status }) {
     const { data, setData, post, processing, errors } = useForm({
@@ -17,7 +17,7 @@ export default function ForgotPassword({ status }) {
         <GuestLayout>
             <Head title="Forgot Password" />
 
-            <div className="pt-4 lg:pt-12 2xl:pt-0">
+            <div className="mt-10 pt-6 lg:mt-16 lg:pt-2 2xl:mt-20">
                 <div className="mb-6 pt-5 sm:pt-6 2xl:mb-7 2xl:pt-8">
                     <div className="app-text-muted text-[0.7rem] font-semibold uppercase tracking-[0.28em]">
                         Reset access

@@ -1,6 +1,6 @@
+import { Head, Link, useForm } from '@inertiajs/react';
 import InputError from '@/Components/InputError';
 import GuestLayout from '@/Layouts/GuestLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
 
 export default function Login({ status, canResetPassword }) {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -21,7 +21,7 @@ export default function Login({ status, canResetPassword }) {
         <GuestLayout>
             <Head title="Log in" />
 
-            <div className="pt-4 lg:pt-12 2xl:pt-0">
+            <div className="pt-12 lg:pt-20 2xl:pt-10">
                 <div className="mb-6 2xl:mb-7">
                     <div className="app-text-muted text-[0.7rem] font-semibold uppercase tracking-[0.28em]">
                         Welcome back
