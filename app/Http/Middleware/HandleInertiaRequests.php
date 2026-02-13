@@ -22,7 +22,10 @@ class HandleInertiaRequests extends Middleware
         $user = $request->user();
         $notificationLimit = 8;
         $notifications = $user
-            ? $user->notifications()->latest()->limit($notificationLimit)->get()
+            ? NotificationController::queryForCategory(
+                $user->notifications()->latest(),
+                'bell',
+            )->limit($notificationLimit)->get()
             : collect();
 
         return [
@@ -47,8 +50,14 @@ class HandleInertiaRequests extends Middleware
                     ->count(),
                 'notifications' => NotificationController::serializeNotifications($notifications),
                 'notifications_page' => 1,
-                'notifications_has_more' => $user->notifications()->count() > $notificationLimit,
-                'notifications_count' => $user->unreadNotifications()->count(),
+                'notifications_has_more' => NotificationController::queryForCategory(
+                    $user->notifications(),
+                    'bell',
+                )->count() > $notificationLimit,
+                'notifications_count' => NotificationController::queryForCategory(
+                    $user->unreadNotifications(),
+                    'bell',
+                )->count(),
             ] : null,
             'flash' => [
                 'new_post_id' => fn () => $request->session()->get('new_post_id'),

@@ -83,6 +83,14 @@ class SocialGraphService
             'accepted_at' => now(),
         ]);
 
+        $requester->notify(new DatabaseActivityNotification([
+            'type' => 'friend_request_accepted',
+            'title' => "{$actor->name} accepted your friend request",
+            'body' => "You and {$actor->name} are now connected.",
+            'href' => route('users.show', $actor->username),
+            'actor' => $this->actorPayload($actor),
+        ]));
+
         return $friendship->refresh();
     }
 

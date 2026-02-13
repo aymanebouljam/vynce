@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
@@ -11,10 +12,17 @@ class NotificationController extends Controller
 {
     private const PER_PAGE = 8;
 
+    private const REQUEST_TYPES = ['friend_request'];
+
+    private const MESSAGE_TYPES = ['message'];
+
     public function index(Request $request): JsonResponse
     {
         $page = max(1, (int) $request->integer('page', 1));
-        $query = $request->user()->notifications()->latest();
+        $query = self::queryForCategory(
+            $request->user()->notifications()->latest(),
+            (string) $request->query('category', 'bell'),
+        );
         $total = (clone $query)->count();
         $notifications = $query
             ->forPage($page, self::PER_PAGE)
@@ -29,7 +37,10 @@ class NotificationController extends Controller
 
     public function markRead(Request $request): JsonResponse
     {
-        $request->user()->unreadNotifications->markAsRead();
+        self::queryForCategory(
+            $request->user()->unreadNotifications(),
+            (string) $request->input('category', $request->query('category', 'bell')),
+        )->get()->markAsRead();
 
         return response()->json([
             'status' => 'ok',
@@ -38,7 +49,10 @@ class NotificationController extends Controller
 
     public function destroy(Request $request, string $notification): JsonResponse
     {
-        $request->user()->notifications()->whereKey($notification)->delete();
+        self::queryForCategory(
+            $request->user()->notifications()->whereKey($notification),
+            (string) $request->input('category', $request->query('category', 'bell')),
+        )->delete();
 
         return response()->json([
             'status' => 'ok',
@@ -47,11 +61,25 @@ class NotificationController extends Controller
 
     public function clear(Request $request): JsonResponse
     {
-        $request->user()->notifications()->delete();
+        self::queryForCategory(
+            $request->user()->notifications(),
+            (string) $request->input('category', $request->query('category', 'bell')),
+        )->delete();
 
         return response()->json([
             'status' => 'ok',
         ]);
+    }
+
+    public static function queryForCategory(MorphMany $query, string $category): MorphMany
+    {
+        return match ($category) {
+            'requests' => $query->whereIn('data->type', self::REQUEST_TYPES),
+            'messages' => $query->whereIn('data->type', self::MESSAGE_TYPES),
+            default => $query
+                ->whereNotIn('data->type', self::REQUEST_TYPES)
+                ->whereNotIn('data->type', self::MESSAGE_TYPES),
+        };
     }
 
     public static function serializeNotifications(Collection $notifications): array
