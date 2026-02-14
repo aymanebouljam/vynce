@@ -73,12 +73,14 @@ class NotificationController extends Controller
 
     public static function queryForCategory(MorphMany $query, string $category): MorphMany
     {
+        $typeExpression = "(data::jsonb ->> 'type')";
+
         return match ($category) {
-            'requests' => $query->whereIn('data->type', self::REQUEST_TYPES),
-            'messages' => $query->whereIn('data->type', self::MESSAGE_TYPES),
+            'requests' => $query->whereRaw("{$typeExpression} = ?", [self::REQUEST_TYPES[0]]),
+            'messages' => $query->whereRaw("{$typeExpression} = ?", [self::MESSAGE_TYPES[0]]),
             default => $query
-                ->whereNotIn('data->type', self::REQUEST_TYPES)
-                ->whereNotIn('data->type', self::MESSAGE_TYPES),
+                ->whereRaw("{$typeExpression} != ?", [self::REQUEST_TYPES[0]])
+                ->whereRaw("{$typeExpression} != ?", [self::MESSAGE_TYPES[0]]),
         };
     }
 
