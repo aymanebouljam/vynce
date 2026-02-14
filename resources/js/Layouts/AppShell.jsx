@@ -52,6 +52,7 @@ export default function AppShell({ children, title, sidebar }) {
     );
     const [notificationsLoadingMore, setNotificationsLoadingMore] = useState(false);
     const [notificationConfirm, setNotificationConfirm] = useState(null);
+    const sidebarMenuCount = notificationsCount + pendingRequestsCount + unreadMessagesCount;
 
     useEffect(() => {
         if (sidebarNavOpen) {
@@ -396,7 +397,7 @@ export default function AppShell({ children, title, sidebar }) {
                                     <button
                                         type="button"
                                         onClick={() => setSidebarNavOpen((current) => !current)}
-                                        className={`app-nav-link inline-flex h-10 w-10 items-center justify-center rounded-[18px] 2xl:h-11 2xl:w-11 2xl:rounded-2xl ${
+                                        className={`app-nav-link relative inline-flex h-10 w-10 items-center justify-center rounded-[18px] 2xl:h-11 2xl:w-11 2xl:rounded-2xl ${
                                             sidebarNavOpen ? 'app-nav-link-active' : ''
                                         }`}
                                         aria-label={
@@ -417,6 +418,9 @@ export default function AppShell({ children, title, sidebar }) {
                                                 strokeWidth={1.8}
                                             />
                                         )}
+                                        {sidebarMenuCount > 0 ? (
+                                            <TopbarBadge count={sidebarMenuCount} />
+                                        ) : null}
                                     </button>
                                 </div>
 
