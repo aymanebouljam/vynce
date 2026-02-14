@@ -7,6 +7,8 @@ import {
     Eraser,
     File,
     Image as ImageIcon,
+    PanelLeftClose,
+    PanelLeftOpen,
     Paperclip,
     Pencil,
     PenSquare,
@@ -40,6 +42,7 @@ export default function Index({ conversations, activeConversation, contacts = []
     const [deletingConversationIds, setDeletingConversationIds] = useState([]);
     const [localConversations, setLocalConversations] = useState(conversations);
     const [localMessages, setLocalMessages] = useState(messages);
+    const [conversationRailCollapsed, setConversationRailCollapsed] = useState(false);
     const messagesViewportRef = useRef(null);
     const imageInputRef = useRef(null);
     const fileInputRef = useRef(null);
@@ -60,10 +63,14 @@ export default function Index({ conversations, activeConversation, contacts = []
             [...localConversations].sort((left, right) => {
                 const leftTime = left.latest_message_at
                     ? new Date(left.latest_message_at).getTime()
-                    : 0;
+                    : left.updated_at
+                      ? new Date(left.updated_at).getTime()
+                      : 0;
                 const rightTime = right.latest_message_at
                     ? new Date(right.latest_message_at).getTime()
-                    : 0;
+                    : right.updated_at
+                      ? new Date(right.updated_at).getTime()
+                      : 0;
 
                 return rightTime - leftTime;
             }),
@@ -75,6 +82,28 @@ export default function Index({ conversations, activeConversation, contacts = []
             null,
         [activeConversationId, localConversations],
     );
+    const groupedMessages = useMemo(() => {
+        const groups = [];
+
+        localMessages.forEach((message) => {
+            const timestamp = message.created_at ?? message.updated_at;
+            const dateKey = timestamp ? new Date(timestamp).toDateString() : 'unknown';
+            const lastGroup = groups.at(-1);
+
+            if (!lastGroup || lastGroup.dateKey !== dateKey) {
+                groups.push({
+                    dateKey,
+                    label: timestamp ? formatMessageDateBadge(timestamp) : 'Unknown date',
+                    messages: [message],
+                });
+                return;
+            }
+
+            lastGroup.messages.push(message);
+        });
+
+        return groups;
+    }, [localMessages]);
 
     useEffect(() => {
         setActiveConversationId(activeConversation?.id ?? null);
@@ -562,38 +591,89 @@ export default function Index({ conversations, activeConversation, contacts = []
 
     return (
         <AuthenticatedLayout title="Messages">
-            <div className="grid gap-5 xl:grid-cols-[290px,1fr] 2xl:grid-cols-[320px,1fr] 2xl:gap-6">
+            <div
+                className={`grid gap-5 2xl:gap-6 ${
+                    conversationRailCollapsed
+                        ? 'xl:grid-cols-[92px,1fr] 2xl:grid-cols-[104px,1fr]'
+                        : 'xl:grid-cols-[290px,1fr] 2xl:grid-cols-[320px,1fr]'
+                }`}
+            >
                 <section className="app-panel rounded-[28px] p-4 2xl:rounded-[32px] 2xl:p-5">
                     <div className="mb-3 flex items-start justify-between gap-3 2xl:mb-4">
-                        <button
-                            type="button"
-                            onClick={goBack}
-                            className="app-button-secondary inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[13px] 2xl:px-4 2xl:text-sm"
-                        >
-                            <ArrowLeft className="h-4 w-4" strokeWidth={1.9} />
-                            Back
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setPickerOpen(true)}
-                            className="app-button-primary inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[13px] font-semibold 2xl:px-4 2xl:text-sm"
-                        >
-                            <PenSquare className="h-4 w-4" strokeWidth={1.9} />
-                            New
-                        </button>
+                        {conversationRailCollapsed ? (
+                            <div className="flex w-full justify-center">
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setConversationRailCollapsed((current) => !current)
+                                    }
+                                    className="app-nav-link inline-flex h-10 w-10 items-center justify-center rounded-full p-0 2xl:h-11 2xl:w-11"
+                                    aria-label="Expand conversations panel"
+                                >
+                                    <PanelLeftOpen className="h-4 w-4" strokeWidth={1.9} />
+                                </button>
+                            </div>
+                        ) : (
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={goBack}
+                                    className="app-button-secondary inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[13px] 2xl:px-4 2xl:text-sm"
+                                    aria-label="Back"
+                                >
+                                    <ArrowLeft className="h-4 w-4" strokeWidth={1.9} />
+                                    Back
+                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setConversationRailCollapsed((current) => !current)
+                                        }
+                                        className="app-nav-link inline-flex h-10 w-10 items-center justify-center rounded-full p-0 2xl:h-11 2xl:w-11"
+                                        aria-label="Collapse conversations panel"
+                                    >
+                                        <PanelLeftClose className="h-4 w-4" strokeWidth={1.9} />
+                                    </button>
+                                </div>
+                            </>
+                        )}
                     </div>
 
-                    <div className="mb-3 2xl:mb-4">
-                        <h1 className="text-lg font-semibold 2xl:text-xl">Messages</h1>
-                    </div>
+                    {!conversationRailCollapsed ? (
+                        <div className="mb-5 flex items-center justify-between gap-3 2xl:mb-6">
+                            <h1 className="text-lg font-semibold 2xl:text-xl">Messages</h1>
+                            <button
+                                type="button"
+                                onClick={() => setPickerOpen(true)}
+                                className="app-button-primary inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[13px] font-semibold 2xl:px-4 2xl:text-sm"
+                                aria-label="New conversation"
+                            >
+                                <PenSquare className="h-4 w-4" strokeWidth={1.9} />
+                                New
+                            </button>
+                        </div>
+                    ) : null}
 
                     {localConversations.length === 0 ? (
-                        <div className="app-dashed-panel app-text-muted rounded-[24px] p-4 text-[13px] leading-5 2xl:rounded-[28px] 2xl:p-5 2xl:text-sm 2xl:leading-6">
-                            No conversations yet. Visit a profile and tap Message to open a direct
-                            chat.
-                        </div>
+                        conversationRailCollapsed ? (
+                            <div className="app-dashed-panel app-text-muted flex min-h-24 items-center justify-center rounded-[24px] p-3 text-center text-[11px] leading-4 2xl:rounded-[28px] 2xl:p-4 2xl:text-xs">
+                                Empty
+                            </div>
+                        ) : (
+                            <div className="app-dashed-panel app-text-muted rounded-[24px] p-4 text-[13px] leading-5 2xl:rounded-[28px] 2xl:p-5 2xl:text-sm 2xl:leading-6">
+                                No conversations yet. Visit a profile and tap Message to open a
+                                direct chat.
+                            </div>
+                        )
                     ) : (
-                        <div className="space-y-2.5 2xl:space-y-3">
+                        <div
+                            className={
+                                conversationRailCollapsed
+                                    ? 'space-y-2'
+                                    : 'space-y-2.5 2xl:space-y-3'
+                            }
+                        >
                             {sortedConversations.map((conversation) => {
                                 const isConversationBusy =
                                     clearingConversationIds.includes(conversation.id) ||
@@ -603,88 +683,127 @@ export default function Index({ conversations, activeConversation, contacts = []
                                     <div key={conversation.id} className="relative">
                                         <Link
                                             href={route('messages.show', conversation.id)}
-                                            className={`block rounded-[20px] p-3.5 pr-12 transition 2xl:rounded-[24px] 2xl:p-4 2xl:pr-14 ${
-                                                displayedConversation?.id === conversation.id
-                                                    ? 'border border-[rgba(196,177,232,0.9)] bg-[rgba(120,88,166,0.22)] shadow-[0_0_0_1px_rgba(214,198,242,0.45),0_0_24px_rgba(144,114,204,0.18)]'
-                                                    : 'app-card-inset border border-white/5 bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.07)]'
+                                            className={`block transition ${
+                                                conversationRailCollapsed
+                                                    ? displayedConversation?.id === conversation.id
+                                                        ? 'rounded-[22px] border border-[rgba(196,177,232,0.9)] bg-[rgba(120,88,166,0.22)] p-2 shadow-[0_0_0_1px_rgba(214,198,242,0.45),0_0_24px_rgba(144,114,204,0.18)] 2xl:rounded-[24px]'
+                                                        : 'app-card-inset rounded-[22px] border border-white/5 bg-[rgba(255,255,255,0.04)] p-2 hover:bg-[rgba(255,255,255,0.07)] 2xl:rounded-[24px]'
+                                                    : displayedConversation?.id === conversation.id
+                                                      ? 'rounded-[20px] border border-[rgba(196,177,232,0.9)] bg-[rgba(120,88,166,0.22)] p-3.5 pr-12 shadow-[0_0_0_1px_rgba(214,198,242,0.45),0_0_24px_rgba(144,114,204,0.18)] 2xl:rounded-[24px] 2xl:p-4 2xl:pr-14'
+                                                      : 'app-card-inset rounded-[20px] border border-white/5 bg-[rgba(255,255,255,0.04)] p-3.5 pr-12 hover:bg-[rgba(255,255,255,0.07)] 2xl:rounded-[24px] 2xl:p-4 2xl:pr-14'
                                             }`}
+                                            title={conversation.participant?.name ?? 'Unknown user'}
                                         >
-                                            <div className="flex items-start gap-3">
-                                                <div className="app-avatar-fallback flex h-10 w-10 shrink-0 items-center justify-center rounded-[18px] text-[13px] font-semibold 2xl:h-11 2xl:w-11 2xl:rounded-2xl 2xl:text-sm">
-                                                    {initialsFor(conversation.participant?.name)}
-                                                </div>
-                                                <div className="min-w-0 flex-1">
-                                                    <div className="truncate text-[13px] font-semibold 2xl:text-sm">
-                                                        {conversation.participant?.name ??
-                                                            'Unknown user'}
+                                            <div
+                                                className={`flex ${
+                                                    conversationRailCollapsed
+                                                        ? 'justify-center'
+                                                        : 'items-start gap-3'
+                                                }`}
+                                            >
+                                                {conversation.participant?.avatar_url ? (
+                                                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-[18px] 2xl:h-11 2xl:w-11 2xl:rounded-2xl">
+                                                        <img
+                                                            src={
+                                                                conversation.participant.avatar_url
+                                                            }
+                                                            alt={conversation.participant?.name}
+                                                            className="h-full w-full object-cover"
+                                                            style={{
+                                                                objectPosition: `${conversation.participant.avatar_position_x}% ${conversation.participant.avatar_position_y}%`,
+                                                                transform: `scale(${conversation.participant.avatar_zoom})`,
+                                                                transformOrigin: `${conversation.participant.avatar_position_x}% ${conversation.participant.avatar_position_y}%`,
+                                                            }}
+                                                        />
                                                     </div>
-                                                    <div className="app-text-soft mt-1.5 truncate text-[13px] 2xl:mt-2 2xl:text-sm">
-                                                        {conversation.latest_message?.sender?.id ===
-                                                        auth.user.id
-                                                            ? 'You: '
-                                                            : ''}
-                                                        {conversation.latest_message?.body ??
-                                                            'No messages yet'}
+                                                ) : (
+                                                    <div className="app-avatar-fallback flex h-10 w-10 shrink-0 items-center justify-center rounded-[18px] text-[13px] font-semibold 2xl:h-11 2xl:w-11 2xl:rounded-2xl 2xl:text-sm">
+                                                        {initialsFor(
+                                                            conversation.participant?.name,
+                                                        )}
                                                     </div>
-                                                </div>
+                                                )}
+                                                {!conversationRailCollapsed ? (
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="truncate text-[13px] font-semibold 2xl:text-sm">
+                                                            {conversation.participant?.name ??
+                                                                'Unknown user'}
+                                                        </div>
+                                                        <div className="app-text-soft mt-1.5 truncate text-[13px] 2xl:mt-2 2xl:text-sm">
+                                                            {conversation.latest_message?.sender
+                                                                ?.id === auth.user.id
+                                                                ? 'You: '
+                                                                : ''}
+                                                            {conversation.latest_message?.body ??
+                                                                'No messages yet'}
+                                                        </div>
+                                                    </div>
+                                                ) : null}
                                             </div>
                                         </Link>
-                                        <div
-                                            className="absolute right-3 top-3"
-                                            ref={
-                                                openConversationMenuId === conversation.id
-                                                    ? conversationMenuRef
-                                                    : null
-                                            }
-                                        >
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    setOpenConversationMenuId((current) =>
-                                                        current === conversation.id
-                                                            ? null
-                                                            : conversation.id,
-                                                    )
+                                        {!conversationRailCollapsed ? (
+                                            <div
+                                                className="absolute right-3 top-3"
+                                                ref={
+                                                    openConversationMenuId === conversation.id
+                                                        ? conversationMenuRef
+                                                        : null
                                                 }
-                                                disabled={isConversationBusy}
-                                                className="text-current/75 inline-flex h-7 w-7 items-center justify-center rounded-full transition hover:bg-white/10 hover:text-current disabled:opacity-60 2xl:h-8 2xl:w-8"
-                                                aria-label="Conversation options"
                                             >
-                                                <Ellipsis className="h-4 w-4" strokeWidth={1.9} />
-                                            </button>
-                                            {openConversationMenuId === conversation.id && (
-                                                <div className="app-panel-inset absolute right-0 top-full z-20 mt-2 w-44 rounded-[18px] p-2 shadow-[var(--vynce-shadow-md)] 2xl:w-48 2xl:rounded-2xl">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            openClearConversationModal(conversation)
-                                                        }
-                                                        className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[13px] 2xl:text-sm"
-                                                    >
-                                                        <Eraser
-                                                            className="h-4 w-4"
-                                                            strokeWidth={1.9}
-                                                        />
-                                                        Clear conversation
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            openDeleteConversationModal(
-                                                                conversation,
-                                                            )
-                                                        }
-                                                        className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[13px] text-rose-200 2xl:text-sm"
-                                                    >
-                                                        <Trash2
-                                                            className="h-4 w-4"
-                                                            strokeWidth={1.9}
-                                                        />
-                                                        Delete
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setOpenConversationMenuId((current) =>
+                                                            current === conversation.id
+                                                                ? null
+                                                                : conversation.id,
+                                                        )
+                                                    }
+                                                    disabled={isConversationBusy}
+                                                    className="text-current/75 inline-flex h-7 w-7 items-center justify-center rounded-full transition hover:bg-white/10 hover:text-current disabled:opacity-60 2xl:h-8 2xl:w-8"
+                                                    aria-label="Conversation options"
+                                                >
+                                                    <Ellipsis
+                                                        className="h-4 w-4"
+                                                        strokeWidth={1.9}
+                                                    />
+                                                </button>
+                                                {openConversationMenuId === conversation.id && (
+                                                    <div className="app-panel-inset absolute right-0 top-full z-20 mt-2 w-44 rounded-[18px] p-2 shadow-[var(--vynce-shadow-md)] 2xl:w-48 2xl:rounded-2xl">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                openClearConversationModal(
+                                                                    conversation,
+                                                                )
+                                                            }
+                                                            className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[13px] 2xl:text-sm"
+                                                        >
+                                                            <Eraser
+                                                                className="h-4 w-4"
+                                                                strokeWidth={1.9}
+                                                            />
+                                                            Clear conversation
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                openDeleteConversationModal(
+                                                                    conversation,
+                                                                )
+                                                            }
+                                                            className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[13px] text-rose-200 2xl:text-sm"
+                                                        >
+                                                            <Trash2
+                                                                className="h-4 w-4"
+                                                                strokeWidth={1.9}
+                                                            />
+                                                            Delete
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : null}
                                     </div>
                                 );
                             })}
@@ -700,9 +819,24 @@ export default function Index({ conversations, activeConversation, contacts = []
                     ) : (
                         <div className="flex min-h-0 flex-1 flex-col">
                             <div className="app-panel-inset mb-4 flex items-center gap-3 rounded-[20px] px-3.5 py-3 2xl:mb-5 2xl:rounded-[24px] 2xl:px-4 2xl:py-4">
-                                <div className="app-avatar-fallback flex h-10 w-10 items-center justify-center rounded-[18px] text-[13px] font-semibold 2xl:h-12 2xl:w-12 2xl:rounded-2xl 2xl:text-sm">
-                                    {initialsFor(displayedConversation.participant?.name)}
-                                </div>
+                                {displayedConversation.participant?.avatar_url ? (
+                                    <div className="h-10 w-10 overflow-hidden rounded-[18px] 2xl:h-12 2xl:w-12 2xl:rounded-2xl">
+                                        <img
+                                            src={displayedConversation.participant.avatar_url}
+                                            alt={displayedConversation.participant?.name}
+                                            className="h-full w-full object-cover"
+                                            style={{
+                                                objectPosition: `${displayedConversation.participant.avatar_position_x}% ${displayedConversation.participant.avatar_position_y}%`,
+                                                transform: `scale(${displayedConversation.participant.avatar_zoom})`,
+                                                transformOrigin: `${displayedConversation.participant.avatar_position_x}% ${displayedConversation.participant.avatar_position_y}%`,
+                                            }}
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="app-avatar-fallback flex h-10 w-10 items-center justify-center rounded-[18px] text-[13px] font-semibold 2xl:h-12 2xl:w-12 2xl:rounded-2xl 2xl:text-sm">
+                                        {initialsFor(displayedConversation.participant?.name)}
+                                    </div>
+                                )}
                                 <div className="min-w-0">
                                     <div className="truncate text-[13px] font-semibold 2xl:text-base">
                                         {displayedConversation.participant?.name}
@@ -737,283 +871,361 @@ export default function Index({ conversations, activeConversation, contacts = []
                                     ref={messagesViewportRef}
                                     className="app-scrollbar-hidden h-full space-y-2.5 overflow-y-auto pr-1 pt-1 2xl:space-y-3"
                                 >
-                                    {localMessages.map((message) => {
-                                        const own = message.sender?.id === auth.user.id;
-                                        const isEditing = editingMessageId === message.id;
-                                        const isDeleting = deletingMessageIds.includes(message.id);
-                                        const timestamp = message.updated_at ?? message.created_at;
-                                        const isEdited = Boolean(
-                                            message.updated_at &&
-                                                message.created_at &&
-                                                message.updated_at !== message.created_at,
-                                        );
+                                    {groupedMessages.map((group) => (
+                                        <div
+                                            key={group.dateKey}
+                                            className="space-y-2.5 2xl:space-y-3"
+                                        >
+                                            <div className="flex justify-center py-1">
+                                                <div className="app-panel-inset rounded-full px-3 py-1 text-[11px] font-semibold tracking-[0.08em] text-[rgba(241,235,251,0.82)] shadow-[var(--vynce-shadow-sm)] 2xl:text-xs">
+                                                    {group.label}
+                                                </div>
+                                            </div>
+                                            {group.messages.map((message) => {
+                                                const own = message.sender?.id === auth.user.id;
+                                                const isEditing = editingMessageId === message.id;
+                                                const isDeleting = deletingMessageIds.includes(
+                                                    message.id,
+                                                );
+                                                const timestamp =
+                                                    message.updated_at ?? message.created_at;
+                                                const isEdited = Boolean(
+                                                    message.updated_at &&
+                                                        message.created_at &&
+                                                        message.updated_at !== message.created_at,
+                                                );
 
-                                        return (
-                                            <div
-                                                key={message.id}
-                                                className={`flex ${own ? 'justify-end' : 'justify-start'}`}
-                                            >
-                                                <div
-                                                    className={`relative max-w-[78%] rounded-[20px] px-3 py-2 text-[13px] leading-6 2xl:rounded-[24px] 2xl:px-3 2xl:py-2.5 2xl:text-sm 2xl:leading-7 ${
-                                                        own
-                                                            ? 'app-button-primary'
-                                                            : 'app-panel-inset'
-                                                    }`}
-                                                >
-                                                    {!isEditing && (
+                                                return (
+                                                    <div
+                                                        key={message.id}
+                                                        className={`flex items-end gap-2.5 ${
+                                                            own ? 'justify-end' : 'justify-start'
+                                                        }`}
+                                                    >
+                                                        {!own ? (
+                                                            message.sender?.avatar_url ? (
+                                                                <div className="h-8 w-8 shrink-0 overflow-hidden rounded-[16px] 2xl:h-9 2xl:w-9 2xl:rounded-[18px]">
+                                                                    <img
+                                                                        src={
+                                                                            message.sender
+                                                                                .avatar_url
+                                                                        }
+                                                                        alt={message.sender?.name}
+                                                                        className="h-full w-full object-cover"
+                                                                        style={{
+                                                                            objectPosition: `${message.sender.avatar_position_x}% ${message.sender.avatar_position_y}%`,
+                                                                            transform: `scale(${message.sender.avatar_zoom})`,
+                                                                            transformOrigin: `${message.sender.avatar_position_x}% ${message.sender.avatar_position_y}%`,
+                                                                        }}
+                                                                    />
+                                                                </div>
+                                                            ) : (
+                                                                <div className="app-avatar-fallback flex h-8 w-8 shrink-0 items-center justify-center rounded-[16px] text-[11px] font-semibold 2xl:h-9 2xl:w-9 2xl:rounded-[18px] 2xl:text-xs">
+                                                                    {initialsFor(
+                                                                        message.sender?.name,
+                                                                    )}
+                                                                </div>
+                                                            )
+                                                        ) : null}
                                                         <div
-                                                            className="absolute right-3 top-3"
-                                                            ref={
-                                                                openMenuMessageId === message.id
-                                                                    ? messageMenuRef
-                                                                    : null
-                                                            }
+                                                            className={`relative max-w-[78%] rounded-[20px] px-3 py-2 text-[13px] leading-6 2xl:rounded-[24px] 2xl:px-3 2xl:py-2.5 2xl:text-sm 2xl:leading-7 ${
+                                                                own
+                                                                    ? 'app-button-primary'
+                                                                    : 'app-panel-inset'
+                                                            }`}
                                                         >
-                                                            <button
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    setOpenMenuMessageId(
-                                                                        (current) =>
-                                                                            current === message.id
-                                                                                ? null
-                                                                                : message.id,
-                                                                    )
-                                                                }
-                                                                className="text-current/75 inline-flex h-7 w-7 items-center justify-center rounded-full transition hover:bg-white/10 hover:text-current 2xl:h-8 2xl:w-8"
-                                                                aria-label="Message options"
-                                                            >
-                                                                <Ellipsis
-                                                                    className="h-4 w-4"
-                                                                    strokeWidth={1.9}
-                                                                />
-                                                            </button>
-                                                            {openMenuMessageId === message.id && (
-                                                                <div className="app-panel-inset absolute right-0 top-full z-20 mt-2 w-32 rounded-[18px] p-2 shadow-[var(--vynce-shadow-md)] 2xl:w-36 2xl:rounded-2xl">
+                                                            {!isEditing && (
+                                                                <div
+                                                                    className="absolute right-3 top-3"
+                                                                    ref={
+                                                                        openMenuMessageId ===
+                                                                        message.id
+                                                                            ? messageMenuRef
+                                                                            : null
+                                                                    }
+                                                                >
                                                                     <button
                                                                         type="button"
                                                                         onClick={() =>
-                                                                            copyMessage(
-                                                                                message.body,
+                                                                            setOpenMenuMessageId(
+                                                                                (current) =>
+                                                                                    current ===
+                                                                                    message.id
+                                                                                        ? null
+                                                                                        : message.id,
                                                                             )
                                                                         }
-                                                                        className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[13px] 2xl:text-sm"
+                                                                        className="text-current/75 inline-flex h-7 w-7 items-center justify-center rounded-full transition hover:bg-white/10 hover:text-current 2xl:h-8 2xl:w-8"
+                                                                        aria-label="Message options"
                                                                     >
-                                                                        <Copy
+                                                                        <Ellipsis
                                                                             className="h-4 w-4"
                                                                             strokeWidth={1.9}
                                                                         />
-                                                                        Copy
                                                                     </button>
-                                                                    {own && (
-                                                                        <>
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => {
-                                                                                    beginEdit(
-                                                                                        message,
-                                                                                    );
-                                                                                    setOpenMenuMessageId(
-                                                                                        null,
-                                                                                    );
-                                                                                }}
-                                                                                className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[13px] 2xl:text-sm"
-                                                                            >
-                                                                                <Pencil
-                                                                                    className="h-4 w-4"
-                                                                                    strokeWidth={
-                                                                                        1.9
-                                                                                    }
-                                                                                />
-                                                                                Edit
-                                                                            </button>
+                                                                    {openMenuMessageId ===
+                                                                        message.id && (
+                                                                        <div className="app-panel-inset absolute right-0 top-full z-20 mt-2 w-32 rounded-[18px] p-2 shadow-[var(--vynce-shadow-md)] 2xl:w-36 2xl:rounded-2xl">
                                                                             <button
                                                                                 type="button"
                                                                                 onClick={() =>
-                                                                                    openDeleteModal(
-                                                                                        message,
+                                                                                    copyMessage(
+                                                                                        message.body,
                                                                                     )
                                                                                 }
-                                                                                disabled={
-                                                                                    isDeleting
-                                                                                }
-                                                                                className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[13px] text-rose-200 disabled:opacity-60 2xl:text-sm"
+                                                                                className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[13px] 2xl:text-sm"
                                                                             >
-                                                                                <Trash2
+                                                                                <Copy
                                                                                     className="h-4 w-4"
                                                                                     strokeWidth={
                                                                                         1.9
                                                                                     }
                                                                                 />
-                                                                                Delete
+                                                                                Copy
                                                                             </button>
-                                                                        </>
-                                                                    )}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                    {isEditing ? (
-                                                        <div className="relative -mx-1.5 -my-1">
-                                                            <button
-                                                                type="button"
-                                                                onClick={cancelEdit}
-                                                                className="text-current/80 absolute left-0 top-0 inline-flex h-7 w-7 items-center justify-center transition hover:text-current"
-                                                                aria-label="Cancel edit"
-                                                            >
-                                                                <ArrowLeft
-                                                                    className="h-4 w-4"
-                                                                    strokeWidth={1.9}
-                                                                />
-                                                            </button>
-                                                            <textarea
-                                                                value={editDraft}
-                                                                onChange={(event) =>
-                                                                    setEditDraft(event.target.value)
-                                                                }
-                                                                className="app-scrollbar-hidden min-h-20 w-full resize-none overflow-y-auto border-0 bg-transparent pb-11 pl-9 pr-14 text-[13px] focus:border-0 focus:shadow-none focus:outline-none focus:ring-0 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0 2xl:pb-12 2xl:pl-10 2xl:pr-16 2xl:text-sm"
-                                                                style={{
-                                                                    outline: 'none',
-                                                                    boxShadow: 'none',
-                                                                }}
-                                                            />
-                                                            <div className="absolute bottom-3 right-3 flex items-center gap-1 text-xs">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        saveEdit(message.id)
-                                                                    }
-                                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-white/15"
-                                                                    aria-label="Save edit"
-                                                                >
-                                                                    <Check
-                                                                        className="h-4 w-4"
-                                                                        strokeWidth={1.9}
-                                                                    />
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="space-y-2.5 2xl:space-y-3">
-                                                            {message.attachment && (
-                                                                <div>
-                                                                    {message.attachment.is_image ? (
-                                                                        message.attachment.url ? (
-                                                                            <a
-                                                                                href={
-                                                                                    message
-                                                                                        .attachment
-                                                                                        .url
-                                                                                }
-                                                                                target="_blank"
-                                                                                rel="noreferrer"
-                                                                                className="block overflow-hidden rounded-[20px]"
-                                                                            >
-                                                                                <img
-                                                                                    src={
-                                                                                        message
-                                                                                            .attachment
-                                                                                            .url
-                                                                                    }
-                                                                                    alt={
-                                                                                        message
-                                                                                            .attachment
-                                                                                            .name ??
-                                                                                        'Attachment'
-                                                                                    }
-                                                                                    className="max-h-72 w-full object-cover"
-                                                                                />
-                                                                            </a>
-                                                                        ) : null
-                                                                    ) : message.attachment.url ? (
-                                                                        <a
-                                                                            href={
-                                                                                message.attachment
-                                                                                    .url
-                                                                            }
-                                                                            target="_blank"
-                                                                            rel="noreferrer"
-                                                                            className="app-panel-inset flex items-center gap-3 rounded-[18px] px-3 py-2.5 2xl:py-3"
-                                                                        >
-                                                                            <div className="app-avatar-fallback flex h-9 w-9 items-center justify-center rounded-[18px] text-[13px] font-semibold 2xl:h-10 2xl:w-10 2xl:rounded-2xl 2xl:text-sm">
-                                                                                <File
-                                                                                    className="h-4 w-4"
-                                                                                    strokeWidth={
-                                                                                        1.9
-                                                                                    }
-                                                                                />
-                                                                            </div>
-                                                                            <div className="min-w-0 flex-1">
-                                                                                <div className="truncate text-[13px] font-semibold 2xl:text-sm">
-                                                                                    {
-                                                                                        message
-                                                                                            .attachment
-                                                                                            .name
-                                                                                    }
-                                                                                </div>
-                                                                                <div className="app-text-soft text-[11px] 2xl:text-xs">
-                                                                                    {formatFileSize(
-                                                                                        message
-                                                                                            .attachment
-                                                                                            .size,
-                                                                                    )}
-                                                                                </div>
-                                                                            </div>
-                                                                        </a>
-                                                                    ) : (
-                                                                        <div className="app-panel-inset flex items-center gap-3 rounded-[18px] px-3 py-2.5 2xl:py-3">
-                                                                            <div className="app-avatar-fallback flex h-9 w-9 items-center justify-center rounded-[18px] text-[13px] font-semibold 2xl:h-10 2xl:w-10 2xl:rounded-2xl 2xl:text-sm">
-                                                                                <File
-                                                                                    className="h-4 w-4"
-                                                                                    strokeWidth={
-                                                                                        1.9
-                                                                                    }
-                                                                                />
-                                                                            </div>
-                                                                            <div className="min-w-0 flex-1">
-                                                                                <div className="truncate text-[13px] font-semibold 2xl:text-sm">
-                                                                                    {
-                                                                                        message
-                                                                                            .attachment
-                                                                                            .name
-                                                                                    }
-                                                                                </div>
-                                                                                <div className="app-text-soft text-[11px] 2xl:text-xs">
-                                                                                    {formatFileSize(
-                                                                                        message
-                                                                                            .attachment
-                                                                                            .size,
-                                                                                    )}
-                                                                                </div>
-                                                                            </div>
+                                                                            {own && (
+                                                                                <>
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => {
+                                                                                            beginEdit(
+                                                                                                message,
+                                                                                            );
+                                                                                            setOpenMenuMessageId(
+                                                                                                null,
+                                                                                            );
+                                                                                        }}
+                                                                                        className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[13px] 2xl:text-sm"
+                                                                                    >
+                                                                                        <Pencil
+                                                                                            className="h-4 w-4"
+                                                                                            strokeWidth={
+                                                                                                1.9
+                                                                                            }
+                                                                                        />
+                                                                                        Edit
+                                                                                    </button>
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() =>
+                                                                                            openDeleteModal(
+                                                                                                message,
+                                                                                            )
+                                                                                        }
+                                                                                        disabled={
+                                                                                            isDeleting
+                                                                                        }
+                                                                                        className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[13px] text-rose-200 disabled:opacity-60 2xl:text-sm"
+                                                                                    >
+                                                                                        <Trash2
+                                                                                            className="h-4 w-4"
+                                                                                            strokeWidth={
+                                                                                                1.9
+                                                                                            }
+                                                                                        />
+                                                                                        Delete
+                                                                                    </button>
+                                                                                </>
+                                                                            )}
                                                                         </div>
                                                                     )}
                                                                 </div>
                                                             )}
-                                                            {message.body && (
-                                                                <div className="whitespace-pre-wrap break-all pr-10">
-                                                                    {message.body}
+                                                            {isEditing ? (
+                                                                <div className="relative -mx-1.5 -my-1">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={cancelEdit}
+                                                                        className="text-current/80 absolute left-0 top-0 inline-flex h-7 w-7 items-center justify-center transition hover:text-current"
+                                                                        aria-label="Cancel edit"
+                                                                    >
+                                                                        <ArrowLeft
+                                                                            className="h-4 w-4"
+                                                                            strokeWidth={1.9}
+                                                                        />
+                                                                    </button>
+                                                                    <textarea
+                                                                        value={editDraft}
+                                                                        onChange={(event) =>
+                                                                            setEditDraft(
+                                                                                event.target.value,
+                                                                            )
+                                                                        }
+                                                                        className="app-scrollbar-hidden min-h-20 w-full resize-none overflow-y-auto border-0 bg-transparent pb-11 pl-9 pr-14 text-[13px] focus:border-0 focus:shadow-none focus:outline-none focus:ring-0 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0 2xl:pb-12 2xl:pl-10 2xl:pr-16 2xl:text-sm"
+                                                                        style={{
+                                                                            outline: 'none',
+                                                                            boxShadow: 'none',
+                                                                        }}
+                                                                    />
+                                                                    <div className="absolute bottom-3 right-3 flex items-center gap-1 text-xs">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() =>
+                                                                                saveEdit(message.id)
+                                                                            }
+                                                                            className="inline-flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-white/15"
+                                                                            aria-label="Save edit"
+                                                                        >
+                                                                            <Check
+                                                                                className="h-4 w-4"
+                                                                                strokeWidth={1.9}
+                                                                            />
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="space-y-2.5 2xl:space-y-3">
+                                                                    {message.attachment && (
+                                                                        <div>
+                                                                            {message.attachment
+                                                                                .is_image ? (
+                                                                                message.attachment
+                                                                                    .url ? (
+                                                                                    <a
+                                                                                        href={
+                                                                                            message
+                                                                                                .attachment
+                                                                                                .url
+                                                                                        }
+                                                                                        target="_blank"
+                                                                                        rel="noreferrer"
+                                                                                        className="block overflow-hidden rounded-[20px]"
+                                                                                    >
+                                                                                        <img
+                                                                                            src={
+                                                                                                message
+                                                                                                    .attachment
+                                                                                                    .url
+                                                                                            }
+                                                                                            alt={
+                                                                                                message
+                                                                                                    .attachment
+                                                                                                    .name ??
+                                                                                                'Attachment'
+                                                                                            }
+                                                                                            className="max-h-72 w-full object-cover"
+                                                                                        />
+                                                                                    </a>
+                                                                                ) : null
+                                                                            ) : message.attachment
+                                                                                  .url ? (
+                                                                                <a
+                                                                                    href={
+                                                                                        message
+                                                                                            .attachment
+                                                                                            .url
+                                                                                    }
+                                                                                    target="_blank"
+                                                                                    rel="noreferrer"
+                                                                                    className="app-panel-inset flex items-center gap-3 rounded-[18px] px-3 py-2.5 2xl:py-3"
+                                                                                >
+                                                                                    <div className="app-avatar-fallback flex h-9 w-9 items-center justify-center rounded-[18px] text-[13px] font-semibold 2xl:h-10 2xl:w-10 2xl:rounded-2xl 2xl:text-sm">
+                                                                                        <File
+                                                                                            className="h-4 w-4"
+                                                                                            strokeWidth={
+                                                                                                1.9
+                                                                                            }
+                                                                                        />
+                                                                                    </div>
+                                                                                    <div className="min-w-0 flex-1">
+                                                                                        <div className="truncate text-[13px] font-semibold 2xl:text-sm">
+                                                                                            {
+                                                                                                message
+                                                                                                    .attachment
+                                                                                                    .name
+                                                                                            }
+                                                                                        </div>
+                                                                                        <div className="app-text-soft text-[11px] 2xl:text-xs">
+                                                                                            {formatFileSize(
+                                                                                                message
+                                                                                                    .attachment
+                                                                                                    .size,
+                                                                                            )}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </a>
+                                                                            ) : (
+                                                                                <div className="app-panel-inset flex items-center gap-3 rounded-[18px] px-3 py-2.5 2xl:py-3">
+                                                                                    <div className="app-avatar-fallback flex h-9 w-9 items-center justify-center rounded-[18px] text-[13px] font-semibold 2xl:h-10 2xl:w-10 2xl:rounded-2xl 2xl:text-sm">
+                                                                                        <File
+                                                                                            className="h-4 w-4"
+                                                                                            strokeWidth={
+                                                                                                1.9
+                                                                                            }
+                                                                                        />
+                                                                                    </div>
+                                                                                    <div className="min-w-0 flex-1">
+                                                                                        <div className="truncate text-[13px] font-semibold 2xl:text-sm">
+                                                                                            {
+                                                                                                message
+                                                                                                    .attachment
+                                                                                                    .name
+                                                                                            }
+                                                                                        </div>
+                                                                                        <div className="app-text-soft text-[11px] 2xl:text-xs">
+                                                                                            {formatFileSize(
+                                                                                                message
+                                                                                                    .attachment
+                                                                                                    .size,
+                                                                                            )}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                                    {message.body && (
+                                                                        <div className="whitespace-pre-wrap break-all pr-10">
+                                                                            {message.body}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                            {!isEditing && (
+                                                                <div className="app-text-soft mt-2 flex items-center gap-2 text-[11px] 2xl:text-xs">
+                                                                    {isEdited && (
+                                                                        <span className="bg-white/8 text-current/75 rounded-full px-2 py-0.5 text-[11px] uppercase tracking-[0.16em]">
+                                                                            Edited
+                                                                        </span>
+                                                                    )}
+                                                                    <span>
+                                                                        {formatMessageTime(
+                                                                            timestamp,
+                                                                        )}
+                                                                    </span>
                                                                 </div>
                                                             )}
                                                         </div>
-                                                    )}
-                                                    {!isEditing && (
-                                                        <div className="app-text-soft mt-2 flex items-center gap-2 text-[11px] 2xl:text-xs">
-                                                            {isEdited && (
-                                                                <span className="bg-white/8 text-current/75 rounded-full px-2 py-0.5 text-[11px] uppercase tracking-[0.16em]">
-                                                                    Edited
-                                                                </span>
-                                                            )}
-                                                            <span>
-                                                                {new Date(
-                                                                    timestamp,
-                                                                ).toLocaleString()}
-                                                            </span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
+                                                        {own ? (
+                                                            message.sender?.avatar_url ? (
+                                                                <div className="h-8 w-8 shrink-0 overflow-hidden rounded-[16px] 2xl:h-9 2xl:w-9 2xl:rounded-[18px]">
+                                                                    <img
+                                                                        src={
+                                                                            message.sender
+                                                                                .avatar_url
+                                                                        }
+                                                                        alt={message.sender?.name}
+                                                                        className="h-full w-full object-cover"
+                                                                        style={{
+                                                                            objectPosition: `${message.sender.avatar_position_x}% ${message.sender.avatar_position_y}%`,
+                                                                            transform: `scale(${message.sender.avatar_zoom})`,
+                                                                            transformOrigin: `${message.sender.avatar_position_x}% ${message.sender.avatar_position_y}%`,
+                                                                        }}
+                                                                    />
+                                                                </div>
+                                                            ) : (
+                                                                <div className="app-avatar-fallback flex h-8 w-8 shrink-0 items-center justify-center rounded-[16px] text-[11px] font-semibold 2xl:h-9 2xl:w-9 2xl:rounded-[18px] 2xl:text-xs">
+                                                                    {initialsFor(
+                                                                        message.sender?.name,
+                                                                    )}
+                                                                </div>
+                                                            )
+                                                        ) : null}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
 
@@ -1298,6 +1510,43 @@ function initialsFor(name) {
             .slice(0, 2)
             .toUpperCase() ?? 'DM'
     );
+}
+
+function formatMessageTime(value) {
+    if (!value) {
+        return '';
+    }
+
+    return new Date(value).toLocaleTimeString([], {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+    });
+}
+
+function formatMessageDateBadge(value) {
+    if (!value) {
+        return 'Unknown date';
+    }
+
+    const date = new Date(value);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) {
+        return 'Today';
+    }
+
+    if (date.toDateString() === yesterday.toDateString()) {
+        return 'Yesterday';
+    }
+
+    return date.toLocaleDateString([], {
+        month: 'short',
+        day: 'numeric',
+        year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined,
+    });
 }
 
 function formatFileSize(size) {

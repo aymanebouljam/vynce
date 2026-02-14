@@ -19,6 +19,7 @@ class ConversationResource extends JsonResource
             'id' => $this->id,
             'kind' => $this->kind,
             'latest_message_at' => optional($this->latest_message_at)->toIso8601String(),
+            'updated_at' => optional($this->updated_at)->toIso8601String(),
             'participant' => $otherParticipant
                 ? UserResource::make($otherParticipant)->resolve($request)
                 : null,
