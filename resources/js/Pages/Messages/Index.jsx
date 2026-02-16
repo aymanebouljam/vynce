@@ -2,8 +2,8 @@ import { Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     Check,
+    ChevronDown,
     Copy,
-    Ellipsis,
     Eraser,
     File,
     Image as ImageIcon,
@@ -136,11 +136,6 @@ export default function Index({ conversations, activeConversation, contacts = []
     }, []);
 
     const goBack = () => {
-        if (window.history.length > 1) {
-            window.history.back();
-            return;
-        }
-
         router.visit(route('feed.home'));
     };
 
@@ -762,9 +757,17 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                     disabled={isConversationBusy}
                                                     className="text-current/75 inline-flex h-7 w-7 items-center justify-center rounded-full transition hover:bg-white/10 hover:text-current disabled:opacity-60 2xl:h-8 2xl:w-8"
                                                     aria-label="Conversation options"
+                                                    aria-expanded={
+                                                        openConversationMenuId === conversation.id
+                                                    }
                                                 >
-                                                    <Ellipsis
-                                                        className="h-4 w-4"
+                                                    <ChevronDown
+                                                        className={`h-4 w-4 transition-transform ${
+                                                            openConversationMenuId ===
+                                                            conversation.id
+                                                                ? 'rotate-180'
+                                                                : ''
+                                                        }`}
                                                         strokeWidth={1.9}
                                                     />
                                                 </button>
@@ -898,7 +901,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                 return (
                                                     <div
                                                         key={message.id}
-                                                        className={`flex items-end gap-2.5 ${
+                                                        className={`flex items-start gap-2.5 ${
                                                             own ? 'justify-end' : 'justify-start'
                                                         }`}
                                                     >
@@ -936,7 +939,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                         >
                                                             {!isEditing && (
                                                                 <div
-                                                                    className="absolute right-3 top-3"
+                                                                    className="absolute right-2 top-2 2xl:right-2.5 2xl:top-2.5"
                                                                     ref={
                                                                         openMenuMessageId ===
                                                                         message.id
@@ -957,9 +960,18 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                                         }
                                                                         className="text-current/75 inline-flex h-7 w-7 items-center justify-center rounded-full transition hover:bg-white/10 hover:text-current 2xl:h-8 2xl:w-8"
                                                                         aria-label="Message options"
+                                                                        aria-expanded={
+                                                                            openMenuMessageId ===
+                                                                            message.id
+                                                                        }
                                                                     >
-                                                                        <Ellipsis
-                                                                            className="h-4 w-4"
+                                                                        <ChevronDown
+                                                                            className={`h-4 w-4 transition-transform ${
+                                                                                openMenuMessageId ===
+                                                                                message.id
+                                                                                    ? 'rotate-180'
+                                                                                    : ''
+                                                                            }`}
                                                                             strokeWidth={1.9}
                                                                         />
                                                                     </button>
@@ -1175,13 +1187,29 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                                         </div>
                                                                     )}
                                                                     {message.body && (
-                                                                        <div className="whitespace-pre-wrap break-all pr-10">
-                                                                            {message.body}
+                                                                        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3">
+                                                                            <div className="min-w-0">
+                                                                                <span className="whitespace-pre-wrap break-all leading-6 2xl:leading-7">
+                                                                                    {message.body}
+                                                                                </span>
+                                                                                {isEdited && (
+                                                                                    <span className="bg-white/8 text-current/75 mt-1.5 inline-flex rounded-full px-2 py-0.5 text-[10px] uppercase tracking-[0.16em]">
+                                                                                        Edited
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                            <div className="flex min-w-[3.75rem] flex-col items-end justify-start pt-5 text-right 2xl:min-w-[4.25rem] 2xl:pt-6">
+                                                                                <span className="app-text-soft shrink-0 text-[11px] leading-6 2xl:text-xs 2xl:leading-7">
+                                                                                    {formatMessageTime(
+                                                                                        timestamp,
+                                                                                    )}
+                                                                                </span>
+                                                                            </div>
                                                                         </div>
                                                                     )}
                                                                 </div>
                                                             )}
-                                                            {!isEditing && (
+                                                            {!isEditing && !message.body && (
                                                                 <div className="app-text-soft mt-2 flex items-center gap-2 text-[11px] 2xl:text-xs">
                                                                     {isEdited && (
                                                                         <span className="bg-white/8 text-current/75 rounded-full px-2 py-0.5 text-[11px] uppercase tracking-[0.16em]">
