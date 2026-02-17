@@ -147,6 +147,30 @@ export default function AppShell({ children, title, sidebar }) {
         topbar?.notifications_page,
     ]);
 
+    useEffect(() => {
+        const reloadTopbar = () => {
+            if (document.visibilityState !== 'visible') {
+                return;
+            }
+
+            router.reload({
+                only: ['topbar'],
+                preserveScroll: true,
+                preserveState: true,
+            });
+        };
+
+        const intervalId = window.setInterval(reloadTopbar, 10000);
+        window.addEventListener('focus', reloadTopbar);
+        document.addEventListener('visibilitychange', reloadTopbar);
+
+        return () => {
+            window.clearInterval(intervalId);
+            window.removeEventListener('focus', reloadTopbar);
+            document.removeEventListener('visibilitychange', reloadTopbar);
+        };
+    }, []);
+
     const runFeedSearch = () => {
         const term = feedSearchValue.trim();
 
