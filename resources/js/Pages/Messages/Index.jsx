@@ -3,6 +3,8 @@ import {
     ArrowLeft,
     Check,
     ChevronDown,
+    ChevronLeft,
+    ChevronRight,
     Copy,
     Eraser,
     File,
@@ -42,6 +44,7 @@ export default function Index({ conversations, activeConversation, contacts = []
     const [deletingConversationIds, setDeletingConversationIds] = useState([]);
     const [localConversations, setLocalConversations] = useState(conversations);
     const [localMessages, setLocalMessages] = useState(messages);
+    const [activeImageIndex, setActiveImageIndex] = useState(null);
     const [conversationRailCollapsed, setConversationRailCollapsed] = useState(false);
     const messagesViewportRef = useRef(null);
     const imageInputRef = useRef(null);
@@ -104,6 +107,15 @@ export default function Index({ conversations, activeConversation, contacts = []
 
         return groups;
     }, [localMessages]);
+    const imageMessages = useMemo(
+        () =>
+            localMessages.filter(
+                (message) => message.attachment?.is_image && message.attachment?.url,
+            ),
+        [localMessages],
+    );
+    const activeImage =
+        activeImageIndex === null ? null : (imageMessages[activeImageIndex] ?? null);
 
     useEffect(() => {
         setActiveConversationId(activeConversation?.id ?? null);
@@ -135,8 +147,64 @@ export default function Index({ conversations, activeConversation, contacts = []
         };
     }, []);
 
+    useEffect(() => {
+        const reloadMessages = () => {
+            if (document.visibilityState !== 'visible' || isSending) {
+                return;
+            }
+
+            router.reload({
+                only: ['conversations', 'activeConversation', 'contacts', 'messages', 'topbar'],
+                preserveScroll: true,
+                preserveState: true,
+            });
+        };
+
+        const intervalId = window.setInterval(reloadMessages, 5000);
+        window.addEventListener('focus', reloadMessages);
+        document.addEventListener('visibilitychange', reloadMessages);
+
+        return () => {
+            window.clearInterval(intervalId);
+            window.removeEventListener('focus', reloadMessages);
+            document.removeEventListener('visibilitychange', reloadMessages);
+        };
+    }, [isSending]);
+
     const goBack = () => {
         router.visit(route('feed.home'));
+    };
+
+    const openImageCarousel = (messageId) => {
+        const imageIndex = imageMessages.findIndex((message) => message.id === messageId);
+
+        if (imageIndex !== -1) {
+            setActiveImageIndex(imageIndex);
+        }
+    };
+
+    const closeImageCarousel = () => {
+        setActiveImageIndex(null);
+    };
+
+    const showPreviousImage = () => {
+        if (!imageMessages.length) {
+            return;
+        }
+
+        setActiveImageIndex((current) =>
+            current === null ? 0 : (current - 1 + imageMessages.length) % imageMessages.length,
+        );
+    };
+
+    const showNextImage = () => {
+        if (!imageMessages.length) {
+            return;
+        }
+
+        setActiveImageIndex((current) =>
+            current === null ? 0 : (current + 1) % imageMessages.length,
+        );
     };
 
     const submit = (event) => {
@@ -872,7 +940,7 @@ export default function Index({ conversations, activeConversation, contacts = []
 
                                 <div
                                     ref={messagesViewportRef}
-                                    className="app-scrollbar-hidden h-full space-y-2.5 overflow-y-auto pr-1 pt-1 2xl:space-y-3"
+                                    className="app-scrollbar-hidden h-full space-y-2.5 overflow-y-auto pr-1 pb-28 pt-1 2xl:space-y-3 2xl:pb-32"
                                 >
                                     {groupedMessages.map((group) => (
                                         <div
@@ -1093,15 +1161,15 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                                                 .is_image ? (
                                                                                 message.attachment
                                                                                     .url ? (
-                                                                                    <a
-                                                                                        href={
-                                                                                            message
-                                                                                                .attachment
-                                                                                                .url
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() =>
+                                                                                            openImageCarousel(
+                                                                                                message.id,
+                                                                                            )
                                                                                         }
-                                                                                        target="_blank"
-                                                                                        rel="noreferrer"
                                                                                         className="block overflow-hidden rounded-[20px]"
+                                                                                        aria-label="Open image carousel"
                                                                                     >
                                                                                         <img
                                                                                             src={
@@ -1117,7 +1185,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                                                             }
                                                                                             className="max-h-72 w-full object-cover"
                                                                                         />
-                                                                                    </a>
+                                                                                    </button>
                                                                                 ) : null
                                                                             ) : message.attachment
                                                                                   .url ? (
@@ -1439,6 +1507,59 @@ export default function Index({ conversations, activeConversation, contacts = []
                         </button>
                     </div>
                 </div>
+            </Modal>
+
+            <Modal show={Boolean(activeImage)} onClose={closeImageCarousel} maxWidth="3xl" centered>
+                {activeImage && (
+                    <div className="space-y-4 rounded-[28px] bg-[rgba(8,12,20,0.94)] p-5 2xl:space-y-5 2xl:p-6">
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="app-text-soft text-sm">
+                                {activeImageIndex + 1} / {imageMessages.length}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={closeImageCarousel}
+                                className="app-button-secondary inline-flex h-9 w-9 items-center justify-center rounded-full p-0"
+                                aria-label="Close image carousel"
+                            >
+                                <X className="h-4 w-4" strokeWidth={1.9} />
+                            </button>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            {imageMessages.length > 1 ? (
+                                <button
+                                    type="button"
+                                    onClick={showPreviousImage}
+                                    className="app-button-secondary inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full p-0"
+                                    aria-label="Previous image"
+                                >
+                                    <ChevronLeft className="h-5 w-5" strokeWidth={1.9} />
+                                </button>
+                            ) : (
+                                <div className="h-10 w-10 shrink-0" aria-hidden="true" />
+                            )}
+                            <div className="min-w-0 flex-1 overflow-hidden rounded-[24px]">
+                                <img
+                                    src={activeImage.attachment.url}
+                                    alt={activeImage.attachment.name ?? 'Conversation image'}
+                                    className="mx-auto max-h-[68vh] w-auto max-w-full object-contain"
+                                />
+                            </div>
+                            {imageMessages.length > 1 ? (
+                                <button
+                                    type="button"
+                                    onClick={showNextImage}
+                                    className="app-button-secondary inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full p-0"
+                                    aria-label="Next image"
+                                >
+                                    <ChevronRight className="h-5 w-5" strokeWidth={1.9} />
+                                </button>
+                            ) : (
+                                <div className="h-10 w-10 shrink-0" aria-hidden="true" />
+                            )}
+                        </div>
+                    </div>
+                )}
             </Modal>
 
             <Modal
