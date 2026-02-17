@@ -1,6 +1,4 @@
-import DangerButton from '@/Components/DangerButton';
-import Modal from '@/Components/Modal';
-import SecondaryButton from '@/Components/SecondaryButton';
+import { Link, useForm, usePage } from '@inertiajs/react';
 import {
     ChevronLeft,
     ChevronRight,
@@ -14,9 +12,11 @@ import {
     Trash2,
     Users,
 } from 'lucide-react';
-import { Link, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import DangerButton from '@/Components/DangerButton';
+import Modal from '@/Components/Modal';
+import SecondaryButton from '@/Components/SecondaryButton';
 
 export default function PostCard({
     post,
@@ -753,7 +753,7 @@ export default function PostCard({
                 <div className="relative mx-auto flex min-h-[70vh] w-full max-w-5xl items-center justify-center">
                     {currentViewerMedia ? (
                         <>
-                            <div className="app-panel-inset relative w-full overflow-hidden rounded-[32px] p-4 sm:p-5">
+                            <div className="relative w-full overflow-hidden rounded-[32px] bg-[rgba(8,12,20,0.94)] p-4 sm:p-5">
                                 <img
                                     src={currentViewerMedia.url}
                                     alt=""

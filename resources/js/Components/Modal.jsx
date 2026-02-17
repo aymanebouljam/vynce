@@ -42,7 +42,7 @@ export default function Modal({
                         leaveFrom="opacity-100"
                         leaveTo="opacity-0"
                     >
-                        <div className="fixed inset-0 bg-[rgba(3,7,12,0.62)] backdrop-blur-sm" />
+                        <div className="fixed inset-0 bg-[rgba(3,7,12,0.78)] backdrop-blur-sm" />
                     </TransitionChild>
 
                     <div className="fixed inset-0 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
