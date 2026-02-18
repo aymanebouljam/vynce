@@ -86,6 +86,23 @@ class TopbarNotificationTest extends TestCase
                 ->where('topbar.notifications_count', 0));
     }
 
+    public function test_message_badge_counts_total_unread_messages_not_just_conversations(): void
+    {
+        $sender = User::factory()->create();
+        $recipient = User::factory()->create();
+        $conversationService = app(ConversationService::class);
+
+        $conversation = $conversationService->startDirect($sender, $recipient);
+        $conversationService->sendMessage($sender, $conversation, 'First unread message.');
+        $conversationService->sendMessage($sender, $conversation, 'Second unread message.');
+
+        $this->actingAs($recipient)
+            ->get(route('feed.home'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('topbar.unread_messages_count', 2)
+                ->where('topbar.notifications_count', 0));
+    }
+
     public function test_accepting_a_friend_request_creates_a_bell_notification_for_the_requester(): void
     {
         $requester = User::factory()->create(['username' => 'requester-user']);
