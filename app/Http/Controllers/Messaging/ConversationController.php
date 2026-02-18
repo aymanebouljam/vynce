@@ -25,16 +25,11 @@ class ConversationController extends Controller
     ): Response {
         $user = request()->user();
         $conversations = $conversationService->inbox($user);
-        $activeConversation = $conversations->first();
         $contacts = $this->messageableContacts($user, $socialGraphService);
-
-        if ($activeConversation) {
-            $activeConversation = $conversationService->threadFor($user, $activeConversation);
-        }
 
         return Inertia::render(
             'Messages/Index',
-            $this->payload($conversations, $activeConversation, $contacts),
+            $this->payload($conversations, null, $contacts),
         );
     }
 

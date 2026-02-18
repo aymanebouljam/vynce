@@ -22,6 +22,15 @@ class ConversationService
     {
         $conversations = $user->conversations()
             ->with(['participants', 'latestMessage.sender'])
+            ->withCount([
+                'messages as unread_messages_count' => function ($query) use ($user) {
+                    $query->where('messages.user_id', '!=', $user->id)
+                        ->where(function ($query) {
+                            $query->whereNull('conversation_participants.last_read_at')
+                                ->orWhereColumn('messages.created_at', '>', 'conversation_participants.last_read_at');
+                        });
+                },
+            ])
             ->orderByDesc('latest_message_at')
             ->orderByDesc('conversations.updated_at')
             ->get();

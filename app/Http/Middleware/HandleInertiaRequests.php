@@ -4,7 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Http\Controllers\NotificationController;
 use App\Http\Resources\UserResource;
-use App\Models\Conversation;
+use App\Models\Message;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -39,13 +39,14 @@ class HandleInertiaRequests extends Middleware
                         ->pluck('requester'),
                 )->resolve(),
                 'pending_requests_count' => $user->pendingFriendRequests()->count(),
-                'unread_messages_count' => Conversation::query()
+                'unread_messages_count' => Message::query()
+                    ->join('conversations', 'messages.conversation_id', '=', 'conversations.id')
                     ->join('conversation_participants', 'conversations.id', '=', 'conversation_participants.conversation_id')
                     ->where('conversation_participants.user_id', $user->id)
-                    ->whereNotNull('conversations.latest_message_at')
+                    ->where('messages.user_id', '!=', $user->id)
                     ->where(function ($query) {
                         $query->whereNull('conversation_participants.last_read_at')
-                            ->orWhereColumn('conversations.latest_message_at', '>', 'conversation_participants.last_read_at');
+                            ->orWhereColumn('messages.created_at', '>', 'conversation_participants.last_read_at');
                     })
                     ->count(),
                 'notifications' => NotificationController::serializeNotifications($notifications),
