@@ -1058,7 +1058,7 @@ function TopbarIconButton({ onClick, icon: Icon, count = 0, ariaLabel, disabled 
 
 function TopbarBadge({ count }) {
     return (
-        <span className="app-button-primary absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-semibold leading-none">
+        <span className="absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-[rgba(244,91,105,0.96)] px-1 text-[10px] font-semibold leading-none text-white shadow-[0_8px_18px_rgba(244,91,105,0.32)]">
             {count > 99 ? '99+' : count}
         </span>
     );

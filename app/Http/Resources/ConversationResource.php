@@ -23,6 +23,7 @@ class ConversationResource extends JsonResource
             'participant' => $otherParticipant
                 ? UserResource::make($otherParticipant)->resolve($request)
                 : null,
+            'unread_messages_count' => (int) ($this->unread_messages_count ?? 0),
             'latest_message' => $this->relationLoaded('latestMessage') && $this->latestMessage
                 ? MessageResource::make($this->latestMessage)->resolve($request)
                 : null,

@@ -9,6 +9,7 @@ import {
     Eraser,
     File,
     Image as ImageIcon,
+    MessageCircle,
     PanelLeftClose,
     PanelLeftOpen,
     Paperclip,
@@ -173,6 +174,15 @@ export default function Index({ conversations, activeConversation, contacts = []
 
     const goBack = () => {
         router.visit(route('feed.home'));
+    };
+
+    const closeConversation = () => {
+        setActiveConversationId(null);
+        setLocalMessages([]);
+        router.visit(route('messages.index'), {
+            preserveScroll: true,
+            preserveState: true,
+        });
     };
 
     const openImageCarousel = (messageId) => {
@@ -661,7 +671,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                         : 'xl:grid-cols-[290px,1fr] 2xl:grid-cols-[320px,1fr]'
                 }`}
             >
-                <section className="app-panel rounded-[28px] p-4 2xl:rounded-[32px] 2xl:p-5">
+                <section className="app-panel flex min-h-[420px] flex-col rounded-[28px] p-4 xl:h-[calc(100vh-3rem)] 2xl:rounded-[32px] 2xl:p-5">
                     <div className="mb-3 flex items-start justify-between gap-3 2xl:mb-4">
                         {conversationRailCollapsed ? (
                             <div className="flex w-full justify-center">
@@ -718,174 +728,238 @@ export default function Index({ conversations, activeConversation, contacts = []
                         </div>
                     ) : null}
 
-                    {localConversations.length === 0 ? (
-                        conversationRailCollapsed ? (
-                            <div className="app-dashed-panel app-text-muted flex min-h-24 items-center justify-center rounded-[24px] p-3 text-center text-[11px] leading-4 2xl:rounded-[28px] 2xl:p-4 2xl:text-xs">
-                                Empty
-                            </div>
+                    <div className="app-scrollbar-hidden min-h-0 flex-1 overflow-y-auto pr-1">
+                        {localConversations.length === 0 ? (
+                            conversationRailCollapsed ? (
+                                <div className="app-dashed-panel app-text-muted flex min-h-24 items-center justify-center rounded-[24px] p-3 text-center text-[11px] leading-4 2xl:rounded-[28px] 2xl:p-4 2xl:text-xs">
+                                    Empty
+                                </div>
+                            ) : (
+                                <div className="app-dashed-panel app-text-muted rounded-[24px] p-4 text-[13px] leading-5 2xl:rounded-[28px] 2xl:p-5 2xl:text-sm 2xl:leading-6">
+                                    No conversations yet. Visit a profile and tap Message to open a
+                                    direct chat.
+                                </div>
+                            )
                         ) : (
-                            <div className="app-dashed-panel app-text-muted rounded-[24px] p-4 text-[13px] leading-5 2xl:rounded-[28px] 2xl:p-5 2xl:text-sm 2xl:leading-6">
-                                No conversations yet. Visit a profile and tap Message to open a
-                                direct chat.
-                            </div>
-                        )
-                    ) : (
-                        <div
-                            className={
-                                conversationRailCollapsed
-                                    ? 'space-y-2'
-                                    : 'space-y-2.5 2xl:space-y-3'
-                            }
-                        >
-                            {sortedConversations.map((conversation) => {
-                                const isConversationBusy =
-                                    clearingConversationIds.includes(conversation.id) ||
-                                    deletingConversationIds.includes(conversation.id);
+                            <div
+                                className={
+                                    conversationRailCollapsed
+                                        ? 'space-y-2'
+                                        : 'space-y-2.5 2xl:space-y-3'
+                                }
+                            >
+                                {sortedConversations.map((conversation) => {
+                                    const isConversationBusy =
+                                        clearingConversationIds.includes(conversation.id) ||
+                                        deletingConversationIds.includes(conversation.id);
 
-                                return (
-                                    <div key={conversation.id} className="relative">
-                                        <Link
-                                            href={route('messages.show', conversation.id)}
-                                            className={`block transition ${
-                                                conversationRailCollapsed
-                                                    ? displayedConversation?.id === conversation.id
-                                                        ? 'rounded-[22px] border border-[rgba(196,177,232,0.9)] bg-[rgba(120,88,166,0.22)] p-2 shadow-[0_0_0_1px_rgba(214,198,242,0.45),0_0_24px_rgba(144,114,204,0.18)] 2xl:rounded-[24px]'
-                                                        : 'app-card-inset rounded-[22px] border border-white/5 bg-[rgba(255,255,255,0.04)] p-2 hover:bg-[rgba(255,255,255,0.07)] 2xl:rounded-[24px]'
-                                                    : displayedConversation?.id === conversation.id
-                                                      ? 'rounded-[20px] border border-[rgba(196,177,232,0.9)] bg-[rgba(120,88,166,0.22)] p-3.5 pr-12 shadow-[0_0_0_1px_rgba(214,198,242,0.45),0_0_24px_rgba(144,114,204,0.18)] 2xl:rounded-[24px] 2xl:p-4 2xl:pr-14'
-                                                      : 'app-card-inset rounded-[20px] border border-white/5 bg-[rgba(255,255,255,0.04)] p-3.5 pr-12 hover:bg-[rgba(255,255,255,0.07)] 2xl:rounded-[24px] 2xl:p-4 2xl:pr-14'
-                                            }`}
-                                            title={conversation.participant?.name ?? 'Unknown user'}
-                                        >
-                                            <div
-                                                className={`flex ${
+                                    return (
+                                        <div key={conversation.id} className="relative">
+                                            <Link
+                                                href={route('messages.show', conversation.id)}
+                                                className={`block transition ${
                                                     conversationRailCollapsed
-                                                        ? 'justify-center'
-                                                        : 'items-start gap-3'
+                                                        ? displayedConversation?.id ===
+                                                          conversation.id
+                                                            ? 'rounded-[22px] border border-[rgba(196,177,232,0.9)] bg-[rgba(120,88,166,0.22)] p-2 shadow-[0_0_0_1px_rgba(214,198,242,0.45),0_0_24px_rgba(144,114,204,0.18)] 2xl:rounded-[24px]'
+                                                            : 'app-card-inset rounded-[22px] border border-white/5 bg-[rgba(255,255,255,0.04)] p-2 hover:bg-[rgba(255,255,255,0.07)] 2xl:rounded-[24px]'
+                                                        : displayedConversation?.id ===
+                                                            conversation.id
+                                                          ? 'rounded-[20px] border border-[rgba(196,177,232,0.9)] bg-[rgba(120,88,166,0.22)] p-3.5 pr-12 shadow-[0_0_0_1px_rgba(214,198,242,0.45),0_0_24px_rgba(144,114,204,0.18)] 2xl:rounded-[24px] 2xl:p-4 2xl:pr-14'
+                                                          : 'app-card-inset rounded-[20px] border border-white/5 bg-[rgba(255,255,255,0.04)] p-3.5 pr-12 hover:bg-[rgba(255,255,255,0.07)] 2xl:rounded-[24px] 2xl:p-4 2xl:pr-14'
                                                 }`}
-                                            >
-                                                {conversation.participant?.avatar_url ? (
-                                                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-[18px] 2xl:h-11 2xl:w-11 2xl:rounded-2xl">
-                                                        <img
-                                                            src={
-                                                                conversation.participant.avatar_url
-                                                            }
-                                                            alt={conversation.participant?.name}
-                                                            className="h-full w-full object-cover"
-                                                            style={{
-                                                                objectPosition: `${conversation.participant.avatar_position_x}% ${conversation.participant.avatar_position_y}%`,
-                                                                transform: `scale(${conversation.participant.avatar_zoom})`,
-                                                                transformOrigin: `${conversation.participant.avatar_position_x}% ${conversation.participant.avatar_position_y}%`,
-                                                            }}
-                                                        />
-                                                    </div>
-                                                ) : (
-                                                    <div className="app-avatar-fallback flex h-10 w-10 shrink-0 items-center justify-center rounded-[18px] text-[13px] font-semibold 2xl:h-11 2xl:w-11 2xl:rounded-2xl 2xl:text-sm">
-                                                        {initialsFor(
-                                                            conversation.participant?.name,
-                                                        )}
-                                                    </div>
-                                                )}
-                                                {!conversationRailCollapsed ? (
-                                                    <div className="min-w-0 flex-1">
-                                                        <div className="truncate text-[13px] font-semibold 2xl:text-sm">
-                                                            {conversation.participant?.name ??
-                                                                'Unknown user'}
-                                                        </div>
-                                                        <div className="app-text-soft mt-1.5 truncate text-[13px] 2xl:mt-2 2xl:text-sm">
-                                                            {conversation.latest_message?.sender
-                                                                ?.id === auth.user.id
-                                                                ? 'You: '
-                                                                : ''}
-                                                            {conversation.latest_message?.body ??
-                                                                'No messages yet'}
-                                                        </div>
-                                                    </div>
-                                                ) : null}
-                                            </div>
-                                        </Link>
-                                        {!conversationRailCollapsed ? (
-                                            <div
-                                                className="absolute right-3 top-3"
-                                                ref={
-                                                    openConversationMenuId === conversation.id
-                                                        ? conversationMenuRef
-                                                        : null
+                                                title={
+                                                    conversation.participant?.name ?? 'Unknown user'
                                                 }
                                             >
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        setOpenConversationMenuId((current) =>
-                                                            current === conversation.id
-                                                                ? null
-                                                                : conversation.id,
-                                                        )
-                                                    }
-                                                    disabled={isConversationBusy}
-                                                    className="text-current/75 inline-flex h-7 w-7 items-center justify-center rounded-full transition hover:bg-white/10 hover:text-current disabled:opacity-60 2xl:h-8 2xl:w-8"
-                                                    aria-label="Conversation options"
-                                                    aria-expanded={
+                                                <div
+                                                    className={`flex ${
+                                                        conversationRailCollapsed
+                                                            ? 'justify-center'
+                                                            : 'items-start gap-3'
+                                                    }`}
+                                                >
+                                                    {conversation.participant?.avatar_url ? (
+                                                        <div className="relative h-10 w-10 shrink-0 2xl:h-11 2xl:w-11">
+                                                            <div className="h-10 w-10 overflow-hidden rounded-[18px] 2xl:h-11 2xl:w-11 2xl:rounded-2xl">
+                                                                <img
+                                                                    src={
+                                                                        conversation.participant
+                                                                            .avatar_url
+                                                                    }
+                                                                    alt={
+                                                                        conversation.participant
+                                                                            ?.name
+                                                                    }
+                                                                    className="h-full w-full object-cover"
+                                                                    style={{
+                                                                        objectPosition: `${conversation.participant.avatar_position_x}% ${conversation.participant.avatar_position_y}%`,
+                                                                        transform: `scale(${conversation.participant.avatar_zoom})`,
+                                                                        transformOrigin: `${conversation.participant.avatar_position_x}% ${conversation.participant.avatar_position_y}%`,
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                            {conversationRailCollapsed &&
+                                                                conversation.unread_messages_count >
+                                                                    0 && (
+                                                                    <div className="absolute -right-1 -top-1 flex min-w-5 items-center justify-center rounded-full bg-[rgba(244,91,105,0.96)] px-1.5 py-0.5 text-[10px] font-semibold text-white shadow-[0_8px_18px_rgba(244,91,105,0.32)]">
+                                                                        {
+                                                                            conversation.unread_messages_count
+                                                                        }
+                                                                    </div>
+                                                                )}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="relative h-10 w-10 shrink-0 2xl:h-11 2xl:w-11">
+                                                            <div className="app-avatar-fallback flex h-10 w-10 items-center justify-center rounded-[18px] text-[13px] font-semibold 2xl:h-11 2xl:w-11 2xl:rounded-2xl 2xl:text-sm">
+                                                                {initialsFor(
+                                                                    conversation.participant?.name,
+                                                                )}
+                                                            </div>
+                                                            {conversationRailCollapsed &&
+                                                                conversation.unread_messages_count >
+                                                                    0 && (
+                                                                    <div className="absolute -right-1 -top-1 flex min-w-5 items-center justify-center rounded-full bg-[rgba(244,91,105,0.96)] px-1.5 py-0.5 text-[10px] font-semibold text-white shadow-[0_8px_18px_rgba(244,91,105,0.32)]">
+                                                                        {
+                                                                            conversation.unread_messages_count
+                                                                        }
+                                                                    </div>
+                                                                )}
+                                                        </div>
+                                                    )}
+                                                    {!conversationRailCollapsed ? (
+                                                        <div className="min-w-0 flex-1">
+                                                            <div className="truncate text-[13px] font-semibold 2xl:text-sm">
+                                                                {conversation.participant?.name ??
+                                                                    'Unknown user'}
+                                                            </div>
+                                                            <div className="app-text-soft mt-1.5 truncate text-[13px] 2xl:mt-2 2xl:text-sm">
+                                                                {conversation.latest_message?.sender
+                                                                    ?.id === auth.user.id
+                                                                    ? 'You: '
+                                                                    : ''}
+                                                                {conversation.latest_message
+                                                                    ?.body ?? 'No messages yet'}
+                                                            </div>
+                                                        </div>
+                                                    ) : null}
+                                                </div>
+                                            </Link>
+                                            {!conversationRailCollapsed ? (
+                                                <div
+                                                    className="absolute right-3 top-3"
+                                                    ref={
                                                         openConversationMenuId === conversation.id
+                                                            ? conversationMenuRef
+                                                            : null
                                                     }
                                                 >
-                                                    <ChevronDown
-                                                        className={`h-4 w-4 transition-transform ${
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setOpenConversationMenuId((current) =>
+                                                                current === conversation.id
+                                                                    ? null
+                                                                    : conversation.id,
+                                                            )
+                                                        }
+                                                        disabled={isConversationBusy}
+                                                        className="text-current/75 inline-flex h-7 w-7 items-center justify-center rounded-full transition hover:bg-white/10 hover:text-current disabled:opacity-60 2xl:h-8 2xl:w-8"
+                                                        aria-label="Conversation options"
+                                                        aria-expanded={
                                                             openConversationMenuId ===
                                                             conversation.id
-                                                                ? 'rotate-180'
-                                                                : ''
-                                                        }`}
-                                                        strokeWidth={1.9}
-                                                    />
-                                                </button>
-                                                {openConversationMenuId === conversation.id && (
-                                                    <div className="app-panel-inset absolute right-0 top-full z-20 mt-2 w-44 rounded-[18px] p-2 shadow-[var(--vynce-shadow-md)] 2xl:w-48 2xl:rounded-2xl">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                openClearConversationModal(
-                                                                    conversation,
-                                                                )
-                                                            }
-                                                            className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[13px] 2xl:text-sm"
-                                                        >
-                                                            <Eraser
-                                                                className="h-4 w-4"
-                                                                strokeWidth={1.9}
-                                                            />
-                                                            Clear conversation
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                openDeleteConversationModal(
-                                                                    conversation,
-                                                                )
-                                                            }
-                                                            className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[13px] text-rose-200 2xl:text-sm"
-                                                        >
-                                                            <Trash2
-                                                                className="h-4 w-4"
-                                                                strokeWidth={1.9}
-                                                            />
-                                                            Delete
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ) : null}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
+                                                        }
+                                                    >
+                                                        <ChevronDown
+                                                            className={`h-4 w-4 transition-transform ${
+                                                                openConversationMenuId ===
+                                                                conversation.id
+                                                                    ? 'rotate-180'
+                                                                    : ''
+                                                            }`}
+                                                            strokeWidth={1.9}
+                                                        />
+                                                    </button>
+                                                    {conversation.unread_messages_count > 0 && (
+                                                        <div className="-mt-0.5 flex justify-center">
+                                                            <div className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[rgba(244,91,105,0.96)] px-1.5 text-[10px] font-semibold text-white shadow-[0_8px_18px_rgba(244,91,105,0.28)] 2xl:h-6 2xl:min-w-6 2xl:text-[11px]">
+                                                                {conversation.unread_messages_count}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    {openConversationMenuId === conversation.id && (
+                                                        <div className="app-panel-inset absolute right-0 top-full z-20 mt-2 w-44 rounded-[18px] p-2 shadow-[var(--vynce-shadow-md)] 2xl:w-48 2xl:rounded-2xl">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    openClearConversationModal(
+                                                                        conversation,
+                                                                    )
+                                                                }
+                                                                className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[13px] 2xl:text-sm"
+                                                            >
+                                                                <Eraser
+                                                                    className="h-4 w-4"
+                                                                    strokeWidth={1.9}
+                                                                />
+                                                                Clear conversation
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    openDeleteConversationModal(
+                                                                        conversation,
+                                                                    )
+                                                                }
+                                                                className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[13px] text-rose-200 2xl:text-sm"
+                                                            >
+                                                                <Trash2
+                                                                    className="h-4 w-4"
+                                                                    strokeWidth={1.9}
+                                                                />
+                                                                Delete
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ) : null}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
                 </section>
 
                 <section className="app-panel flex min-h-[420px] flex-col rounded-[28px] p-4 xl:h-[calc(100vh-3rem)] 2xl:rounded-[32px] 2xl:p-5">
                     {!displayedConversation ? (
-                        <div className="app-dashed-panel app-text-muted flex min-h-[420px] flex-1 items-center justify-center rounded-[24px] p-6 text-center text-[13px] leading-6 2xl:rounded-[28px] 2xl:p-8 2xl:text-sm 2xl:leading-7">
-                            Pick a conversation from the left, or start one from a user profile.
+                        <div className="app-dashed-panel flex min-h-[420px] flex-1 items-center justify-center rounded-[24px] p-6 2xl:rounded-[28px] 2xl:p-8">
+                            <div className="mx-auto max-w-md text-center">
+                                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[22px] bg-[radial-gradient(circle_at_top,rgba(245,242,255,0.22),rgba(132,86,255,0.04)_68%)] shadow-[0_18px_50px_rgba(7,11,18,0.22)] 2xl:h-20 2xl:w-20 2xl:rounded-[26px]">
+                                    <MessageCircle
+                                        className="h-7 w-7 2xl:h-8 2xl:w-8"
+                                        strokeWidth={1.9}
+                                    />
+                                </div>
+                                <div className="mt-5 text-xl font-semibold tracking-[-0.02em] 2xl:mt-6 2xl:text-2xl">
+                                    Your inbox is ready
+                                </div>
+                                <p className="app-text-soft mt-3 text-[13px] leading-6 2xl:mt-4 2xl:text-sm 2xl:leading-7">
+                                    Open any conversation from the left rail, or start a new thread
+                                    from a profile when you want to reach out.
+                                </p>
+                                <div className="mt-5 flex flex-wrap items-center justify-center gap-3 2xl:mt-6">
+                                    <div className="app-panel-inset inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[12px] 2xl:text-[13px]">
+                                        <MessageCircle className="h-4 w-4" strokeWidth={1.9} />
+                                        Select a thread
+                                    </div>
+                                    <div className="app-panel-inset inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[12px] 2xl:text-[13px]">
+                                        <PenSquare className="h-4 w-4" strokeWidth={1.9} />
+                                        Start from a profile
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     ) : (
                         <div className="flex min-h-0 flex-1 flex-col">
@@ -916,7 +990,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                         @{displayedConversation.participant?.username}
                                     </div>
                                 </div>
-                                <div className="ml-auto">
+                                <div className="ml-auto flex items-center gap-2">
                                     <Link
                                         href={route(
                                             'users.show',
@@ -927,6 +1001,15 @@ export default function Index({ conversations, activeConversation, contacts = []
                                         <User className="h-4 w-4" strokeWidth={1.9} />
                                         View profile
                                     </Link>
+                                    <button
+                                        type="button"
+                                        onClick={closeConversation}
+                                        className="app-button-secondary inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[13px] 2xl:px-4 2xl:text-sm"
+                                        aria-label="Close conversation"
+                                    >
+                                        <X className="h-4 w-4" strokeWidth={1.9} />
+                                        Close
+                                    </button>
                                 </div>
                             </div>
 
