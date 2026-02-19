@@ -2,14 +2,17 @@ import { Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     Check,
+    CheckCheck,
     ChevronDown,
     ChevronLeft,
     ChevronRight,
+    Clock3,
     Copy,
     Eraser,
     File,
     Image as ImageIcon,
     MessageCircle,
+    MoreHorizontal,
     PanelLeftClose,
     PanelLeftOpen,
     Paperclip,
@@ -53,6 +56,8 @@ export default function Index({ conversations, activeConversation, contacts = []
     const messageMenuRef = useRef(null);
     const conversationMenuRef = useRef(null);
     const optimisticMessageIdRef = useRef(0);
+    const previousConversationIdRef = useRef(activeConversation?.id ?? null);
+    const shouldAutoScrollRef = useRef(true);
     const conversationParticipantIds = useMemo(
         () =>
             localConversations.map((conversation) => conversation.participant?.id).filter(Boolean),
@@ -261,6 +266,7 @@ export default function Index({ conversations, activeConversation, contacts = []
         setDraft('');
         setDraftAttachment(null);
         setIsSending(true);
+        shouldAutoScrollRef.current = true;
         setLocalMessages((current) => [...current, optimisticMessage]);
         setLocalConversations((current) =>
             current.map((conversation) =>
@@ -650,17 +656,39 @@ export default function Index({ conversations, activeConversation, contacts = []
     };
 
     useEffect(() => {
-        if (!messagesViewportRef.current) {
+        const viewport = messagesViewportRef.current;
+
+        if (!viewport) {
             return;
         }
 
-        messagesViewportRef.current.scrollTop = messagesViewportRef.current.scrollHeight;
-    }, [displayedConversation?.id, localMessages]);
+        const conversationChanged = previousConversationIdRef.current !== displayedConversation?.id;
+
+        if (conversationChanged || shouldAutoScrollRef.current) {
+            viewport.scrollTop = viewport.scrollHeight;
+            shouldAutoScrollRef.current = true;
+        }
+
+        previousConversationIdRef.current = displayedConversation?.id ?? null;
+    }, [displayedConversation?.id, localMessages.length]);
 
     useEffect(() => {
         setOpenMenuMessageId(null);
         setOpenConversationMenuId(null);
     }, [displayedConversation?.id]);
+
+    const handleMessagesScroll = () => {
+        const viewport = messagesViewportRef.current;
+
+        if (!viewport) {
+            return;
+        }
+
+        const distanceFromBottom =
+            viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
+
+        shouldAutoScrollRef.current = distanceFromBottom < 80;
+    };
 
     return (
         <AuthenticatedLayout title="Messages">
@@ -846,38 +874,20 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                 </div>
                                             </Link>
                                             {!conversationRailCollapsed ? (
-                                                <div
-                                                    className="absolute right-3 top-3"
-                                                    ref={
-                                                        openConversationMenuId === conversation.id
-                                                            ? conversationMenuRef
-                                                            : null
-                                                    }
-                                                >
+                                                <div className="absolute right-3 top-3">
                                                     <button
                                                         type="button"
                                                         onClick={() =>
-                                                            setOpenConversationMenuId((current) =>
-                                                                current === conversation.id
-                                                                    ? null
-                                                                    : conversation.id,
+                                                            openDeleteConversationModal(
+                                                                conversation,
                                                             )
                                                         }
                                                         disabled={isConversationBusy}
-                                                        className="text-current/75 inline-flex h-7 w-7 items-center justify-center rounded-full transition hover:bg-white/10 hover:text-current disabled:opacity-60 2xl:h-8 2xl:w-8"
-                                                        aria-label="Conversation options"
-                                                        aria-expanded={
-                                                            openConversationMenuId ===
-                                                            conversation.id
-                                                        }
+                                                        className="text-current/75 inline-flex h-7 w-7 items-center justify-center rounded-full transition hover:bg-[rgba(244,91,105,0.14)] hover:text-rose-300 disabled:opacity-60 2xl:h-8 2xl:w-8"
+                                                        aria-label="Delete conversation"
                                                     >
-                                                        <ChevronDown
-                                                            className={`h-4 w-4 transition-transform ${
-                                                                openConversationMenuId ===
-                                                                conversation.id
-                                                                    ? 'rotate-180'
-                                                                    : ''
-                                                            }`}
+                                                        <Trash2
+                                                            className="h-4 w-4"
                                                             strokeWidth={1.9}
                                                         />
                                                     </button>
@@ -886,40 +896,6 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                             <div className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[rgba(244,91,105,0.96)] px-1.5 text-[10px] font-semibold text-white shadow-[0_8px_18px_rgba(244,91,105,0.28)] 2xl:h-6 2xl:min-w-6 2xl:text-[11px]">
                                                                 {conversation.unread_messages_count}
                                                             </div>
-                                                        </div>
-                                                    )}
-                                                    {openConversationMenuId === conversation.id && (
-                                                        <div className="app-panel-inset absolute right-0 top-full z-20 mt-2 w-44 rounded-[18px] p-2 shadow-[var(--vynce-shadow-md)] 2xl:w-48 2xl:rounded-2xl">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    openClearConversationModal(
-                                                                        conversation,
-                                                                    )
-                                                                }
-                                                                className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[13px] 2xl:text-sm"
-                                                            >
-                                                                <Eraser
-                                                                    className="h-4 w-4"
-                                                                    strokeWidth={1.9}
-                                                                />
-                                                                Clear conversation
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    openDeleteConversationModal(
-                                                                        conversation,
-                                                                    )
-                                                                }
-                                                                className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[13px] text-rose-200 2xl:text-sm"
-                                                            >
-                                                                <Trash2
-                                                                    className="h-4 w-4"
-                                                                    strokeWidth={1.9}
-                                                                />
-                                                                Delete
-                                                            </button>
                                                         </div>
                                                     )}
                                                 </div>
@@ -990,26 +966,68 @@ export default function Index({ conversations, activeConversation, contacts = []
                                         @{displayedConversation.participant?.username}
                                     </div>
                                 </div>
-                                <div className="ml-auto flex items-center gap-2">
-                                    <Link
-                                        href={route(
-                                            'users.show',
-                                            displayedConversation.participant?.username,
-                                        )}
-                                        className="app-button-secondary inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[13px] 2xl:px-4 2xl:text-sm"
-                                    >
-                                        <User className="h-4 w-4" strokeWidth={1.9} />
-                                        View profile
-                                    </Link>
+                                <div
+                                    className="ml-auto relative"
+                                    ref={
+                                        openConversationMenuId === displayedConversation.id
+                                            ? conversationMenuRef
+                                            : null
+                                    }
+                                >
                                     <button
                                         type="button"
-                                        onClick={closeConversation}
-                                        className="app-button-secondary inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[13px] 2xl:px-4 2xl:text-sm"
-                                        aria-label="Close conversation"
+                                        onClick={() =>
+                                            setOpenConversationMenuId((current) =>
+                                                current === displayedConversation.id
+                                                    ? null
+                                                    : displayedConversation.id,
+                                            )
+                                        }
+                                        className="app-button-secondary inline-flex h-10 w-10 items-center justify-center rounded-full p-0 2xl:h-11 2xl:w-11"
+                                        aria-label="Conversation actions"
+                                        aria-expanded={
+                                            openConversationMenuId === displayedConversation.id
+                                        }
                                     >
-                                        <X className="h-4 w-4" strokeWidth={1.9} />
-                                        Close
+                                        <MoreHorizontal className="h-4 w-4" strokeWidth={1.9} />
                                     </button>
+                                    {openConversationMenuId === displayedConversation.id && (
+                                        <div className="app-panel-inset absolute right-0 top-full z-20 mt-2 w-52 rounded-[18px] p-2 shadow-[var(--vynce-shadow-md)] 2xl:w-56 2xl:rounded-2xl">
+                                            <Link
+                                                href={route(
+                                                    'users.show',
+                                                    displayedConversation.participant?.username,
+                                                )}
+                                                className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[13px] 2xl:text-sm"
+                                            >
+                                                <User className="h-4 w-4" strokeWidth={1.9} />
+                                                Profile
+                                            </Link>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    openClearConversationModal(
+                                                        displayedConversation,
+                                                    )
+                                                }
+                                                className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[13px] 2xl:text-sm"
+                                            >
+                                                <Eraser className="h-4 w-4" strokeWidth={1.9} />
+                                                Clear conversation
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setOpenConversationMenuId(null);
+                                                    closeConversation();
+                                                }}
+                                                className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[13px] text-rose-200 2xl:text-sm"
+                                            >
+                                                <X className="h-4 w-4" strokeWidth={1.9} />
+                                                Close
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -1023,7 +1041,8 @@ export default function Index({ conversations, activeConversation, contacts = []
 
                                 <div
                                     ref={messagesViewportRef}
-                                    className="app-scrollbar-hidden h-full space-y-2.5 overflow-y-auto pr-1 pb-28 pt-1 2xl:space-y-3 2xl:pb-32"
+                                    onScroll={handleMessagesScroll}
+                                    className="app-scrollbar-hidden h-full space-y-2.5 overflow-y-auto pr-1 pb-10 pt-1 2xl:space-y-3 2xl:pb-12"
                                 >
                                     {groupedMessages.map((group) => (
                                         <div
@@ -1043,10 +1062,30 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                 );
                                                 const timestamp =
                                                     message.updated_at ?? message.created_at;
+                                                const deliveryStatus =
+                                                    message.delivery?.status ?? null;
                                                 const isEdited = Boolean(
                                                     message.updated_at &&
                                                         message.created_at &&
                                                         message.updated_at !== message.created_at,
+                                                );
+                                                const avatar = message.sender?.avatar_url ? (
+                                                    <div className="h-8 w-8 shrink-0 overflow-hidden rounded-[16px] 2xl:h-9 2xl:w-9 2xl:rounded-[18px]">
+                                                        <img
+                                                            src={message.sender.avatar_url}
+                                                            alt={message.sender?.name}
+                                                            className="h-full w-full object-cover"
+                                                            style={{
+                                                                objectPosition: `${message.sender.avatar_position_x}% ${message.sender.avatar_position_y}%`,
+                                                                transform: `scale(${message.sender.avatar_zoom})`,
+                                                                transformOrigin: `${message.sender.avatar_position_x}% ${message.sender.avatar_position_y}%`,
+                                                            }}
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div className="app-avatar-fallback flex h-8 w-8 shrink-0 items-center justify-center rounded-[16px] text-[11px] font-semibold 2xl:h-9 2xl:w-9 2xl:rounded-[18px] 2xl:text-xs">
+                                                        {initialsFor(message.sender?.name)}
+                                                    </div>
                                                 );
 
                                                 return (
@@ -1056,33 +1095,9 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                             own ? 'justify-end' : 'justify-start'
                                                         }`}
                                                     >
-                                                        {!own ? (
-                                                            message.sender?.avatar_url ? (
-                                                                <div className="h-8 w-8 shrink-0 overflow-hidden rounded-[16px] 2xl:h-9 2xl:w-9 2xl:rounded-[18px]">
-                                                                    <img
-                                                                        src={
-                                                                            message.sender
-                                                                                .avatar_url
-                                                                        }
-                                                                        alt={message.sender?.name}
-                                                                        className="h-full w-full object-cover"
-                                                                        style={{
-                                                                            objectPosition: `${message.sender.avatar_position_x}% ${message.sender.avatar_position_y}%`,
-                                                                            transform: `scale(${message.sender.avatar_zoom})`,
-                                                                            transformOrigin: `${message.sender.avatar_position_x}% ${message.sender.avatar_position_y}%`,
-                                                                        }}
-                                                                    />
-                                                                </div>
-                                                            ) : (
-                                                                <div className="app-avatar-fallback flex h-8 w-8 shrink-0 items-center justify-center rounded-[16px] text-[11px] font-semibold 2xl:h-9 2xl:w-9 2xl:rounded-[18px] 2xl:text-xs">
-                                                                    {initialsFor(
-                                                                        message.sender?.name,
-                                                                    )}
-                                                                </div>
-                                                            )
-                                                        ) : null}
+                                                        {!own ? avatar : null}
                                                         <div
-                                                            className={`relative max-w-[78%] rounded-[20px] px-3 py-2 text-[13px] leading-6 2xl:rounded-[24px] 2xl:px-3 2xl:py-2.5 2xl:text-sm 2xl:leading-7 ${
+                                                            className={`relative min-w-[11rem] max-w-[78%] rounded-[20px] px-3 py-2 text-[13px] leading-6 2xl:min-w-[12rem] 2xl:rounded-[24px] 2xl:px-3 2xl:py-2.5 2xl:text-sm 2xl:leading-7 ${
                                                                 own
                                                                     ? 'app-button-primary'
                                                                     : 'app-panel-inset'
@@ -1237,7 +1252,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                                     </div>
                                                                 </div>
                                                             ) : (
-                                                                <div className="space-y-2.5 2xl:space-y-3">
+                                                                <div className="space-y-2.5 pr-10 2xl:space-y-3 2xl:pr-11">
                                                                     {message.attachment && (
                                                                         <div>
                                                                             {message.attachment
@@ -1338,68 +1353,71 @@ export default function Index({ conversations, activeConversation, contacts = []
                                                                         </div>
                                                                     )}
                                                                     {message.body && (
-                                                                        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3">
+                                                                        <div className="min-w-0">
                                                                             <div className="min-w-0">
                                                                                 <span className="whitespace-pre-wrap break-all leading-6 2xl:leading-7">
                                                                                     {message.body}
-                                                                                </span>
-                                                                                {isEdited && (
-                                                                                    <span className="bg-white/8 text-current/75 mt-1.5 inline-flex rounded-full px-2 py-0.5 text-[10px] uppercase tracking-[0.16em]">
-                                                                                        Edited
-                                                                                    </span>
-                                                                                )}
-                                                                            </div>
-                                                                            <div className="flex min-w-[3.75rem] flex-col items-end justify-start pt-5 text-right 2xl:min-w-[4.25rem] 2xl:pt-6">
-                                                                                <span className="app-text-soft shrink-0 text-[11px] leading-6 2xl:text-xs 2xl:leading-7">
-                                                                                    {formatMessageTime(
-                                                                                        timestamp,
-                                                                                    )}
                                                                                 </span>
                                                                             </div>
                                                                         </div>
                                                                     )}
                                                                 </div>
                                                             )}
-                                                            {!isEditing && !message.body && (
-                                                                <div className="app-text-soft mt-2 flex items-center gap-2 text-[11px] 2xl:text-xs">
-                                                                    {isEdited && (
-                                                                        <span className="bg-white/8 text-current/75 rounded-full px-2 py-0.5 text-[11px] uppercase tracking-[0.16em]">
-                                                                            Edited
+                                                            {!isEditing && (
+                                                                <div
+                                                                    dir="ltr"
+                                                                    className="app-text-soft mt-2 grid w-full grid-cols-[auto_minmax(0,1fr)] items-center gap-3 text-[11px] 2xl:text-xs"
+                                                                >
+                                                                    <div className="min-w-0 justify-self-start">
+                                                                        <span>
+                                                                            {formatMessageTime(
+                                                                                timestamp,
+                                                                            )}
                                                                         </span>
-                                                                    )}
-                                                                    <span>
-                                                                        {formatMessageTime(
-                                                                            timestamp,
+                                                                    </div>
+                                                                    <div className="flex w-full items-center justify-end gap-2 text-right">
+                                                                        {isEdited && (
+                                                                            <span className="bg-white/8 text-current/75 rounded-full px-2 py-0.5 text-[11px] uppercase tracking-[0.16em]">
+                                                                                Edited
+                                                                            </span>
                                                                         )}
-                                                                    </span>
+                                                                        {deliveryStatus && (
+                                                                            <span
+                                                                                className={`inline-flex items-center gap-1 ${
+                                                                                    deliveryStatus ===
+                                                                                    'seen'
+                                                                                        ? 'text-sky-300'
+                                                                                        : 'text-current/85'
+                                                                                }`}
+                                                                            >
+                                                                                {deliveryStatus ===
+                                                                                'unread' ? (
+                                                                                    <Clock3
+                                                                                        className="h-3.5 w-3.5"
+                                                                                        strokeWidth={
+                                                                                            1.9
+                                                                                        }
+                                                                                    />
+                                                                                ) : (
+                                                                                    <CheckCheck
+                                                                                        className="h-3.5 w-3.5"
+                                                                                        strokeWidth={
+                                                                                            1.9
+                                                                                        }
+                                                                                    />
+                                                                                )}
+                                                                                <span>
+                                                                                    {formatDeliveryStatus(
+                                                                                        deliveryStatus,
+                                                                                    )}
+                                                                                </span>
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                             )}
                                                         </div>
-                                                        {own ? (
-                                                            message.sender?.avatar_url ? (
-                                                                <div className="h-8 w-8 shrink-0 overflow-hidden rounded-[16px] 2xl:h-9 2xl:w-9 2xl:rounded-[18px]">
-                                                                    <img
-                                                                        src={
-                                                                            message.sender
-                                                                                .avatar_url
-                                                                        }
-                                                                        alt={message.sender?.name}
-                                                                        className="h-full w-full object-cover"
-                                                                        style={{
-                                                                            objectPosition: `${message.sender.avatar_position_x}% ${message.sender.avatar_position_y}%`,
-                                                                            transform: `scale(${message.sender.avatar_zoom})`,
-                                                                            transformOrigin: `${message.sender.avatar_position_x}% ${message.sender.avatar_position_y}%`,
-                                                                        }}
-                                                                    />
-                                                                </div>
-                                                            ) : (
-                                                                <div className="app-avatar-fallback flex h-8 w-8 shrink-0 items-center justify-center rounded-[16px] text-[11px] font-semibold 2xl:h-9 2xl:w-9 2xl:rounded-[18px] 2xl:text-xs">
-                                                                    {initialsFor(
-                                                                        message.sender?.name,
-                                                                    )}
-                                                                </div>
-                                                            )
-                                                        ) : null}
+                                                        {own ? avatar : null}
                                                     </div>
                                                 );
                                             })}
@@ -1408,7 +1426,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                 </div>
                             </div>
 
-                            <form onSubmit={submit} className="relative mt-4 2xl:mt-5">
+                            <form onSubmit={submit} className="relative mt-1.5 2xl:mt-2">
                                 <input
                                     ref={imageInputRef}
                                     type="file"
@@ -1754,6 +1772,16 @@ function formatMessageTime(value) {
         minute: '2-digit',
         hour12: true,
     });
+}
+
+function formatDeliveryStatus(status) {
+    return (
+        {
+            unread: 'Unread',
+            received: 'Received',
+            seen: 'Seen',
+        }[status] ?? ''
+    );
 }
 
 function formatMessageDateBadge(value) {
