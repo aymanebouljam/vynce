@@ -88,7 +88,11 @@ class PostEngagementController extends Controller
                     'type' => 'comment',
                     'title' => "{$request->user()->name} commented on your post",
                     'body' => str($comment->body)->limit(100)->toString(),
-                    'href' => route('users.show', $request->user()->username),
+                    'href' => route('users.show', [
+                        'user' => $post->user->username,
+                        'post' => $post->id,
+                        'comments' => 1,
+                    ]),
                     'actor' => [
                         'id' => $request->user()->id,
                         'name' => $request->user()->name,

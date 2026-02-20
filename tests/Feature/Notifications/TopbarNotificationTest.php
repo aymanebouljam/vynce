@@ -62,6 +62,11 @@ class TopbarNotificationTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->where('topbar.notifications_count', 1)
                 ->where('topbar.pending_requests_count', 1)
+                ->where('topbar.notifications.0.href', route('users.show', [
+                    'user' => $owner->username,
+                    'post' => $post->id,
+                    'comments' => 1,
+                ]))
                 ->where('topbar.notifications', fn ($notifications) => collect($notifications)
                     ->pluck('type')
                     ->intersect(['comment'])

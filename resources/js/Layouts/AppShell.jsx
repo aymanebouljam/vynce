@@ -255,6 +255,15 @@ export default function AppShell({ children, title, sidebar }) {
         setNotificationConfirm(null);
     };
 
+    const visitNotification = (event, href) => {
+        event.preventDefault();
+        setNotificationsOpen(false);
+        setNotificationConfirm(null);
+        window.setTimeout(() => {
+            router.visit(href);
+        }, 0);
+    };
+
     const removeNotification = (notificationId) => {
         const previousNotifications = notifications;
         const previousCount = notificationsCount;
@@ -854,10 +863,12 @@ export default function AppShell({ children, title, sidebar }) {
                                     key={notification.id}
                                     className="app-card-inset flex items-start gap-3 rounded-[18px] p-3 transition hover:bg-[var(--vynce-surface-muted)] 2xl:rounded-2xl 2xl:p-4"
                                 >
-                                    <Link
-                                        href={notification.href}
-                                        onClick={() => setNotificationsOpen(false)}
-                                        className="flex min-w-0 flex-1 items-start gap-3"
+                                    <button
+                                        type="button"
+                                        onClick={(event) =>
+                                            visitNotification(event, notification.href)
+                                        }
+                                        className="flex min-w-0 flex-1 items-start gap-3 text-left"
                                     >
                                         {notification.actor?.avatar_url ? (
                                             <img
@@ -893,7 +904,7 @@ export default function AppShell({ children, title, sidebar }) {
                                                 {notification.created_at_human}
                                             </div>
                                         </div>
-                                    </Link>
+                                    </button>
                                     <button
                                         type="button"
                                         onClick={(event) => {
