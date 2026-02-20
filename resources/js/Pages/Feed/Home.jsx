@@ -12,8 +12,12 @@ const trends = [
 ];
 
 export default function Home({ feed, activeTab, suggestions = [] }) {
-    const { flash } = usePage().props;
+    const page = usePage();
+    const { flash } = page.props;
+    const pageUrl = page.url;
     const newPostId = flash?.new_post_id;
+    const [targetPostId, setTargetPostId] = useState(null);
+    const [targetCommentsOpen, setTargetCommentsOpen] = useState(false);
     const isDiscover = activeTab === 'discover';
     const [visibleSuggestions, setVisibleSuggestions] = useState(suggestions);
     const [processingSuggestionIds, setProcessingSuggestionIds] = useState([]);
@@ -26,6 +30,20 @@ export default function Home({ feed, activeTab, suggestions = [] }) {
             suggestions.filter((person) => !removedSuggestionIds.includes(person.id)),
         );
     }, [suggestions, removedSuggestionIds]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        const search = new URLSearchParams(window.location.search);
+        const requestedPostId = Number(search.get('post'));
+
+        setTargetPostId(
+            Number.isFinite(requestedPostId) && requestedPostId > 0 ? requestedPostId : null,
+        );
+        setTargetCommentsOpen(search.get('comments') === '1');
+    }, [pageUrl]);
 
     const addSuggestion = async (person) => {
         if (processingSuggestionIds.includes(person.id)) {
@@ -185,7 +203,12 @@ export default function Home({ feed, activeTab, suggestions = [] }) {
         <AuthenticatedLayout title="Feed" sidebar={isDiscover ? null : sidebar}>
             <section className="space-y-5 2xl:space-y-6">
                 {isDiscover ? (
-                    <DiscoverExperience posts={feed.data} newPostId={newPostId} />
+                    <DiscoverExperience
+                        posts={feed.data}
+                        newPostId={newPostId}
+                        targetPostId={targetPostId}
+                        targetCommentsOpen={targetCommentsOpen}
+                    />
                 ) : (
                     <>
                         <PostComposer compact />
@@ -202,7 +225,13 @@ export default function Home({ feed, activeTab, suggestions = [] }) {
                                     <PostCard
                                         key={post.id}
                                         post={post}
-                                        highlighted={Number(newPostId) === post.id}
+                                        highlighted={
+                                            Number(newPostId) === post.id ||
+                                            targetPostId === post.id
+                                        }
+                                        openCommentsByDefault={
+                                            targetCommentsOpen && targetPostId === post.id
+                                        }
                                     />
                                 ))
                             )}
@@ -243,7 +272,7 @@ function initialsFor(name) {
     );
 }
 
-function DiscoverExperience({ posts, newPostId }) {
+function DiscoverExperience({ posts, newPostId, targetPostId, targetCommentsOpen }) {
     const [contentType, setContentType] = useState('all');
     const [languageFilter, setLanguageFilter] = useState('all');
     const [dateFilter, setDateFilter] = useState('all');
@@ -353,7 +382,12 @@ function DiscoverExperience({ posts, newPostId }) {
                                 <PostCard
                                     key={post.id}
                                     post={post}
-                                    highlighted={Number(newPostId) === post.id}
+                                    highlighted={
+                                        Number(newPostId) === post.id || targetPostId === post.id
+                                    }
+                                    openCommentsByDefault={
+                                        targetCommentsOpen && targetPostId === post.id
+                                    }
                                 />
                             ))}
                         </div>

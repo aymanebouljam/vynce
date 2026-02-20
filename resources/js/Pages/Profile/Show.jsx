@@ -34,10 +34,14 @@ const trends = [
 ];
 
 export default function Show({ profile, relationship, feed, suggestions = [] }) {
-    const { auth, errors, flash } = usePage().props;
+    const page = usePage();
+    const { auth, errors, flash } = page.props;
+    const pageUrl = page.url;
     const followForm = useForm({});
     const isOwnProfile = auth.user.id === profile.id;
     const newPostId = flash?.new_post_id;
+    const [targetPostId, setTargetPostId] = useState(null);
+    const [targetCommentsOpen, setTargetCommentsOpen] = useState(false);
     const [composerOpen, setComposerOpen] = useState(false);
     const [avatarManagerOpen, setAvatarManagerOpen] = useState(false);
     const [coverManagerOpen, setCoverManagerOpen] = useState(false);
@@ -52,6 +56,20 @@ export default function Show({ profile, relationship, feed, suggestions = [] }) 
             suggestions.filter((person) => !removedSuggestionIds.includes(person.id)),
         );
     }, [suggestions, removedSuggestionIds]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        const search = new URLSearchParams(window.location.search);
+        const requestedPostId = Number(search.get('post'));
+
+        setTargetPostId(
+            Number.isFinite(requestedPostId) && requestedPostId > 0 ? requestedPostId : null,
+        );
+        setTargetCommentsOpen(search.get('comments') === '1');
+    }, [pageUrl]);
 
     const submitFollow = () => {
         if (relationship.is_following || relationship.has_pending_request) {
@@ -484,7 +502,12 @@ export default function Show({ profile, relationship, feed, suggestions = [] }) 
                                 post={post}
                                 profileUsername={profile.username}
                                 showProfileRepostLabel
-                                highlighted={Number(newPostId) === post.id}
+                                highlighted={
+                                    Number(newPostId) === post.id || targetPostId === post.id
+                                }
+                                openCommentsByDefault={
+                                    targetCommentsOpen && targetPostId === post.id
+                                }
                                 profileRepostLabel={
                                     isOwnProfile ? 'Reposted' : `Reposted by @${profile.username}`
                                 }

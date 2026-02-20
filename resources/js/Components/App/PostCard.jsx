@@ -24,6 +24,7 @@ export default function PostCard({
     showProfileRepostLabel = true,
     profileRepostLabel = null,
     highlighted = false,
+    openCommentsByDefault = false,
 }) {
     const { auth } = usePage().props;
     const authorName = post.user?.name ?? 'Unknown user';
@@ -82,6 +83,27 @@ export default function PostCard({
     useEffect(() => {
         setViewerIndex(null);
     }, [post.id]);
+
+    useEffect(() => {
+        setCommentsOpen(openCommentsByDefault);
+    }, [openCommentsByDefault, post.id]);
+
+    useEffect(() => {
+        if (!highlighted || typeof document === 'undefined') {
+            return;
+        }
+
+        const element = document.getElementById(`post-${post.id}`);
+
+        if (!element) {
+            return;
+        }
+
+        element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+        });
+    }, [highlighted, post.id]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -342,6 +364,7 @@ export default function PostCard({
     return (
         <>
             <article
+                id={`post-${post.id}`}
                 className={`feed-post-card ${highlighted ? 'feed-post-card--highlighted' : ''}`}
             >
                 <div className="feed-post-card__inner">
