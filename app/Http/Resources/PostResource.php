@@ -40,14 +40,7 @@ class PostResource extends JsonResource
                 'position_y' => $media->position_y ?? 50,
                 'position' => $media->position,
             ])->values(),
-            'comments' => $this->comments->take(5)->map(fn ($comment) => [
-                'id' => $comment->id,
-                'body' => $comment->body,
-                'created_at' => optional($comment->created_at)->toIso8601String(),
-                'user' => $comment->relationLoaded('user') && $comment->user
-                    ? UserResource::make($comment->user)->resolve($request)
-                    : null,
-            ])->values(),
+            'comments' => PostCommentResource::tree($this->comments, $request),
         ];
     }
 }
