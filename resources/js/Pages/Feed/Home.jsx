@@ -3,6 +3,7 @@ import { Check, Flame, TrendingUp, UserRoundPlus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import PostCard from '@/Components/App/PostCard';
 import PostComposer from '@/Components/App/PostComposer';
+import useLiveInertiaReload from '@/hooks/useLiveInertiaReload';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 const trends = [
@@ -24,6 +25,8 @@ export default function Home({ feed, activeTab, suggestions = [] }) {
     const [confirmedSuggestionIds, setConfirmedSuggestionIds] = useState([]);
     const [exitingSuggestionIds, setExitingSuggestionIds] = useState([]);
     const [removedSuggestionIds, setRemovedSuggestionIds] = useState([]);
+
+    useLiveInertiaReload(['feed'], 5000);
 
     useEffect(() => {
         setVisibleSuggestions(

@@ -25,6 +25,7 @@ import DangerButton from '@/Components/DangerButton';
 import Dropdown from '@/Components/Dropdown';
 import Modal from '@/Components/Modal';
 import SecondaryButton from '@/Components/SecondaryButton';
+import useLiveInertiaReload from '@/hooks/useLiveInertiaReload';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 const trends = [
@@ -50,6 +51,8 @@ export default function Show({ profile, relationship, feed, suggestions = [] }) 
     const [confirmedSuggestionIds, setConfirmedSuggestionIds] = useState([]);
     const [exitingSuggestionIds, setExitingSuggestionIds] = useState([]);
     const [removedSuggestionIds, setRemovedSuggestionIds] = useState([]);
+
+    useLiveInertiaReload(['feed'], 5000);
 
     useEffect(() => {
         setVisibleSuggestions(
