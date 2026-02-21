@@ -2,6 +2,7 @@ import { Link, useForm, usePage } from '@inertiajs/react';
 import {
     ChevronLeft,
     ChevronRight,
+    CornerDownRight,
     Ellipsis,
     Globe,
     Heart,
@@ -35,7 +36,11 @@ export default function PostCard({
     const [commentsOpen, setCommentsOpen] = useState(false);
     const [isLiked, setIsLiked] = useState(post.is_liked);
     const [likesCount, setLikesCount] = useState(post.likes_count ?? 0);
+    const [isReposted, setIsReposted] = useState(post.is_reposted);
+    const [repostsCount, setRepostsCount] = useState(post.reposts_count ?? 0);
+    const [commentsCount, setCommentsCount] = useState(post.comments_count ?? 0);
     const [liking, setLiking] = useState(false);
+    const [reposting, setReposting] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
     const [visibilityMenuOpen, setVisibilityMenuOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
@@ -43,13 +48,17 @@ export default function PostCard({
     const [viewerIndex, setViewerIndex] = useState(null);
     const [selectedVisibility, setSelectedVisibility] = useState(post.visibility);
     const [isVisibilitySaving, setIsVisibilitySaving] = useState(false);
+    const [replyTarget, setReplyTarget] = useState(null);
     const menuButtonRef = useRef(null);
     const menuPanelRef = useRef(null);
     const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
     const visibilityButtonRef = useRef(null);
     const visibilityPanelRef = useRef(null);
     const [visibilityMenuPosition, setVisibilityMenuPosition] = useState({ top: 0, left: 0 });
-    const commentForm = useForm({ body: '' });
+    const commentForm = useForm({
+        body: '',
+        parent_id: null,
+    });
     const editForm = useForm({
         body: post.body ?? '',
         visibility: post.visibility,
@@ -77,6 +86,12 @@ export default function PostCard({
     }, [post.id, post.is_liked, post.likes_count]);
 
     useEffect(() => {
+        setIsReposted(post.is_reposted);
+        setRepostsCount(post.reposts_count ?? 0);
+        setCommentsCount(post.comments_count ?? 0);
+    }, [post.id, post.is_reposted, post.reposts_count, post.comments_count]);
+
+    useEffect(() => {
         setSelectedVisibility(post.visibility);
     }, [post.id, post.visibility]);
 
@@ -87,6 +102,11 @@ export default function PostCard({
     useEffect(() => {
         setCommentsOpen(openCommentsByDefault);
     }, [openCommentsByDefault, post.id]);
+
+    useEffect(() => {
+        setReplyTarget(null);
+        commentForm.setData('parent_id', null);
+    }, [post.id]);
 
     useEffect(() => {
         if (!highlighted || typeof document === 'undefined') {
@@ -227,9 +247,26 @@ export default function PostCard({
             preserveScroll: true,
             onSuccess: () => {
                 commentForm.reset();
+                setReplyTarget(null);
                 setCommentsOpen(true);
+                setCommentsCount((count) => count + 1);
             },
         });
+    };
+
+    const startReply = (comment) => {
+        setReplyTarget({
+            id: comment.id,
+            name: comment.user?.name ?? 'Unknown user',
+            username: comment.user?.username ?? null,
+        });
+        commentForm.setData('parent_id', comment.id);
+        setCommentsOpen(true);
+    };
+
+    const cancelReply = () => {
+        setReplyTarget(null);
+        commentForm.setData('parent_id', null);
     };
 
     const toggleLike = async () => {
@@ -259,6 +296,36 @@ export default function PostCard({
             setLikesCount(previousCount);
         } finally {
             setLiking(false);
+        }
+    };
+
+    const toggleRepost = async () => {
+        if (reposting) {
+            return;
+        }
+
+        const previousReposted = isReposted;
+        const previousCount = repostsCount;
+        const nextReposted = !previousReposted;
+
+        setReposting(true);
+        setIsReposted(nextReposted);
+        setRepostsCount((count) => Math.max(0, count + (nextReposted ? 1 : -1)));
+
+        try {
+            const response = await window.axios.post(route('posts.reposts.toggle', post.id), null, {
+                headers: {
+                    Accept: 'application/json',
+                },
+            });
+
+            setIsReposted(response.data.reposted);
+            setRepostsCount(response.data.reposts_count);
+        } catch {
+            setIsReposted(previousReposted);
+            setRepostsCount(previousCount);
+        } finally {
+            setReposting(false);
         }
     };
 
@@ -538,43 +605,77 @@ export default function PostCard({
                                     }`}
                                 >
                                     <MessageCircle className="h-4 w-4" strokeWidth={1.9} />
-                                    {post.comments_count ?? 0}
+                                    {commentsCount}
                                 </button>
 
-                                <Link
-                                    href={route('posts.reposts.toggle', post.id)}
-                                    method="post"
-                                    as="button"
+                                <button
+                                    type="button"
+                                    onClick={toggleRepost}
                                     className={`app-button-secondary inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] ${
-                                        post.is_reposted ? 'app-nav-link-active' : ''
-                                    }`}
+                                        isReposted ? 'app-nav-link-active' : ''
+                                    } ${reposting ? 'opacity-70' : ''}`}
                                 >
                                     <Repeat2 className="h-4 w-4" strokeWidth={1.9} />
-                                    {post.reposts_count ?? 0}
-                                </Link>
+                                    {repostsCount}
+                                </button>
                             </div>
 
                             {commentsOpen && (
                                 <div className="app-panel-inset mt-4 space-y-4 rounded-[24px] p-4">
-                                    <form
-                                        onSubmit={submitComment}
-                                        className="flex items-start gap-3"
-                                    >
-                                        <textarea
-                                            value={commentForm.data.body}
-                                            onChange={(event) =>
-                                                commentForm.setData('body', event.target.value)
-                                            }
-                                            className="field min-h-20 flex-1 resize-none text-sm"
-                                            placeholder="Write a reply..."
-                                        />
-                                        <button
-                                            type="submit"
-                                            disabled={commentForm.processing}
-                                            className="app-button-primary inline-flex h-11 w-11 items-center justify-center rounded-full disabled:opacity-60"
-                                        >
-                                            <SendHorizontal className="h-4 w-4" strokeWidth={1.9} />
-                                        </button>
+                                    <form onSubmit={submitComment} className="space-y-3">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-[rgba(241,235,251,0.6)]">
+                                                Reply
+                                            </div>
+                                            {replyTarget ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={cancelReply}
+                                                    className="app-text-soft text-xs font-medium hover:text-[rgba(241,235,251,0.95)]"
+                                                >
+                                                    Cancel reply
+                                                </button>
+                                            ) : null}
+                                        </div>
+
+                                        {replyTarget ? (
+                                            <div className="app-card-inset flex items-center gap-2 rounded-2xl px-3 py-2 text-sm">
+                                                <CornerDownRight className="h-4 w-4 text-[rgba(241,235,251,0.65)]" />
+                                                <span className="font-medium">
+                                                    Replying to {replyTarget.name}
+                                                </span>
+                                                {replyTarget.username ? (
+                                                    <span className="app-text-muted text-xs">
+                                                        @{replyTarget.username}
+                                                    </span>
+                                                ) : null}
+                                            </div>
+                                        ) : null}
+
+                                        <div className="flex items-start gap-3">
+                                            <textarea
+                                                value={commentForm.data.body}
+                                                onChange={(event) =>
+                                                    commentForm.setData('body', event.target.value)
+                                                }
+                                                className="field min-h-20 flex-1 resize-none text-sm"
+                                                placeholder={
+                                                    replyTarget
+                                                        ? `Reply to ${replyTarget.name}...`
+                                                        : 'Write a reply...'
+                                                }
+                                            />
+                                            <button
+                                                type="submit"
+                                                disabled={commentForm.processing}
+                                                className="app-button-primary inline-flex h-11 w-11 items-center justify-center rounded-full disabled:opacity-60"
+                                            >
+                                                <SendHorizontal
+                                                    className="h-4 w-4"
+                                                    strokeWidth={1.9}
+                                                />
+                                            </button>
+                                        </div>
                                     </form>
 
                                     {commentForm.errors.body && (
@@ -585,26 +686,7 @@ export default function PostCard({
 
                                     {post.comments?.length > 0 ? (
                                         <div className="space-y-3">
-                                            {post.comments.map((comment) => (
-                                                <div
-                                                    key={comment.id}
-                                                    className="app-card-inset rounded-2xl px-4 py-3"
-                                                >
-                                                    <div className="flex items-center gap-2 text-sm">
-                                                        <span className="font-semibold">
-                                                            {comment.user?.name ?? 'Unknown user'}
-                                                        </span>
-                                                        {comment.user?.username && (
-                                                            <span className="app-text-muted text-xs">
-                                                                @{comment.user.username}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6">
-                                                        {comment.body}
-                                                    </p>
-                                                </div>
-                                            ))}
+                                            {renderCommentThreads(post.comments, startReply)}
                                         </div>
                                     ) : (
                                         <div className="app-text-soft text-sm">
@@ -830,4 +912,55 @@ function postMediaTransformStyle(media) {
         transform: `scale(${zoom})`,
         transformOrigin: `${positionX}% ${positionY}%`,
     };
+}
+
+function renderCommentThreads(comments, onReply, depth = 0) {
+    return comments.map((comment) => (
+        <CommentThread key={comment.id} comment={comment} onReply={onReply} depth={depth} />
+    ));
+}
+
+function CommentThread({ comment, onReply, depth = 0 }) {
+    const indentClass = depth > 0 ? 'ml-5 border-l border-white/10 pl-4' : '';
+    const createdAt = comment.created_at ? new Date(comment.created_at).toLocaleString() : null;
+    const replies = comment.replies ?? [];
+
+    return (
+        <div className={`${indentClass} space-y-3`}>
+            <div className="app-card-inset rounded-2xl px-4 py-3">
+                <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 text-sm">
+                            <span className="font-semibold">
+                                {comment.user?.name ?? 'Unknown user'}
+                            </span>
+                            {comment.user?.username && (
+                                <span className="app-text-muted text-xs">
+                                    @{comment.user.username}
+                                </span>
+                            )}
+                        </div>
+                        {createdAt ? (
+                            <div className="app-text-muted mt-1 text-[11px]">{createdAt}</div>
+                        ) : null}
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={() => onReply(comment)}
+                        className="app-text-soft inline-flex items-center gap-1 text-xs font-medium hover:text-[rgba(241,235,251,0.95)]"
+                    >
+                        <CornerDownRight className="h-3.5 w-3.5" />
+                        Reply
+                    </button>
+                </div>
+
+                <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6">
+                    {comment.body}
+                </p>
+            </div>
+
+            {replies.length > 0 ? renderCommentThreads(replies, onReply, depth + 1) : null}
+        </div>
+    );
 }
