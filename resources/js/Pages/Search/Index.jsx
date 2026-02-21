@@ -1,10 +1,13 @@
-import PostCard from '@/Components/App/PostCard';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Link } from '@inertiajs/react';
 import { FileText, Hash, Search, Users } from 'lucide-react';
+import PostCard from '@/Components/App/PostCard';
+import useLiveInertiaReload from '@/hooks/useLiveInertiaReload';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 export default function Index({ query, filter = 'people', users = [], posts = [], topics = [] }) {
     const activeFilter = filter === 'posts' ? 'posts' : 'people';
+
+    useLiveInertiaReload(['posts'], 5000);
 
     return (
         <AuthenticatedLayout title="Search">
