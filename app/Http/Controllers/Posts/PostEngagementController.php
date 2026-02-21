@@ -46,25 +46,36 @@ class PostEngagementController extends Controller
         return back();
     }
 
-    public function toggleRepost(Post $post): RedirectResponse
+    public function toggleRepost(Post $post): RedirectResponse|JsonResponse
     {
         $this->authorize('view', $post);
 
-        DB::transaction(function () use ($post) {
+        $reposted = DB::transaction(function () use ($post) {
             $repost = $post->reposts()->where('user_id', request()->user()->id)->first();
 
             if ($repost) {
                 $repost->delete();
                 $post->decrement('reposts_count');
 
-                return;
+                return false;
             }
 
             $post->reposts()->create([
                 'user_id' => request()->user()->id,
             ]);
             $post->increment('reposts_count');
+
+            return true;
         });
+
+        $post->refresh();
+
+        if (request()->expectsJson()) {
+            return response()->json([
+                'reposted' => $reposted,
+                'reposts_count' => $post->reposts_count,
+            ]);
+        }
 
         return back();
     }
@@ -74,8 +85,15 @@ class PostEngagementController extends Controller
         $this->authorize('view', $post);
 
         DB::transaction(function () use ($request, $post) {
+            $parentComment = null;
+
+            if ($request->filled('parent_id')) {
+                $parentComment = $post->comments()->with('user')->find($request->integer('parent_id'));
+            }
+
             $comment = $post->comments()->create([
                 'user_id' => $request->user()->id,
+                'parent_id' => $parentComment?->id,
                 'body' => $request->string('body')->toString(),
             ]);
 
@@ -86,7 +104,33 @@ class PostEngagementController extends Controller
             if (! $post->user->is($request->user())) {
                 $post->user->notify(new DatabaseActivityNotification([
                     'type' => 'comment',
-                    'title' => "{$request->user()->name} commented on your post",
+                    'title' => $parentComment
+                        ? "{$request->user()->name} replied to a comment on your post"
+                        : "{$request->user()->name} commented on your post",
+                    'body' => str($comment->body)->limit(100)->toString(),
+                    'href' => route('users.show', [
+                        'user' => $post->user->username,
+                        'post' => $post->id,
+                        'comments' => 1,
+                    ]),
+                    'actor' => [
+                        'id' => $request->user()->id,
+                        'name' => $request->user()->name,
+                        'username' => $request->user()->username,
+                        'avatar_url' => $request->user()->avatar_path
+                            ? route('media.public', ['path' => $request->user()->avatar_path])
+                            : null,
+                        'avatar_position_x' => $request->user()->avatar_position_x ?? 50,
+                        'avatar_position_y' => $request->user()->avatar_position_y ?? 50,
+                        'avatar_zoom' => $request->user()->avatar_zoom ?? 1,
+                    ],
+                ]));
+            }
+
+            if ($parentComment && $parentComment->user && ! $parentComment->user->is($request->user()) && ! $parentComment->user->is($post->user)) {
+                $parentComment->user->notify(new DatabaseActivityNotification([
+                    'type' => 'comment',
+                    'title' => "{$request->user()->name} replied to your comment",
                     'body' => str($comment->body)->limit(100)->toString(),
                     'href' => route('users.show', [
                         'user' => $post->user->username,
