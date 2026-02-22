@@ -574,7 +574,7 @@ export default function PostCard({
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-1.5">
+                                <div className="flex items-center justify-end gap-1.5">
                                     <button
                                         ref={visibilityButtonRef}
                                         type="button"
@@ -1106,7 +1106,7 @@ function CommentThread({ comment, handlers, depth = 0 }) {
                 </div>
 
                 <div className="min-w-0 flex-1">
-                    <div className="app-panel-muted rounded-2xl px-4 py-3">
+                    <div className="app-panel-muted rounded-2xl px-4 py-2.5">
                         <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
                                 <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -1116,11 +1116,12 @@ function CommentThread({ comment, handlers, depth = 0 }) {
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center justify-end gap-1">
                                 <button
                                     type="button"
                                     onClick={() => handlers.onReply(comment)}
-                                    className="app-text-soft inline-flex items-center gap-1 text-xs font-medium hover:text-[rgba(241,235,251,0.95)]"
+                                    className="app-text-soft
+                                     inline-flex items-center gap-1 text-xs font-medium hover:text-[rgba(241,235,251,0.95)]"
                                 >
                                     <CornerDownRight className="h-3.5 w-3.5" />
                                     Reply
@@ -1132,10 +1133,14 @@ function CommentThread({ comment, handlers, depth = 0 }) {
                                             ref={menuButtonRef}
                                             type="button"
                                             onClick={() => setMenuOpen((open) => !open)}
-                                            className="app-button-secondary inline-flex h-8 w-8 items-center justify-center rounded-full"
+                                            className="app-text-soft inline-flex h-7 w-4 
+                                            items-center justify-end rounded-full transition hover:bg-white/5 hover:text-white"
                                             aria-label="Comment options"
                                         >
-                                            <ChevronDown className="h-4 w-4" strokeWidth={1.9} />
+                                            <ChevronDown
+                                                className="h-3.5 w-3.5"
+                                                strokeWidth={1.9}
+                                            />
                                         </button>
 
                                         {menuOpen ? (
@@ -1177,7 +1182,7 @@ function CommentThread({ comment, handlers, depth = 0 }) {
                                 <textarea
                                     value={draftBody}
                                     onChange={(event) => setDraftBody(event.target.value)}
-                                    className="field min-h-24 resize-none text-sm"
+                                    className="field min-h-20 resize-none text-sm"
                                 />
 
                                 <div className="flex items-center justify-end gap-2">
@@ -1204,33 +1209,33 @@ function CommentThread({ comment, handlers, depth = 0 }) {
                                 </div>
                             </div>
                         ) : (
-                            <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6">
+                            <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-5">
                                 {comment.body}
                             </p>
                         )}
-
-                        <div className="mt-3 flex flex-wrap items-center gap-2">
-                            <button
-                                type="button"
-                                onClick={() => handlers.onToggleLove(comment)}
-                                className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${
-                                    comment.is_liked
-                                        ? 'border border-rose-400/30 bg-rose-500/15 text-rose-100'
-                                        : 'app-button-secondary'
-                                }`}
-                            >
-                                <Heart
-                                    className={`h-3.5 w-3.5 ${comment.is_liked ? 'fill-current text-rose-400' : ''}`}
-                                    strokeWidth={1.9}
-                                />
-                                {comment.likes_count ?? 0}
-                            </button>
-                        </div>
                     </div>
 
-                    {createdAt ? (
-                        <div className="app-text-muted mt-2 px-1 text-[11px]">{createdAt}</div>
-                    ) : null}
+                    <div className="flex items-center justify-end gap-2 px-1">
+                        {createdAt ? (
+                            <div className="app-text-muted text-[11px]">{createdAt}</div>
+                        ) : null}
+                        <button
+                            type="button"
+                            onClick={() => handlers.onToggleLove(comment)}
+                            className={`inline-flex items-center gap-1 rounded-full px-0 py-0 text-xs font-medium transition ${
+                                comment.is_liked
+                                    ? 'text-rose-200'
+                                    : 'app-text-soft hover:text-[rgba(241,235,251,0.95)]'
+                            }`}
+                            aria-label={comment.is_liked ? 'Unlike comment' : 'Love comment'}
+                        >
+                            <Heart
+                                className={`h-3.5 w-3.5 ${comment.is_liked ? 'fill-current text-rose-400' : ''}`}
+                                strokeWidth={1.9}
+                            />
+                            {comment.likes_count ?? 0}
+                        </button>
+                    </div>
 
                     {showComposer ? (
                         <div className="mt-3">
@@ -1301,6 +1306,19 @@ function CommentComposer({
     placeholder = 'Write a comment...',
     nested = false,
 }) {
+    const textareaRef = useRef(null);
+
+    useEffect(() => {
+        const textarea = textareaRef.current;
+
+        if (!textarea) {
+            return;
+        }
+
+        textarea.style.height = '0px';
+        textarea.style.height = `${textarea.scrollHeight}px`;
+    }, [form.data.body, replyTarget?.id]);
+
     return (
         <form onSubmit={onSubmit} className={`space-y-3 ${nested ? 'pl-0' : ''}`}>
             {replyTarget ? (
@@ -1327,9 +1345,11 @@ function CommentComposer({
 
             <div className={`relative ${nested ? 'ml-0' : ''}`}>
                 <textarea
+                    ref={textareaRef}
+                    rows={1}
                     value={form.data.body}
                     onChange={(event) => onChange(event.target.value)}
-                    className={`field min-h-24 resize-none pb-12 pr-14 text-sm ${
+                    className={`field app-scrollbar-hidden min-h-10 resize-none overflow-hidden py-2 pr-11 text-sm leading-5 ${
                         nested ? 'app-panel-inset' : ''
                     }`}
                     placeholder={placeholder}
@@ -1337,10 +1357,10 @@ function CommentComposer({
                 <button
                     type="submit"
                     disabled={processing}
-                    className="absolute bottom-3 right-3 inline-flex h-9 w-9 items-center justify-center rounded-full border border-transparent bg-transparent text-[rgba(241,235,251,0.88)] transition hover:bg-white/5 hover:text-white disabled:opacity-50"
+                    className="absolute right-2 top-[45%] inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-transparent text-[rgba(241,235,251,0.88)] transition hover:bg-white/5 hover:text-white disabled:opacity-50"
                     aria-label="Send comment"
                 >
-                    <SendHorizontal className="h-4 w-4" strokeWidth={2} />
+                    <SendHorizontal className="h-3.5 w-3.5" strokeWidth={2} />
                 </button>
             </div>
 
