@@ -757,154 +757,150 @@ export default function Index({ conversations, activeConversation, contacts = []
                     ) : null}
 
                     <div className="app-scrollbar-hidden min-h-0 flex-1 overflow-y-auto pr-1">
-                        {localConversations.length === 0 ? (
-                            conversationRailCollapsed ? (
-                                <div className="app-dashed-panel app-text-muted flex min-h-24 items-center justify-center rounded-[24px] p-3 text-center text-[11px] leading-4 2xl:rounded-[28px] 2xl:p-4 2xl:text-xs">
-                                    Empty
-                                </div>
+                        <div className="app-scrollbar-hidden min-h-0 flex-1 overflow-y-auto pr-1">
+                            {localConversations.length === 0 ? (
+                                conversationRailCollapsed ? (
+                                    <div className="app-dashed-panel app-text-muted flex min-h-24 items-center justify-center rounded-[24px] p-3 text-center text-[11px] leading-4 2xl:rounded-[28px] 2xl:p-4 2xl:text-xs">
+                                        Empty
+                                    </div>
+                                ) : (
+                                    <div className="app-dashed-panel app-text-muted rounded-[24px] p-4 text-[13px] leading-5 2xl:rounded-[28px] 2xl:p-5 2xl:text-sm 2xl:leading-6">
+                                        No conversations yet. Visit a profile and tap Message to
+                                        open a direct chat.
+                                    </div>
+                                )
                             ) : (
-                                <div className="app-dashed-panel app-text-muted rounded-[24px] p-4 text-[13px] leading-5 2xl:rounded-[28px] 2xl:p-5 2xl:text-sm 2xl:leading-6">
-                                    No conversations yet. Visit a profile and tap Message to open a
-                                    direct chat.
-                                </div>
-                            )
-                        ) : (
-                            <div
-                                className={
-                                    conversationRailCollapsed
-                                        ? 'space-y-2'
-                                        : 'space-y-2.5 2xl:space-y-3'
-                                }
-                            >
-                                {sortedConversations.map((conversation) => {
-                                    const isConversationBusy =
-                                        clearingConversationIds.includes(conversation.id) ||
-                                        deletingConversationIds.includes(conversation.id);
+                                <div
+                                    className={
+                                        conversationRailCollapsed
+                                            ? 'space-y-2'
+                                            : 'space-y-2.5 2xl:space-y-3'
+                                    }
+                                >
+                                    {sortedConversations.map((conversation) => {
+                                        const isConversationBusy =
+                                            clearingConversationIds.includes(conversation.id) ||
+                                            deletingConversationIds.includes(conversation.id);
 
-                                    return (
-                                        <div key={conversation.id} className="relative">
-                                            <Link
-                                                href={route('messages.show', conversation.id)}
-                                                className={`block transition ${
-                                                    conversationRailCollapsed
-                                                        ? displayedConversation?.id ===
-                                                          conversation.id
-                                                            ? 'rounded-[22px] border border-[rgba(196,177,232,0.9)] bg-[rgba(120,88,166,0.22)] p-2 shadow-[0_0_0_1px_rgba(214,198,242,0.45),0_0_24px_rgba(144,114,204,0.18)] 2xl:rounded-[24px]'
-                                                            : 'app-card-inset rounded-[22px] border border-white/5 bg-[rgba(255,255,255,0.04)] p-2 hover:bg-[rgba(255,255,255,0.07)] 2xl:rounded-[24px]'
-                                                        : displayedConversation?.id ===
-                                                            conversation.id
-                                                          ? 'rounded-[20px] border border-[rgba(196,177,232,0.9)] bg-[rgba(120,88,166,0.22)] p-3.5 pr-12 shadow-[0_0_0_1px_rgba(214,198,242,0.45),0_0_24px_rgba(144,114,204,0.18)] 2xl:rounded-[24px] 2xl:p-4 2xl:pr-14'
-                                                          : 'app-card-inset rounded-[20px] border border-white/5 bg-[rgba(255,255,255,0.04)] p-3.5 pr-12 hover:bg-[rgba(255,255,255,0.07)] 2xl:rounded-[24px] 2xl:p-4 2xl:pr-14'
-                                                }`}
-                                                title={
-                                                    conversation.participant?.name ?? 'Unknown user'
-                                                }
-                                            >
-                                                <div
-                                                    className={`flex ${
+                                        return (
+                                            <div key={conversation.id} className="relative">
+                                                <Link
+                                                    href={route('messages.show', conversation.id)}
+                                                    className={`block transition ${
                                                         conversationRailCollapsed
-                                                            ? 'justify-center'
-                                                            : 'items-start gap-3'
+                                                            ? displayedConversation?.id ===
+                                                              conversation.id
+                                                                ? 'rounded-[22px] border border-[rgba(196,177,232,0.9)] bg-[rgba(120,88,166,0.22)] p-2 shadow-[0_0_0_1px_rgba(214,198,242,0.45),0_0_24px_rgba(144,114,204,0.18)] 2xl:rounded-[24px]'
+                                                                : 'app-card-inset rounded-[22px] border border-white/5 bg-[rgba(255,255,255,0.04)] p-2 hover:bg-[rgba(255,255,255,0.07)] 2xl:rounded-[24px]'
+                                                            : displayedConversation?.id ===
+                                                                conversation.id
+                                                              ? 'rounded-[20px] border border-[rgba(196,177,232,0.9)] bg-[rgba(120,88,166,0.22)] p-3.5 pr-12 shadow-[0_0_0_1px_rgba(214,198,242,0.45),0_0_24px_rgba(144,114,204,0.18)] 2xl:rounded-[24px] 2xl:p-4 2xl:pr-14'
+                                                              : 'app-card-inset rounded-[20px] border border-white/5 bg-[rgba(255,255,255,0.04)] p-3.5 pr-12 hover:bg-[rgba(255,255,255,0.07)] 2xl:rounded-[24px] 2xl:p-4 2xl:pr-14'
                                                     }`}
+                                                    title={
+                                                        conversation.participant?.name ??
+                                                        'Unknown user'
+                                                    }
                                                 >
-                                                    {conversation.participant?.avatar_url ? (
-                                                        <div className="relative h-10 w-10 shrink-0 2xl:h-11 2xl:w-11">
-                                                            <div className="h-10 w-10 overflow-hidden rounded-[18px] 2xl:h-11 2xl:w-11 2xl:rounded-2xl">
-                                                                <img
-                                                                    src={
-                                                                        conversation.participant
-                                                                            .avatar_url
-                                                                    }
-                                                                    alt={
-                                                                        conversation.participant
-                                                                            ?.name
-                                                                    }
-                                                                    className="h-full w-full object-cover"
-                                                                    style={{
-                                                                        objectPosition: `${conversation.participant.avatar_position_x}% ${conversation.participant.avatar_position_y}%`,
-                                                                        transform: `scale(${conversation.participant.avatar_zoom})`,
-                                                                        transformOrigin: `${conversation.participant.avatar_position_x}% ${conversation.participant.avatar_position_y}%`,
-                                                                    }}
-                                                                />
-                                                            </div>
-                                                            {conversationRailCollapsed &&
-                                                                conversation.unread_messages_count >
-                                                                    0 && (
-                                                                    <div className="absolute -right-1 -top-1 flex min-w-5 items-center justify-center rounded-full bg-[rgba(244,91,105,0.96)] px-1.5 py-0.5 text-[10px] font-semibold text-white shadow-[0_8px_18px_rgba(244,91,105,0.32)]">
-                                                                        {
-                                                                            conversation.unread_messages_count
-                                                                        }
-                                                                    </div>
-                                                                )}
-                                                        </div>
-                                                    ) : (
-                                                        <div className="relative h-10 w-10 shrink-0 2xl:h-11 2xl:w-11">
-                                                            <div className="app-avatar-fallback flex h-10 w-10 items-center justify-center rounded-[18px] text-[13px] font-semibold 2xl:h-11 2xl:w-11 2xl:rounded-2xl 2xl:text-sm">
-                                                                {initialsFor(
-                                                                    conversation.participant?.name,
-                                                                )}
-                                                            </div>
-                                                            {conversationRailCollapsed &&
-                                                                conversation.unread_messages_count >
-                                                                    0 && (
-                                                                    <div className="absolute -right-1 -top-1 flex min-w-5 items-center justify-center rounded-full bg-[rgba(244,91,105,0.96)] px-1.5 py-0.5 text-[10px] font-semibold text-white shadow-[0_8px_18px_rgba(244,91,105,0.32)]">
-                                                                        {
-                                                                            conversation.unread_messages_count
-                                                                        }
-                                                                    </div>
-                                                                )}
-                                                        </div>
-                                                    )}
-                                                    {!conversationRailCollapsed ? (
-                                                        <div className="min-w-0 flex-1">
-                                                            <div className="truncate text-[13px] font-semibold 2xl:text-sm">
-                                                                {conversation.participant?.name ??
-                                                                    'Unknown user'}
-                                                            </div>
-                                                            <div className="app-text-soft mt-1.5 truncate text-[13px] 2xl:mt-2 2xl:text-sm">
-                                                                {conversation.latest_message?.sender
-                                                                    ?.id === auth.user.id
-                                                                    ? 'You: '
-                                                                    : ''}
-                                                                {conversation.latest_message
-                                                                    ?.body ?? 'No messages yet'}
-                                                            </div>
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </Link>
-                                            {!conversationRailCollapsed ? (
-                                                <div className="absolute right-3 top-3">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            openDeleteConversationModal(
-                                                                conversation,
-                                                            )
-                                                        }
-                                                        disabled={isConversationBusy}
-                                                        className="text-current/75 inline-flex h-7 w-7 items-center justify-center rounded-full transition hover:bg-[rgba(244,91,105,0.14)] hover:text-rose-300 disabled:opacity-60 2xl:h-8 2xl:w-8"
-                                                        aria-label="Delete conversation"
+                                                    <div
+                                                        className={`flex ${
+                                                            conversationRailCollapsed
+                                                                ? 'justify-center'
+                                                                : 'items-start gap-3'
+                                                        }`}
                                                     >
-                                                        <Trash2
-                                                            className="h-4 w-4"
-                                                            strokeWidth={1.9}
-                                                        />
-                                                    </button>
-                                                    {conversation.unread_messages_count > 0 && (
-                                                        <div className="-mt-0.5 flex justify-center">
-                                                            <div className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[rgba(244,91,105,0.96)] px-1.5 text-[10px] font-semibold text-white shadow-[0_8px_18px_rgba(244,91,105,0.28)] 2xl:h-6 2xl:min-w-6 2xl:text-[11px]">
-                                                                {conversation.unread_messages_count}
+                                                        {conversation.participant?.avatar_url ? (
+                                                            <div className="relative h-10 w-10 shrink-0 2xl:h-11 2xl:w-11">
+                                                                <div className="h-10 w-10 overflow-hidden rounded-[18px] 2xl:h-11 2xl:w-11 2xl:rounded-2xl">
+                                                                    <img
+                                                                        src={
+                                                                            conversation.participant
+                                                                                .avatar_url
+                                                                        }
+                                                                        alt={
+                                                                            conversation.participant
+                                                                                ?.name
+                                                                        }
+                                                                        className="h-full w-full object-cover"
+                                                                        style={{
+                                                                            objectPosition: `${conversation.participant.avatar_position_x}% ${conversation.participant.avatar_position_y}%`,
+                                                                            transform: `scale(${conversation.participant.avatar_zoom})`,
+                                                                            transformOrigin: `${conversation.participant.avatar_position_x}% ${conversation.participant.avatar_position_y}%`,
+                                                                        }}
+                                                                    />
+                                                                </div>
+                                                                {conversation.unread_messages_count >
+                                                                0 ? (
+                                                                    <div className="absolute -right-1 -top-1 flex min-w-5 items-center justify-center rounded-full bg-[rgba(244,91,105,0.96)] px-1.5 py-0.5 text-[10px] font-semibold text-white shadow-[0_8px_18px_rgba(244,91,105,0.32)]">
+                                                                        {
+                                                                            conversation.unread_messages_count
+                                                                        }
+                                                                    </div>
+                                                                ) : null}
                                                             </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ) : null}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
+                                                        ) : (
+                                                            <div className="relative h-10 w-10 shrink-0 2xl:h-11 2xl:w-11">
+                                                                <div className="app-avatar-fallback flex h-10 w-10 items-center justify-center rounded-[18px] text-[13px] font-semibold 2xl:h-11 2xl:w-11 2xl:rounded-2xl 2xl:text-sm">
+                                                                    {initialsFor(
+                                                                        conversation.participant
+                                                                            ?.name,
+                                                                    )}
+                                                                </div>
+                                                                {conversation.unread_messages_count >
+                                                                0 ? (
+                                                                    <div className="absolute -right-1 -top-1 flex min-w-5 items-center justify-center rounded-full bg-[rgba(244,91,105,0.96)] px-1.5 py-0.5 text-[10px] font-semibold text-white shadow-[0_8px_18px_rgba(244,91,105,0.32)]">
+                                                                        {
+                                                                            conversation.unread_messages_count
+                                                                        }
+                                                                    </div>
+                                                                ) : null}
+                                                            </div>
+                                                        )}
+                                                        {!conversationRailCollapsed ? (
+                                                            <div className="min-w-0 flex-1">
+                                                                <div className="truncate text-[13px] font-semibold 2xl:text-sm">
+                                                                    {conversation.participant
+                                                                        ?.name ?? 'Unknown user'}
+                                                                </div>
+                                                                <div className="app-text-soft mt-1.5 truncate text-[13px] 2xl:mt-2 2xl:text-sm">
+                                                                    {conversation.latest_message
+                                                                        ?.sender?.id ===
+                                                                    auth.user.id
+                                                                        ? 'You: '
+                                                                        : ''}
+                                                                    {conversation.latest_message
+                                                                        ?.body ?? 'No messages yet'}
+                                                                </div>
+                                                            </div>
+                                                        ) : null}
+                                                    </div>
+                                                </Link>
+                                                {!conversationRailCollapsed ? (
+                                                    <div className="absolute right-3 top-3">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                openDeleteConversationModal(
+                                                                    conversation,
+                                                                )
+                                                            }
+                                                            disabled={isConversationBusy}
+                                                            className="text-current/75 inline-flex h-7 w-7 items-center justify-center rounded-full transition hover:bg-[rgba(244,91,105,0.14)] hover:text-rose-300 disabled:opacity-60 2xl:h-8 2xl:w-8"
+                                                            aria-label="Delete conversation"
+                                                        >
+                                                            <Trash2
+                                                                className="h-4 w-4"
+                                                                strokeWidth={1.9}
+                                                            />
+                                                        </button>
+                                                    </div>
+                                                ) : null}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </section>
 
