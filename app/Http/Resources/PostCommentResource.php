@@ -14,6 +14,8 @@ class PostCommentResource extends JsonResource
             'id' => $this->id,
             'parent_id' => $this->parent_id,
             'body' => $this->body,
+            'likes_count' => $this->likes_count ?? 0,
+            'is_liked' => $request->user() ? $this->likes->contains('user_id', $request->user()->id) : false,
             'created_at' => optional($this->created_at)->toIso8601String(),
             'user' => $this->relationLoaded('user') && $this->user
                 ? UserResource::make($this->user)->resolve($request)
@@ -47,6 +49,8 @@ class PostCommentResource extends JsonResource
                 'id' => $comment->id,
                 'parent_id' => $comment->parent_id,
                 'body' => $comment->body,
+                'likes_count' => $comment->likes_count ?? 0,
+                'is_liked' => $request->user() ? $comment->likes->contains('user_id', $request->user()->id) : false,
                 'created_at' => optional($comment->created_at)->toIso8601String(),
                 'user' => $comment->relationLoaded('user') && $comment->user
                     ? UserResource::make($comment->user)->resolve($request)

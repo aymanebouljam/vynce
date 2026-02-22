@@ -151,7 +151,7 @@ class FeedService
     private function baseQuery(User $user): Builder
     {
         return Post::query()
-            ->with(['user', 'media', 'comments.user', 'likes', 'reposts'])
+            ->with(['user', 'media', 'comments.user', 'comments.likes', 'likes', 'reposts'])
             ->whereNull('deleted_at')
             ->whereNotExists(function ($query) use ($user) {
                 $query->selectRaw('1')
