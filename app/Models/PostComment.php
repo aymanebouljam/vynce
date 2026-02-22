@@ -16,6 +16,7 @@ class PostComment extends Model
         'user_id',
         'parent_id',
         'body',
+        'likes_count',
     ];
 
     public function post(): BelongsTo
@@ -36,5 +37,10 @@ class PostComment extends Model
     public function children(): HasMany
     {
         return $this->hasMany(self::class, 'parent_id')->orderBy('created_at');
+    }
+
+    public function likes(): HasMany
+    {
+        return $this->hasMany(PostCommentLike::class);
     }
 }
