@@ -1,5 +1,6 @@
 import { Link, useForm, usePage } from '@inertiajs/react';
 import {
+    ChevronDown,
     ChevronLeft,
     ChevronRight,
     CornerDownRight,
@@ -340,10 +341,6 @@ export default function PostCard({
     };
 
     const deleteComment = async (comment) => {
-        if (!window.confirm('Delete this comment?')) {
-            return;
-        }
-
         const previousComments = localComments;
         const previousCount = commentsCount;
         const { nextComments, removedCount } = removeCommentBranch(previousComments, comment.id);
@@ -716,82 +713,58 @@ export default function PostCard({
 
                             {commentsOpen && (
                                 <div className="app-panel-inset mt-4 space-y-4 rounded-[24px] p-4">
-                                    <form onSubmit={submitComment} className="space-y-3">
-                                        <div className="flex items-center justify-between gap-3">
-                                            <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-[rgba(241,235,251,0.6)]">
-                                                Reply
-                                            </div>
-                                            {replyTarget ? (
-                                                <button
-                                                    type="button"
-                                                    onClick={cancelReply}
-                                                    className="app-text-soft text-xs font-medium hover:text-[rgba(241,235,251,0.95)]"
-                                                >
-                                                    Cancel reply
-                                                </button>
-                                            ) : null}
-                                        </div>
-
-                                        {replyTarget ? (
-                                            <div className="app-card-inset flex items-center gap-2 rounded-2xl px-3 py-2 text-sm">
-                                                <CornerDownRight className="h-4 w-4 text-[rgba(241,235,251,0.65)]" />
-                                                <span className="font-medium">
-                                                    Replying to {replyTarget.name}
-                                                </span>
-                                                {replyTarget.username ? (
-                                                    <span className="app-text-muted text-xs">
-                                                        @{replyTarget.username}
-                                                    </span>
-                                                ) : null}
-                                            </div>
-                                        ) : null}
-
-                                        <div className="flex items-start gap-3">
-                                            <textarea
-                                                value={commentForm.data.body}
-                                                onChange={(event) =>
-                                                    commentForm.setData('body', event.target.value)
-                                                }
-                                                className="field min-h-20 flex-1 resize-none text-sm"
-                                                placeholder={
-                                                    replyTarget
-                                                        ? `Reply to ${replyTarget.name}...`
-                                                        : 'Write a reply...'
-                                                }
-                                            />
-                                            <button
-                                                type="submit"
-                                                disabled={commentForm.processing}
-                                                className="app-button-primary inline-flex h-11 w-11 items-center justify-center rounded-full disabled:opacity-60"
-                                            >
-                                                <SendHorizontal
-                                                    className="h-4 w-4"
-                                                    strokeWidth={1.9}
-                                                />
-                                            </button>
-                                        </div>
-                                    </form>
-
-                                    {commentForm.errors.body && (
-                                        <div className="text-sm text-rose-300">
-                                            {commentForm.errors.body}
-                                        </div>
-                                    )}
-
                                     {localComments?.length > 0 ? (
                                         <div className="space-y-3">
                                             {renderCommentThreads(localComments, {
+                                                commentForm,
+                                                replyTarget,
                                                 onReply: startReply,
                                                 onToggleLove: toggleCommentLove,
                                                 onEdit: editComment,
                                                 onDelete: deleteComment,
                                                 currentUserId: auth?.user?.id ?? null,
+                                                onCancelReply: cancelReply,
+                                                onSubmit: submitComment,
+                                                onCommentChange: (value) =>
+                                                    commentForm.setData('body', value),
+                                                processing: commentForm.processing,
+                                                error: commentForm.errors.body,
                                             })}
+                                            {!replyTarget ? (
+                                                <CommentComposer
+                                                    form={commentForm}
+                                                    onSubmit={submitComment}
+                                                    onChange={(value) =>
+                                                        commentForm.setData('body', value)
+                                                    }
+                                                    onCancelReply={cancelReply}
+                                                    replyTarget={replyTarget}
+                                                    processing={commentForm.processing}
+                                                    error={commentForm.errors.body}
+                                                    placeholder="Write a comment..."
+                                                />
+                                            ) : null}
                                         </div>
                                     ) : (
-                                        <div className="app-text-soft text-sm">
-                                            No comments yet. Start the conversation.
-                                        </div>
+                                        <>
+                                            <div className="app-text-soft text-sm">
+                                                No comments yet. Start the conversation.
+                                            </div>
+                                            {!replyTarget ? (
+                                                <CommentComposer
+                                                    form={commentForm}
+                                                    onSubmit={submitComment}
+                                                    onChange={(value) =>
+                                                        commentForm.setData('body', value)
+                                                    }
+                                                    onCancelReply={cancelReply}
+                                                    replyTarget={replyTarget}
+                                                    processing={commentForm.processing}
+                                                    error={commentForm.errors.body}
+                                                    placeholder="Write a comment..."
+                                                />
+                                            ) : null}
+                                        </>
                                     )}
                                 </div>
                             )}
@@ -1078,10 +1051,37 @@ function CommentThread({ comment, handlers, depth = 0 }) {
     const canManage = handlers.currentUserId && handlers.currentUserId === comment.user?.id;
     const [isEditing, setIsEditing] = useState(false);
     const [draftBody, setDraftBody] = useState(comment.body ?? '');
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const menuButtonRef = useRef(null);
+    const menuPanelRef = useRef(null);
 
     useEffect(() => {
         setDraftBody(comment.body ?? '');
     }, [comment.body]);
+
+    useEffect(() => {
+        if (!menuOpen) {
+            return undefined;
+        }
+
+        const handleClickOutside = (event) => {
+            const clickedButton = menuButtonRef.current?.contains(event.target);
+            const clickedPanel = menuPanelRef.current?.contains(event.target);
+
+            if (!clickedButton && !clickedPanel) {
+                setMenuOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [menuOpen]);
+
+    const showComposer = handlers.replyTarget?.id === comment.id;
 
     return (
         <div className={`${indentClass} space-y-3`}>
@@ -1114,6 +1114,61 @@ function CommentThread({ comment, handlers, depth = 0 }) {
                                         {comment.user?.name ?? 'Unknown user'}
                                     </span>
                                 </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => handlers.onReply(comment)}
+                                    className="app-text-soft inline-flex items-center gap-1 text-xs font-medium hover:text-[rgba(241,235,251,0.95)]"
+                                >
+                                    <CornerDownRight className="h-3.5 w-3.5" />
+                                    Reply
+                                </button>
+
+                                {canManage ? (
+                                    <div className="relative">
+                                        <button
+                                            ref={menuButtonRef}
+                                            type="button"
+                                            onClick={() => setMenuOpen((open) => !open)}
+                                            className="app-button-secondary inline-flex h-8 w-8 items-center justify-center rounded-full"
+                                            aria-label="Comment options"
+                                        >
+                                            <ChevronDown className="h-4 w-4" strokeWidth={1.9} />
+                                        </button>
+
+                                        {menuOpen ? (
+                                            <div
+                                                ref={menuPanelRef}
+                                                className="app-panel-inset absolute right-0 top-10 z-20 w-40 rounded-2xl p-2 shadow-[var(--vynce-shadow-md)]"
+                                            >
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setMenuOpen(false);
+                                                        setIsEditing(true);
+                                                    }}
+                                                    className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm"
+                                                >
+                                                    <Pencil className="h-4 w-4" strokeWidth={1.9} />
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setMenuOpen(false);
+                                                        setDeleteConfirmOpen(true);
+                                                    }}
+                                                    className="app-nav-link flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-rose-200"
+                                                >
+                                                    <Trash2 className="h-4 w-4" strokeWidth={1.9} />
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        ) : null}
+                                    </div>
+                                ) : null}
                             </div>
                         </div>
 
@@ -1170,44 +1225,127 @@ function CommentThread({ comment, handlers, depth = 0 }) {
                                 />
                                 {comment.likes_count ?? 0}
                             </button>
-
-                            <button
-                                type="button"
-                                onClick={() => handlers.onReply(comment)}
-                                className="app-button-secondary rounded-full px-3 py-1 text-xs font-medium"
-                            >
-                                Reply
-                            </button>
-
-                            {canManage ? (
-                                <>
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsEditing(true)}
-                                        className="app-button-secondary rounded-full px-3 py-1 text-xs font-medium"
-                                    >
-                                        Edit
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => handlers.onDelete(comment)}
-                                        className="app-button-secondary rounded-full px-3 py-1 text-xs font-medium text-rose-200"
-                                    >
-                                        Delete
-                                    </button>
-                                </>
-                            ) : null}
                         </div>
                     </div>
 
                     {createdAt ? (
                         <div className="app-text-muted mt-2 px-1 text-[11px]">{createdAt}</div>
                     ) : null}
+
+                    {showComposer ? (
+                        <div className="mt-3">
+                            <CommentComposer
+                                form={handlers.commentForm}
+                                onSubmit={handlers.onSubmit}
+                                onChange={handlers.onCommentChange}
+                                onCancelReply={handlers.onCancelReply}
+                                replyTarget={handlers.replyTarget}
+                                processing={handlers.processing}
+                                error={handlers.error}
+                                placeholder={`Reply to ${handlers.replyTarget.name}...`}
+                                nested
+                            />
+                        </div>
+                    ) : null}
                 </div>
             </div>
 
             {replies.length > 0 ? renderCommentThreads(replies, handlers, depth + 1) : null}
+
+            <Modal
+                show={deleteConfirmOpen}
+                onClose={() => setDeleteConfirmOpen(false)}
+                maxWidth="md"
+            >
+                <div className="space-y-5 p-6">
+                    <div>
+                        <div className="text-lg font-semibold">Delete comment?</div>
+                        <p className="app-text-soft mt-2 text-sm leading-6">
+                            This will remove the comment and any replies under it.
+                        </p>
+                    </div>
+
+                    <div className="flex justify-end gap-3">
+                        <SecondaryButton
+                            type="button"
+                            onClick={() => setDeleteConfirmOpen(false)}
+                            className="rounded-full px-4 py-2 text-sm normal-case tracking-normal"
+                        >
+                            Cancel
+                        </SecondaryButton>
+                        <DangerButton
+                            type="button"
+                            onClick={async () => {
+                                setDeleteConfirmOpen(false);
+                                await handlers.onDelete(comment);
+                            }}
+                            className="rounded-full px-4 py-2 text-sm normal-case tracking-normal"
+                        >
+                            Delete
+                        </DangerButton>
+                    </div>
+                </div>
+            </Modal>
         </div>
+    );
+}
+
+function CommentComposer({
+    form,
+    onSubmit,
+    onChange,
+    onCancelReply,
+    replyTarget = null,
+    processing = false,
+    error = null,
+    placeholder = 'Write a comment...',
+    nested = false,
+}) {
+    return (
+        <form onSubmit={onSubmit} className={`space-y-3 ${nested ? 'pl-0' : ''}`}>
+            {replyTarget ? (
+                <div className="flex items-center justify-end gap-3">
+                    <button
+                        type="button"
+                        onClick={onCancelReply}
+                        className="app-text-soft text-xs font-medium hover:text-[rgba(241,235,251,0.95)]"
+                    >
+                        Cancel reply
+                    </button>
+                </div>
+            ) : null}
+
+            {replyTarget ? (
+                <div className="app-card-inset flex items-center gap-2 rounded-2xl px-3 py-2 text-sm">
+                    <CornerDownRight className="h-4 w-4 text-[rgba(241,235,251,0.65)]" />
+                    <span className="font-medium">Replying to {replyTarget.name}</span>
+                    {replyTarget.username ? (
+                        <span className="app-text-muted text-xs">@{replyTarget.username}</span>
+                    ) : null}
+                </div>
+            ) : null}
+
+            <div className={`relative ${nested ? 'ml-0' : ''}`}>
+                <textarea
+                    value={form.data.body}
+                    onChange={(event) => onChange(event.target.value)}
+                    className={`field min-h-24 resize-none pb-12 pr-14 text-sm ${
+                        nested ? 'app-panel-inset' : ''
+                    }`}
+                    placeholder={placeholder}
+                />
+                <button
+                    type="submit"
+                    disabled={processing}
+                    className="absolute bottom-3 right-3 inline-flex h-9 w-9 items-center justify-center rounded-full border border-transparent bg-transparent text-[rgba(241,235,251,0.88)] transition hover:bg-white/5 hover:text-white disabled:opacity-50"
+                    aria-label="Send comment"
+                >
+                    <SendHorizontal className="h-4 w-4" strokeWidth={2} />
+                </button>
+            </div>
+
+            {error ? <div className="text-sm text-rose-300">{error}</div> : null}
+        </form>
     );
 }
 
