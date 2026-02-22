@@ -41,8 +41,15 @@ export default function AppShell({ children, title, sidebar }) {
     const navModalSearchInputRef = useRef(null);
     const [notificationsOpen, setNotificationsOpen] = useState(false);
     const [requestsOpen, setRequestsOpen] = useState(false);
-    const pendingRequests = topbar?.pending_requests ?? [];
+    const [pendingRequests, setPendingRequests] = useState(topbar?.pending_requests ?? []);
     const pendingRequestsCount = topbar?.pending_requests_count ?? 0;
+    const [pendingRequestsPage, setPendingRequestsPage] = useState(
+        topbar?.pending_requests_page ?? 1,
+    );
+    const [pendingRequestsHasMore, setPendingRequestsHasMore] = useState(
+        topbar?.pending_requests_has_more ?? false,
+    );
+    const [pendingRequestsLoadingMore, setPendingRequestsLoadingMore] = useState(false);
     const unreadMessagesCount = topbar?.unread_messages_count ?? 0;
     const [notificationsCount, setNotificationsCount] = useState(topbar?.notifications_count ?? 0);
     const [notifications, setNotifications] = useState(topbar?.notifications ?? []);
@@ -52,6 +59,7 @@ export default function AppShell({ children, title, sidebar }) {
     );
     const [notificationsLoadingMore, setNotificationsLoadingMore] = useState(false);
     const [notificationConfirm, setNotificationConfirm] = useState(null);
+    const notificationsModalCloseable = !notificationConfirm;
     const sidebarMenuCount = notificationsCount + pendingRequestsCount + unreadMessagesCount;
 
     useEffect(() => {
@@ -140,11 +148,17 @@ export default function AppShell({ children, title, sidebar }) {
         setNotifications(topbar?.notifications ?? []);
         setNotificationsPage(topbar?.notifications_page ?? 1);
         setNotificationsHasMore(topbar?.notifications_has_more ?? false);
+        setPendingRequests(topbar?.pending_requests ?? []);
+        setPendingRequestsPage(topbar?.pending_requests_page ?? 1);
+        setPendingRequestsHasMore(topbar?.pending_requests_has_more ?? false);
     }, [
         topbar?.notifications,
         topbar?.notifications_count,
         topbar?.notifications_has_more,
         topbar?.notifications_page,
+        topbar?.pending_requests,
+        topbar?.pending_requests_has_more,
+        topbar?.pending_requests_page,
     ]);
 
     useEffect(() => {
@@ -247,6 +261,34 @@ export default function AppShell({ children, title, sidebar }) {
                     preserveScroll: true,
                     preserveState: true,
                 });
+            });
+    };
+
+    const loadMoreRequests = () => {
+        if (pendingRequestsLoadingMore || !pendingRequestsHasMore) {
+            return;
+        }
+
+        const nextPage = pendingRequestsPage + 1;
+        setPendingRequestsLoadingMore(true);
+
+        window.axios
+            .get(route('notifications.index'), {
+                params: {
+                    page: nextPage,
+                    category: 'requests',
+                },
+                headers: {
+                    Accept: 'application/json',
+                },
+            })
+            .then(({ data }) => {
+                setPendingRequests((current) => [...current, ...(data.notifications ?? [])]);
+                setPendingRequestsPage(data.page ?? nextPage);
+                setPendingRequestsHasMore(Boolean(data.has_more));
+            })
+            .finally(() => {
+                setPendingRequestsLoadingMore(false);
             });
     };
 
@@ -795,12 +837,20 @@ export default function AppShell({ children, title, sidebar }) {
                 </div>
             </Modal>
 
-            <Modal show={notificationsOpen} onClose={closeNotifications} maxWidth="lg" centered>
-                <div className="space-y-4 p-5 2xl:space-y-5 2xl:p-6">
+            <Modal
+                show={notificationsOpen}
+                onClose={closeNotifications}
+                closeable={notificationsModalCloseable}
+                maxWidth="md"
+                centered
+            >
+                <div className="space-y-3.5 p-4 2xl:space-y-5 2xl:p-6">
                     <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
-                            <div className="text-base font-semibold 2xl:text-lg">Notifications</div>
-                            <p className="app-text-soft mt-2 text-[13px] leading-5 2xl:text-sm 2xl:leading-6">
+                            <div className="text-[15px] font-semibold 2xl:text-lg">
+                                Notifications
+                            </div>
+                            <p className="app-text-soft mt-1.5 text-[12px] leading-5 2xl:mt-2 2xl:text-sm 2xl:leading-6">
                                 Recent activity across follows, comments, and other updates.
                             </p>
                         </div>
@@ -815,7 +865,7 @@ export default function AppShell({ children, title, sidebar }) {
                                         confirmLabel: 'Clear all',
                                     })
                                 }
-                                className="app-button-secondary inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 text-[12px] 2xl:text-[13px]"
+                                className="app-button-secondary inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 text-[12px] 2xl:px-3.5 2xl:py-2 2xl:text-[13px]"
                             >
                                 <Trash2 className="h-4 w-4" strokeWidth={1.9} />
                                 Clear all
@@ -823,45 +873,16 @@ export default function AppShell({ children, title, sidebar }) {
                         ) : null}
                     </div>
 
-                    {notificationConfirm ? (
-                        <div className="app-panel-inset flex items-center justify-between gap-3 rounded-[18px] px-4 py-3 2xl:rounded-[20px]">
-                            <div className="min-w-0">
-                                <div className="text-[13px] font-semibold 2xl:text-sm">
-                                    {notificationConfirm.title}
-                                </div>
-                                <div className="app-text-soft mt-1 text-[12px] leading-5 2xl:text-[13px]">
-                                    {notificationConfirm.body}
-                                </div>
-                            </div>
-                            <div className="flex shrink-0 items-center gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setNotificationConfirm(null)}
-                                    className="app-button-secondary rounded-full px-3 py-1.5 text-[12px] 2xl:text-[13px]"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={confirmNotificationAction}
-                                    className="app-button-primary rounded-full px-3 py-1.5 text-[12px] 2xl:text-[13px]"
-                                >
-                                    {notificationConfirm.confirmLabel}
-                                </button>
-                            </div>
-                        </div>
-                    ) : null}
-
                     {notifications.length === 0 ? (
-                        <div className="app-dashed-panel app-text-muted rounded-[20px] p-4 text-[13px] leading-5 2xl:rounded-[24px] 2xl:p-5 2xl:text-sm 2xl:leading-6">
+                        <div className="app-dashed-panel app-text-muted rounded-[20px] p-3.5 text-[12px] leading-5 2xl:rounded-[24px] 2xl:p-5 2xl:text-sm 2xl:leading-6">
                             You’re all caught up.
                         </div>
                     ) : (
-                        <div className="space-y-3 2xl:space-y-4">
+                        <div className="space-y-2.5 2xl:space-y-4">
                             {notifications.map((notification) => (
                                 <div
                                     key={notification.id}
-                                    className="app-card-inset flex items-start gap-3 rounded-[18px] p-3 transition hover:bg-[var(--vynce-surface-muted)] 2xl:rounded-2xl 2xl:p-4"
+                                    className="app-card-inset flex items-start gap-2.5 rounded-[18px] p-2.5 transition hover:bg-[var(--vynce-surface-muted)] 2xl:gap-3 2xl:rounded-2xl 2xl:p-4"
                                 >
                                     <button
                                         type="button"
@@ -874,7 +895,7 @@ export default function AppShell({ children, title, sidebar }) {
                                             <img
                                                 src={notification.actor.avatar_url}
                                                 alt={notification.actor.name}
-                                                className="h-11 w-11 rounded-[18px] object-cover 2xl:h-12 2xl:w-12 2xl:rounded-2xl"
+                                                className="h-10 w-10 rounded-[18px] object-cover 2xl:h-12 2xl:w-12 2xl:rounded-2xl"
                                                 style={{
                                                     objectPosition: `${notification.actor.avatar_position_x}% ${notification.actor.avatar_position_y}%`,
                                                     transform: `scale(${notification.actor.avatar_zoom})`,
@@ -882,17 +903,17 @@ export default function AppShell({ children, title, sidebar }) {
                                                 }}
                                             />
                                         ) : (
-                                            <div className="app-avatar-fallback flex h-11 w-11 items-center justify-center rounded-[18px] text-[12px] font-semibold 2xl:h-12 2xl:w-12 2xl:rounded-2xl">
+                                            <div className="app-avatar-fallback flex h-10 w-10 items-center justify-center rounded-[18px] text-[11px] font-semibold 2xl:h-12 2xl:w-12 2xl:rounded-2xl 2xl:text-[12px]">
                                                 {initialsFor(notification.actor?.name)}
                                             </div>
                                         )}
                                         <div className="min-w-0 flex-1">
-                                            <div className="flex items-start justify-between gap-3">
+                                            <div className="flex items-start justify-between gap-2.5">
                                                 <div className="min-w-0">
-                                                    <div className="truncate text-[13px] font-semibold 2xl:text-sm">
+                                                    <div className="truncate text-[12px] font-semibold 2xl:text-sm">
                                                         {notification.title}
                                                     </div>
-                                                    <div className="app-text-soft mt-1 text-[12px] leading-5 2xl:text-[13px]">
+                                                    <div className="app-text-soft mt-0.5 text-[11px] leading-5 2xl:mt-1 2xl:text-[13px]">
                                                         {notification.body}
                                                     </div>
                                                 </div>
@@ -900,7 +921,7 @@ export default function AppShell({ children, title, sidebar }) {
                                                     <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--vynce-accent)]" />
                                                 ) : null}
                                             </div>
-                                            <div className="app-text-muted mt-2 text-[11px] 2xl:text-xs">
+                                            <div className="app-text-muted mt-1.5 text-[10px] 2xl:mt-2 2xl:text-xs">
                                                 {notification.created_at_human}
                                             </div>
                                         </div>
@@ -918,7 +939,7 @@ export default function AppShell({ children, title, sidebar }) {
                                                 confirmLabel: 'Remove',
                                             });
                                         }}
-                                        className="app-text-muted inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition hover:bg-[var(--vynce-surface-muted)] hover:text-white"
+                                        className="app-text-muted inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition hover:bg-[var(--vynce-surface-muted)] hover:text-white 2xl:h-9 2xl:w-9"
                                         aria-label="Remove notification"
                                         title="Remove notification"
                                     >
@@ -932,7 +953,7 @@ export default function AppShell({ children, title, sidebar }) {
                                         type="button"
                                         onClick={loadMoreNotifications}
                                         disabled={notificationsLoadingMore}
-                                        className="app-button-secondary rounded-full px-4 py-2 text-[13px] disabled:opacity-60 2xl:text-sm"
+                                        className="app-button-secondary rounded-full px-3.5 py-1.5 text-[12px] disabled:opacity-60 2xl:px-4 2xl:py-2 2xl:text-sm"
                                     >
                                         {notificationsLoadingMore ? 'Loading...' : 'Load more'}
                                     </button>
@@ -944,43 +965,79 @@ export default function AppShell({ children, title, sidebar }) {
             </Modal>
 
             <Modal
-                show={requestsOpen}
-                onClose={() => setRequestsOpen(false)}
-                maxWidth="lg"
+                show={Boolean(notificationConfirm)}
+                onClose={() => setNotificationConfirm(null)}
+                maxWidth="md"
                 centered
             >
-                <div className="space-y-4 p-5 2xl:space-y-5 2xl:p-6">
+                {notificationConfirm ? (
+                    <div className="space-y-4 p-4 2xl:space-y-5 2xl:p-6">
+                        <div className="space-y-1.5">
+                            <div className="text-[15px] font-semibold 2xl:text-lg">
+                                {notificationConfirm.title}
+                            </div>
+                            <div className="app-text-soft text-[12px] leading-5 2xl:text-sm 2xl:leading-6">
+                                {notificationConfirm.body}
+                            </div>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setNotificationConfirm(null)}
+                                className="app-button-secondary rounded-full px-3.5 py-1.5 text-[12px] 2xl:px-4 2xl:py-2 2xl:text-sm"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={confirmNotificationAction}
+                                className="app-button-primary rounded-full px-3.5 py-1.5 text-[12px] 2xl:px-4 2xl:py-2 2xl:text-sm"
+                            >
+                                {notificationConfirm.confirmLabel}
+                            </button>
+                        </div>
+                    </div>
+                ) : null}
+            </Modal>
+
+            <Modal
+                show={requestsOpen}
+                onClose={() => setRequestsOpen(false)}
+                maxWidth="md"
+                centered
+            >
+                <div className="space-y-3.5 p-4 2xl:space-y-5 2xl:p-6">
                     <div>
-                        <div className="text-base font-semibold 2xl:text-lg">
+                        <div className="text-[15px] font-semibold 2xl:text-lg">
                             Friendship requests
                         </div>
-                        <p className="app-text-soft mt-2 text-[13px] leading-5 2xl:text-sm 2xl:leading-6">
+                        <p className="app-text-soft mt-1.5 text-[12px] leading-5 2xl:mt-2 2xl:text-sm 2xl:leading-6">
                             Review pending requests from people who want to connect with you.
                         </p>
                     </div>
 
                     {pendingRequests.length === 0 ? (
-                        <div className="app-dashed-panel app-text-muted rounded-[20px] p-4 text-[13px] leading-5 2xl:rounded-[24px] 2xl:p-5 2xl:text-sm 2xl:leading-6">
+                        <div className="app-dashed-panel app-text-muted rounded-[20px] p-3.5 text-[12px] leading-5 2xl:rounded-[24px] 2xl:p-5 2xl:text-sm 2xl:leading-6">
                             No pending friendship requests right now.
                         </div>
                     ) : (
-                        <div className="space-y-3 2xl:space-y-4">
+                        <div className="space-y-2.5 2xl:space-y-4">
                             {pendingRequests.map((person) => (
                                 <div
                                     key={person.id}
-                                    className="app-card-inset rounded-[18px] p-3 2xl:rounded-2xl 2xl:p-4"
+                                    className="app-card-inset rounded-[18px] p-2.5 2xl:rounded-2xl 2xl:p-4"
                                 >
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2.5">
                                         <Link
                                             href={route('users.show', person.username)}
                                             onClick={() => setRequestsOpen(false)}
-                                            className="flex min-w-0 flex-1 items-center gap-3 rounded-[18px] transition-opacity hover:opacity-80"
+                                            className="flex min-w-0 flex-1 items-center gap-2.5 rounded-[18px] transition-opacity hover:opacity-80"
                                         >
                                             {person.avatar_url ? (
                                                 <img
                                                     src={person.avatar_url}
                                                     alt={person.name}
-                                                    className="h-11 w-11 rounded-[18px] object-cover 2xl:h-12 2xl:w-12 2xl:rounded-2xl"
+                                                    className="h-10 w-10 rounded-[18px] object-cover 2xl:h-12 2xl:w-12 2xl:rounded-2xl"
                                                     style={{
                                                         objectPosition: `${person.avatar_position_x}% ${person.avatar_position_y}%`,
                                                         transform: `scale(${person.avatar_zoom})`,
@@ -988,21 +1045,21 @@ export default function AppShell({ children, title, sidebar }) {
                                                     }}
                                                 />
                                             ) : (
-                                                <div className="app-avatar-fallback flex h-11 w-11 items-center justify-center rounded-[18px] text-[12px] font-semibold 2xl:h-12 2xl:w-12 2xl:rounded-2xl">
+                                                <div className="app-avatar-fallback flex h-10 w-10 items-center justify-center rounded-[18px] text-[11px] font-semibold 2xl:h-12 2xl:w-12 2xl:rounded-2xl 2xl:text-[12px]">
                                                     {initialsFor(person.name)}
                                                 </div>
                                             )}
                                             <div className="min-w-0 flex-1">
-                                                <div className="truncate text-[13px] font-semibold 2xl:text-sm">
+                                                <div className="truncate text-[12px] font-semibold 2xl:text-sm">
                                                     {person.name}
                                                 </div>
-                                                <div className="app-text-soft truncate text-[11px] 2xl:text-xs">
+                                                <div className="app-text-soft truncate text-[10px] 2xl:text-xs">
                                                     @{person.username}
                                                 </div>
                                             </div>
                                         </Link>
 
-                                        <div className="flex gap-2">
+                                        <div className="flex gap-1.5">
                                             <Link
                                                 href={route(
                                                     'users.friend-requests.accept',
@@ -1010,7 +1067,7 @@ export default function AppShell({ children, title, sidebar }) {
                                                 )}
                                                 method="post"
                                                 as="button"
-                                                className="app-button-primary rounded-full px-3 py-1.5 text-[11px] font-semibold 2xl:py-2 2xl:text-xs"
+                                                className="app-button-primary rounded-full px-3 py-1.5 text-[11px] font-semibold 2xl:px-3.5 2xl:py-2 2xl:text-xs"
                                             >
                                                 Accept
                                             </Link>
@@ -1021,7 +1078,7 @@ export default function AppShell({ children, title, sidebar }) {
                                                 )}
                                                 method="delete"
                                                 as="button"
-                                                className="app-button-secondary rounded-full px-3 py-1.5 text-[11px] 2xl:py-2 2xl:text-xs"
+                                                className="app-button-secondary rounded-full px-3 py-1.5 text-[11px] 2xl:px-3.5 2xl:py-2 2xl:text-xs"
                                             >
                                                 Refuse
                                             </Link>
@@ -1029,6 +1086,18 @@ export default function AppShell({ children, title, sidebar }) {
                                     </div>
                                 </div>
                             ))}
+                            {pendingRequestsHasMore ? (
+                                <div className="flex justify-center pt-1">
+                                    <button
+                                        type="button"
+                                        onClick={loadMoreRequests}
+                                        disabled={pendingRequestsLoadingMore}
+                                        className="app-button-secondary rounded-full px-3.5 py-1.5 text-[12px] disabled:opacity-60 2xl:px-4 2xl:py-2 2xl:text-sm"
+                                    >
+                                        {pendingRequestsLoadingMore ? 'Loading...' : 'Load more'}
+                                    </button>
+                                </div>
+                            ) : null}
                         </div>
                     )}
                 </div>

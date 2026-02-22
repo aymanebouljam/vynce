@@ -28,12 +28,7 @@ export default function Modal({
     return (
         <Transition show={show} leave="duration-200">
             <Portal>
-                <Dialog
-                    as="div"
-                    id="modal"
-                    className="fixed inset-0 isolate z-[240]"
-                    onClose={close}
-                >
+                <Dialog as="div" className="fixed inset-0 isolate z-[240]" onClose={close}>
                     <TransitionChild
                         enter="ease-out duration-300"
                         enterFrom="opacity-0"
