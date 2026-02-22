@@ -232,4 +232,48 @@ class PostTest extends TestCase
         $this->assertCount(1, $serialized['comments'][0]['replies']);
         $this->assertSame('Nested reply.', $serialized['comments'][0]['replies'][0]['body']);
     }
+
+    public function test_users_can_love_edit_and_delete_comments(): void
+    {
+        $author = User::factory()->create();
+        $commentOwner = User::factory()->create();
+        $viewer = User::factory()->create();
+        $post = Post::factory()->for($author)->create([
+            'visibility' => 'public',
+            'comments_count' => 0,
+        ]);
+
+        $this->actingAs($commentOwner)
+            ->post(route('posts.comments.store', $post), [
+                'body' => 'Comment to manage.',
+            ])
+            ->assertRedirect();
+
+        $comment = PostComment::query()->first();
+
+        $this->actingAs($viewer)
+            ->postJson(route('posts.comments.likes.toggle', [$post, $comment]))
+            ->assertOk()
+            ->assertJsonPath('liked', true)
+            ->assertJsonPath('likes_count', 1);
+
+        $this->actingAs($commentOwner)
+            ->patchJson(route('posts.comments.update', [$post, $comment]), [
+                'body' => 'Updated comment body.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('comment.body', 'Updated comment body.');
+
+        $this->actingAs($commentOwner)
+            ->deleteJson(route('posts.comments.destroy', [$post, $comment]))
+            ->assertOk()
+            ->assertJsonPath('deleted_count', 1);
+
+        $post->refresh();
+
+        $this->assertSame(0, $post->comments_count);
+        $this->assertDatabaseMissing('post_comments', [
+            'id' => $comment->id,
+        ]);
+    }
 }
