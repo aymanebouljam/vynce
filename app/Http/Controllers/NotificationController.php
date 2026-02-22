@@ -10,7 +10,7 @@ use Illuminate\Notifications\DatabaseNotification;
 
 class NotificationController extends Controller
 {
-    private const PER_PAGE = 8;
+    private const PER_PAGE = 4;
 
     private const REQUEST_TYPES = ['friend_request'];
 

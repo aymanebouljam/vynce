@@ -20,12 +20,15 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
-        $notificationLimit = 8;
+        $notificationLimit = 4;
         $notifications = $user
             ? NotificationController::queryForCategory(
                 $user->notifications()->latest(),
                 'bell',
             )->limit($notificationLimit)->get()
+            : collect();
+        $pendingRequests = $user
+            ? $user->pendingFriendRequests()->with('requester')->latest()->limit($notificationLimit)->get()
             : collect();
 
         return [
@@ -35,10 +38,10 @@ class HandleInertiaRequests extends Middleware
             ],
             'topbar' => $user ? [
                 'pending_requests' => UserResource::collection(
-                    $user->pendingFriendRequests()->with('requester')->latest()->limit(6)->get()
-                        ->pluck('requester'),
+                    $pendingRequests->pluck('requester'),
                 )->resolve(),
                 'pending_requests_count' => $user->pendingFriendRequests()->count(),
+                'pending_requests_has_more' => $user->pendingFriendRequests()->count() > $notificationLimit,
                 'unread_messages_count' => Message::query()
                     ->join('conversations', 'messages.conversation_id', '=', 'conversations.id')
                     ->join('conversation_participants', 'conversations.id', '=', 'conversation_participants.conversation_id')

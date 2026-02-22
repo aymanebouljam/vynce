@@ -208,6 +208,30 @@ class TopbarNotificationTest extends TestCase
         $this->actingAs($user)
             ->getJson(route('notifications.index', ['page' => 2, 'category' => 'bell']))
             ->assertOk()
+            ->assertJsonCount(4, 'notifications')
+            ->assertJson([
+                'page' => 2,
+                'has_more' => true,
+            ]);
+    }
+
+    public function test_friend_request_notifications_are_paginated(): void
+    {
+        $recipient = User::factory()->create();
+
+        foreach (range(1, 5) as $index) {
+            $requester = User::factory()->create([
+                'username' => "requester-{$index}",
+            ]);
+
+            $this->actingAs($requester)
+                ->post(route('users.friend-requests.store', $recipient))
+                ->assertRedirect();
+        }
+
+        $this->actingAs($recipient)
+            ->getJson(route('notifications.index', ['page' => 2, 'category' => 'requests']))
+            ->assertOk()
             ->assertJsonCount(1, 'notifications')
             ->assertJson([
                 'page' => 2,
