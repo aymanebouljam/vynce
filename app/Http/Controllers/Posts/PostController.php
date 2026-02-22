@@ -42,7 +42,7 @@ class PostController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'post' => PostResource::make(
-                    $post->fresh(['user', 'media', 'comments.user', 'likes', 'reposts']),
+                    $post->fresh(['user', 'media', 'comments.user', 'comments.likes', 'likes', 'reposts']),
                 )->resolve($request),
             ]);
         }

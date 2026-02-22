@@ -63,6 +63,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/posts/{post}/likes/toggle', [PostEngagementController::class, 'toggleLike'])->middleware('throttle:60,1')->name('posts.likes.toggle');
     Route::post('/posts/{post}/reposts/toggle', [PostEngagementController::class, 'toggleRepost'])->middleware('throttle:60,1')->name('posts.reposts.toggle');
     Route::post('/posts/{post}/comments', [PostEngagementController::class, 'storeComment'])->middleware('throttle:60,1')->name('posts.comments.store');
+    Route::post('/posts/{post}/comments/{comment}/likes/toggle', [PostEngagementController::class, 'toggleCommentLove'])->middleware('throttle:60,1')->name('posts.comments.likes.toggle');
+    Route::patch('/posts/{post}/comments/{comment}', [PostEngagementController::class, 'updateComment'])->middleware('throttle:30,1')->name('posts.comments.update');
+    Route::delete('/posts/{post}/comments/{comment}', [PostEngagementController::class, 'destroyComment'])->middleware('throttle:30,1')->name('posts.comments.destroy');
 
     Route::post('/users/{user}/follow', [FollowController::class, 'store'])->middleware('throttle:60,1')->name('users.follow');
     Route::delete('/users/{user}/follow', [FollowController::class, 'destroy'])->middleware('throttle:60,1')->name('users.unfollow');
