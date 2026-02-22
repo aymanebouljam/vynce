@@ -1439,7 +1439,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                 <textarea
                                     value={draft}
                                     onChange={(event) => setDraft(event.target.value)}
-                                    className="field app-scrollbar-hidden min-h-24 w-full resize-none overflow-y-auto pb-12 pr-14 text-[13px] 2xl:pb-14 2xl:pr-16 2xl:text-sm"
+                                    className="field app-scrollbar-hidden min-h-24 w-full resize-none overflow-y-auto pb-5 pr-14 text-[13px] 2xl:pb-18 2xl:pr-16 2xl:text-sm"
                                     placeholder={`Message ${displayedConversation.participant?.name}...`}
                                 />
                                 {draftAttachment && (
@@ -1485,7 +1485,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                         )}
                                     </div>
                                 )}
-                                <div className="absolute bottom-3 left-3 flex items-center gap-2">
+                                <div className="absolute bottom-4 left-3 flex items-center gap-2">
                                     <button
                                         type="button"
                                         onClick={() => imageInputRef.current?.click()}
@@ -1506,7 +1506,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                 <button
                                     type="submit"
                                     disabled={isSending || (!draft.trim() && !draftAttachment)}
-                                    className="app-button-primary absolute bottom-3.5 right-3 inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full disabled:opacity-60 2xl:bottom-4 2xl:h-10 2xl:w-10"
+                                    className="app-button-primary absolute bottom-5 right-3 inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full disabled:opacity-60 2xl:bottom-6 2xl:h-10 2xl:w-10"
                                     aria-label="Send message"
                                 >
                                     <SendHorizonal className="h-4 w-4" strokeWidth={1.9} />
