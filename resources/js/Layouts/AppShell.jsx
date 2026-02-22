@@ -19,6 +19,7 @@ import Modal from '@/Components/Modal';
 
 export default function AppShell({ children, title, sidebar }) {
     const { auth, topbar } = usePage().props;
+    const sidebarWidthClass = 'min-[1246px]:w-64 2xl:w-72';
     const ownProfileActive =
         route().current('users.show') && route().params.user === auth.user.username;
     const ownFriendsActive =
@@ -453,7 +454,9 @@ export default function AppShell({ children, title, sidebar }) {
 
             <div className="app-page-shell min-h-screen">
                 <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-6 px-4 py-6 min-[1246px]:flex-row min-[1246px]:px-6">
-                    <aside className="min-[1246px]:sticky min-[1246px]:top-6 min-[1246px]:h-[calc(100vh-3rem)] min-[1246px]:w-64 2xl:w-72">
+                    <aside
+                        className={`min-[1246px]:sticky min-[1246px]:top-6 min-[1246px]:h-[calc(100vh-3rem)] ${sidebarWidthClass}`}
+                    >
                         <div className="app-panel-strong flex h-full flex-col gap-5 rounded-[28px] p-4 backdrop-blur min-[1246px]:pb-6 2xl:gap-6 2xl:rounded-[32px] 2xl:p-5 2xl:pb-7">
                             <div className="space-y-1.5 2xl:space-y-2">
                                 <div className="flex items-center justify-between gap-3">
@@ -597,10 +600,14 @@ export default function AppShell({ children, title, sidebar }) {
 
                     <main className="min-w-0 flex-1 space-y-6">{children}</main>
 
-                    {sidebar && (
-                        <aside className="min-[1246px]:sticky min-[1246px]:top-6 min-[1246px]:h-fit min-[1246px]:w-80">
+                    {sidebar ? (
+                        <aside
+                            className={`min-[1246px]:sticky min-[1246px]:top-6 min-[1246px]:h-fit ${sidebarWidthClass}`}
+                        >
                             {sidebar}
                         </aside>
+                    ) : (
+                        <div className={`hidden ${sidebarWidthClass}`} aria-hidden="true" />
                     )}
                 </div>
             </div>
@@ -727,9 +734,10 @@ export default function AppShell({ children, title, sidebar }) {
                         </div>
                     </div>
 
-                    {sidebar ? (
-                        <div className="hidden min-[1246px]:block min-[1246px]:w-80" />
-                    ) : null}
+                    <div
+                        className={`hidden min-[1246px]:block ${sidebarWidthClass}`}
+                        aria-hidden="true"
+                    />
                 </div>
             </Modal>
 
@@ -844,7 +852,7 @@ export default function AppShell({ children, title, sidebar }) {
                 maxWidth="md"
                 centered
             >
-                <div className="space-y-3.5 p-4 2xl:space-y-5 2xl:p-6">
+                <div className="flex max-h-[80vh] flex-col gap-3.5 p-4 2xl:gap-5 2xl:p-6">
                     <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
                             <div className="text-[15px] font-semibold 2xl:text-lg">
@@ -873,94 +881,96 @@ export default function AppShell({ children, title, sidebar }) {
                         ) : null}
                     </div>
 
-                    {notifications.length === 0 ? (
-                        <div className="app-dashed-panel app-text-muted rounded-[20px] p-3.5 text-[12px] leading-5 2xl:rounded-[24px] 2xl:p-5 2xl:text-sm 2xl:leading-6">
-                            You’re all caught up.
-                        </div>
-                    ) : (
-                        <div className="space-y-2.5 2xl:space-y-4">
-                            {notifications.map((notification) => (
-                                <div
-                                    key={notification.id}
-                                    className="app-card-inset flex items-start gap-2.5 rounded-[18px] p-2.5 transition hover:bg-[var(--vynce-surface-muted)] 2xl:gap-3 2xl:rounded-2xl 2xl:p-4"
-                                >
-                                    <button
-                                        type="button"
-                                        onClick={(event) =>
-                                            visitNotification(event, notification.href)
-                                        }
-                                        className="flex min-w-0 flex-1 items-start gap-3 text-left"
+                    <div className="app-scrollbar-hidden min-h-0 flex-1 overflow-y-auto pr-1">
+                        {notifications.length === 0 ? (
+                            <div className="app-dashed-panel app-text-muted rounded-[20px] p-3.5 text-[12px] leading-5 2xl:rounded-[24px] 2xl:p-5 2xl:text-sm 2xl:leading-6">
+                                You’re all caught up.
+                            </div>
+                        ) : (
+                            <div className="space-y-2.5 2xl:space-y-4">
+                                {notifications.map((notification) => (
+                                    <div
+                                        key={notification.id}
+                                        className="app-card-inset flex items-start gap-2.5 rounded-[18px] p-2.5 transition hover:bg-[var(--vynce-surface-muted)] 2xl:gap-3 2xl:rounded-2xl 2xl:p-4"
                                     >
-                                        {notification.actor?.avatar_url ? (
-                                            <img
-                                                src={notification.actor.avatar_url}
-                                                alt={notification.actor.name}
-                                                className="h-10 w-10 rounded-[18px] object-cover 2xl:h-12 2xl:w-12 2xl:rounded-2xl"
-                                                style={{
-                                                    objectPosition: `${notification.actor.avatar_position_x}% ${notification.actor.avatar_position_y}%`,
-                                                    transform: `scale(${notification.actor.avatar_zoom})`,
-                                                    transformOrigin: `${notification.actor.avatar_position_x}% ${notification.actor.avatar_position_y}%`,
-                                                }}
-                                            />
-                                        ) : (
-                                            <div className="app-avatar-fallback flex h-10 w-10 items-center justify-center rounded-[18px] text-[11px] font-semibold 2xl:h-12 2xl:w-12 2xl:rounded-2xl 2xl:text-[12px]">
-                                                {initialsFor(notification.actor?.name)}
-                                            </div>
-                                        )}
-                                        <div className="min-w-0 flex-1">
-                                            <div className="flex items-start justify-between gap-2.5">
-                                                <div className="min-w-0">
-                                                    <div className="truncate text-[12px] font-semibold 2xl:text-sm">
-                                                        {notification.title}
-                                                    </div>
-                                                    <div className="app-text-soft mt-0.5 text-[11px] leading-5 2xl:mt-1 2xl:text-[13px]">
-                                                        {notification.body}
-                                                    </div>
+                                        <button
+                                            type="button"
+                                            onClick={(event) =>
+                                                visitNotification(event, notification.href)
+                                            }
+                                            className="flex min-w-0 flex-1 items-start gap-3 text-left"
+                                        >
+                                            {notification.actor?.avatar_url ? (
+                                                <img
+                                                    src={notification.actor.avatar_url}
+                                                    alt={notification.actor.name}
+                                                    className="h-10 w-10 rounded-[18px] object-cover 2xl:h-12 2xl:w-12 2xl:rounded-2xl"
+                                                    style={{
+                                                        objectPosition: `${notification.actor.avatar_position_x}% ${notification.actor.avatar_position_y}%`,
+                                                        transform: `scale(${notification.actor.avatar_zoom})`,
+                                                        transformOrigin: `${notification.actor.avatar_position_x}% ${notification.actor.avatar_position_y}%`,
+                                                    }}
+                                                />
+                                            ) : (
+                                                <div className="app-avatar-fallback flex h-10 w-10 items-center justify-center rounded-[18px] text-[11px] font-semibold 2xl:h-12 2xl:w-12 2xl:rounded-2xl 2xl:text-[12px]">
+                                                    {initialsFor(notification.actor?.name)}
                                                 </div>
-                                                {!notification.read_at ? (
-                                                    <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--vynce-accent)]" />
-                                                ) : null}
+                                            )}
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-start justify-between gap-2.5">
+                                                    <div className="min-w-0">
+                                                        <div className="truncate text-[12px] font-semibold 2xl:text-sm">
+                                                            {notification.title}
+                                                        </div>
+                                                        <div className="app-text-soft mt-0.5 text-[11px] leading-5 2xl:mt-1 2xl:text-[13px]">
+                                                            {notification.body}
+                                                        </div>
+                                                    </div>
+                                                    {!notification.read_at ? (
+                                                        <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--vynce-accent)]" />
+                                                    ) : null}
+                                                </div>
+                                                <div className="app-text-muted mt-1.5 text-[10px] 2xl:mt-2 2xl:text-xs">
+                                                    {notification.created_at_human}
+                                                </div>
                                             </div>
-                                            <div className="app-text-muted mt-1.5 text-[10px] 2xl:mt-2 2xl:text-xs">
-                                                {notification.created_at_human}
-                                            </div>
-                                        </div>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={(event) => {
-                                            event.preventDefault();
-                                            event.stopPropagation();
-                                            setNotificationConfirm({
-                                                type: 'remove_one',
-                                                notificationId: notification.id,
-                                                title: 'Remove this notification?',
-                                                body: 'This item will be removed from your notifications list.',
-                                                confirmLabel: 'Remove',
-                                            });
-                                        }}
-                                        className="app-text-muted inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition hover:bg-[var(--vynce-surface-muted)] hover:text-white 2xl:h-9 2xl:w-9"
-                                        aria-label="Remove notification"
-                                        title="Remove notification"
-                                    >
-                                        <X className="h-4 w-4" strokeWidth={1.9} />
-                                    </button>
-                                </div>
-                            ))}
-                            {notificationsHasMore ? (
-                                <div className="flex justify-center pt-1">
-                                    <button
-                                        type="button"
-                                        onClick={loadMoreNotifications}
-                                        disabled={notificationsLoadingMore}
-                                        className="app-button-secondary rounded-full px-3.5 py-1.5 text-[12px] disabled:opacity-60 2xl:px-4 2xl:py-2 2xl:text-sm"
-                                    >
-                                        {notificationsLoadingMore ? 'Loading...' : 'Load more'}
-                                    </button>
-                                </div>
-                            ) : null}
-                        </div>
-                    )}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={(event) => {
+                                                event.preventDefault();
+                                                event.stopPropagation();
+                                                setNotificationConfirm({
+                                                    type: 'remove_one',
+                                                    notificationId: notification.id,
+                                                    title: 'Remove this notification?',
+                                                    body: 'This item will be removed from your notifications list.',
+                                                    confirmLabel: 'Remove',
+                                                });
+                                            }}
+                                            className="app-text-muted inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition hover:bg-[var(--vynce-surface-muted)] hover:text-white 2xl:h-9 2xl:w-9"
+                                            aria-label="Remove notification"
+                                            title="Remove notification"
+                                        >
+                                            <X className="h-4 w-4" strokeWidth={1.9} />
+                                        </button>
+                                    </div>
+                                ))}
+                                {notificationsHasMore ? (
+                                    <div className="flex justify-center pt-1">
+                                        <button
+                                            type="button"
+                                            onClick={loadMoreNotifications}
+                                            disabled={notificationsLoadingMore}
+                                            className="app-button-secondary rounded-full px-3.5 py-1.5 text-[12px] disabled:opacity-60 2xl:px-4 2xl:py-2 2xl:text-sm"
+                                        >
+                                            {notificationsLoadingMore ? 'Loading...' : 'Load more'}
+                                        </button>
+                                    </div>
+                                ) : null}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </Modal>
 
@@ -1006,7 +1016,7 @@ export default function AppShell({ children, title, sidebar }) {
                 maxWidth="md"
                 centered
             >
-                <div className="space-y-3.5 p-4 2xl:space-y-5 2xl:p-6">
+                <div className="flex max-h-[80vh] flex-col gap-3.5 p-4 2xl:gap-5 2xl:p-6">
                     <div>
                         <div className="text-[15px] font-semibold 2xl:text-lg">
                             Friendship requests
@@ -1016,90 +1026,94 @@ export default function AppShell({ children, title, sidebar }) {
                         </p>
                     </div>
 
-                    {pendingRequests.length === 0 ? (
-                        <div className="app-dashed-panel app-text-muted rounded-[20px] p-3.5 text-[12px] leading-5 2xl:rounded-[24px] 2xl:p-5 2xl:text-sm 2xl:leading-6">
-                            No pending friendship requests right now.
-                        </div>
-                    ) : (
-                        <div className="space-y-2.5 2xl:space-y-4">
-                            {pendingRequests.map((person) => (
-                                <div
-                                    key={person.id}
-                                    className="app-card-inset rounded-[18px] p-2.5 2xl:rounded-2xl 2xl:p-4"
-                                >
-                                    <div className="flex items-center gap-2.5">
-                                        <Link
-                                            href={route('users.show', person.username)}
-                                            onClick={() => setRequestsOpen(false)}
-                                            className="flex min-w-0 flex-1 items-center gap-2.5 rounded-[18px] transition-opacity hover:opacity-80"
-                                        >
-                                            {person.avatar_url ? (
-                                                <img
-                                                    src={person.avatar_url}
-                                                    alt={person.name}
-                                                    className="h-10 w-10 rounded-[18px] object-cover 2xl:h-12 2xl:w-12 2xl:rounded-2xl"
-                                                    style={{
-                                                        objectPosition: `${person.avatar_position_x}% ${person.avatar_position_y}%`,
-                                                        transform: `scale(${person.avatar_zoom})`,
-                                                        transformOrigin: `${person.avatar_position_x}% ${person.avatar_position_y}%`,
-                                                    }}
-                                                />
-                                            ) : (
-                                                <div className="app-avatar-fallback flex h-10 w-10 items-center justify-center rounded-[18px] text-[11px] font-semibold 2xl:h-12 2xl:w-12 2xl:rounded-2xl 2xl:text-[12px]">
-                                                    {initialsFor(person.name)}
+                    <div className="app-scrollbar-hidden min-h-0 flex-1 overflow-y-auto pr-1">
+                        {pendingRequests.length === 0 ? (
+                            <div className="app-dashed-panel app-text-muted rounded-[20px] p-3.5 text-[12px] leading-5 2xl:rounded-[24px] 2xl:p-5 2xl:text-sm 2xl:leading-6">
+                                No pending friendship requests right now.
+                            </div>
+                        ) : (
+                            <div className="space-y-2.5 2xl:space-y-4">
+                                {pendingRequests.map((person) => (
+                                    <div
+                                        key={person.id}
+                                        className="app-card-inset rounded-[18px] p-2.5 2xl:rounded-2xl 2xl:p-4"
+                                    >
+                                        <div className="flex items-center gap-2.5">
+                                            <Link
+                                                href={route('users.show', person.username)}
+                                                onClick={() => setRequestsOpen(false)}
+                                                className="flex min-w-0 flex-1 items-center gap-2.5 rounded-[18px] transition-opacity hover:opacity-80"
+                                            >
+                                                {person.avatar_url ? (
+                                                    <img
+                                                        src={person.avatar_url}
+                                                        alt={person.name}
+                                                        className="h-10 w-10 rounded-[18px] object-cover 2xl:h-12 2xl:w-12 2xl:rounded-2xl"
+                                                        style={{
+                                                            objectPosition: `${person.avatar_position_x}% ${person.avatar_position_y}%`,
+                                                            transform: `scale(${person.avatar_zoom})`,
+                                                            transformOrigin: `${person.avatar_position_x}% ${person.avatar_position_y}%`,
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <div className="app-avatar-fallback flex h-10 w-10 items-center justify-center rounded-[18px] text-[11px] font-semibold 2xl:h-12 2xl:w-12 2xl:rounded-2xl 2xl:text-[12px]">
+                                                        {initialsFor(person.name)}
+                                                    </div>
+                                                )}
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="truncate text-[12px] font-semibold 2xl:text-sm">
+                                                        {person.name}
+                                                    </div>
+                                                    <div className="app-text-soft truncate text-[10px] 2xl:text-xs">
+                                                        @{person.username}
+                                                    </div>
                                                 </div>
-                                            )}
-                                            <div className="min-w-0 flex-1">
-                                                <div className="truncate text-[12px] font-semibold 2xl:text-sm">
-                                                    {person.name}
-                                                </div>
-                                                <div className="app-text-soft truncate text-[10px] 2xl:text-xs">
-                                                    @{person.username}
-                                                </div>
-                                            </div>
-                                        </Link>
+                                            </Link>
 
-                                        <div className="flex gap-1.5">
-                                            <Link
-                                                href={route(
-                                                    'users.friend-requests.accept',
-                                                    person.id,
-                                                )}
-                                                method="post"
-                                                as="button"
-                                                className="app-button-primary rounded-full px-3 py-1.5 text-[11px] font-semibold 2xl:px-3.5 2xl:py-2 2xl:text-xs"
-                                            >
-                                                Accept
-                                            </Link>
-                                            <Link
-                                                href={route(
-                                                    'users.friend-requests.reject',
-                                                    person.id,
-                                                )}
-                                                method="delete"
-                                                as="button"
-                                                className="app-button-secondary rounded-full px-3 py-1.5 text-[11px] 2xl:px-3.5 2xl:py-2 2xl:text-xs"
-                                            >
-                                                Refuse
-                                            </Link>
+                                            <div className="flex gap-1.5">
+                                                <Link
+                                                    href={route(
+                                                        'users.friend-requests.accept',
+                                                        person.id,
+                                                    )}
+                                                    method="post"
+                                                    as="button"
+                                                    className="app-button-primary rounded-full px-3 py-1.5 text-[11px] font-semibold 2xl:px-3.5 2xl:py-2 2xl:text-xs"
+                                                >
+                                                    Accept
+                                                </Link>
+                                                <Link
+                                                    href={route(
+                                                        'users.friend-requests.reject',
+                                                        person.id,
+                                                    )}
+                                                    method="delete"
+                                                    as="button"
+                                                    className="app-button-secondary rounded-full px-3 py-1.5 text-[11px] 2xl:px-3.5 2xl:py-2 2xl:text-xs"
+                                                >
+                                                    Refuse
+                                                </Link>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
-                            {pendingRequestsHasMore ? (
-                                <div className="flex justify-center pt-1">
-                                    <button
-                                        type="button"
-                                        onClick={loadMoreRequests}
-                                        disabled={pendingRequestsLoadingMore}
-                                        className="app-button-secondary rounded-full px-3.5 py-1.5 text-[12px] disabled:opacity-60 2xl:px-4 2xl:py-2 2xl:text-sm"
-                                    >
-                                        {pendingRequestsLoadingMore ? 'Loading...' : 'Load more'}
-                                    </button>
-                                </div>
-                            ) : null}
-                        </div>
-                    )}
+                                ))}
+                                {pendingRequestsHasMore ? (
+                                    <div className="flex justify-center pt-1">
+                                        <button
+                                            type="button"
+                                            onClick={loadMoreRequests}
+                                            disabled={pendingRequestsLoadingMore}
+                                            className="app-button-secondary rounded-full px-3.5 py-1.5 text-[12px] disabled:opacity-60 2xl:px-4 2xl:py-2 2xl:text-sm"
+                                        >
+                                            {pendingRequestsLoadingMore
+                                                ? 'Loading...'
+                                                : 'Load more'}
+                                        </button>
+                                    </div>
+                                ) : null}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </Modal>
         </>
