@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Posts;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Posts\StoreCommentRequest;
+use App\Http\Requests\Posts\UpdateCommentRequest;
 use App\Models\Post;
+use App\Models\PostComment;
 use App\Notifications\DatabaseActivityNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class PostEngagementController extends Controller
@@ -153,5 +156,115 @@ class PostEngagementController extends Controller
         });
 
         return back();
+    }
+
+    public function toggleCommentLove(Post $post, PostComment $comment): RedirectResponse|JsonResponse
+    {
+        $this->authorize('view', $post);
+
+        abort_unless($comment->post_id === $post->id, 404);
+
+        $liked = DB::transaction(function () use ($comment) {
+            $userId = request()->user()->id;
+            $like = $comment->likes()->where('user_id', $userId)->first();
+
+            if ($like) {
+                $like->delete();
+                $comment->decrement('likes_count');
+
+                return false;
+            }
+
+            $comment->likes()->create([
+                'user_id' => $userId,
+            ]);
+            $comment->increment('likes_count');
+
+            return true;
+        });
+
+        $comment->refresh();
+
+        if (request()->expectsJson()) {
+            return response()->json([
+                'liked' => $liked,
+                'likes_count' => $comment->likes_count,
+            ]);
+        }
+
+        return back();
+    }
+
+    public function updateComment(
+        UpdateCommentRequest $request,
+        Post $post,
+        PostComment $comment,
+    ): RedirectResponse|JsonResponse {
+        $this->authorize('view', $post);
+        abort_unless($comment->post_id === $post->id, 404);
+        abort_unless($comment->user_id === $request->user()->id, 403);
+
+        $comment->update([
+            'body' => $request->string('body')->toString(),
+        ]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'comment' => [
+                    'id' => $comment->id,
+                    'body' => $comment->body,
+                    'likes_count' => $comment->likes_count ?? 0,
+                    'is_liked' => $comment->relationLoaded('likes')
+                        ? $comment->likes->contains('user_id', $request->user()->id)
+                        : $comment->likes()->where('user_id', $request->user()->id)->exists(),
+                ],
+            ]);
+        }
+
+        return back();
+    }
+
+    public function destroyComment(
+        Request $request,
+        Post $post,
+        PostComment $comment,
+    ): RedirectResponse|JsonResponse {
+        $this->authorize('view', $post);
+        abort_unless($comment->post_id === $post->id, 404);
+        abort_unless($comment->user_id === $request->user()->id, 403);
+
+        $deletedCount = $this->countCommentBranch($post->id, $comment->id);
+
+        DB::transaction(function () use ($comment, $post, $deletedCount) {
+            $comment->delete();
+            $post->decrement('comments_count', $deletedCount);
+        });
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'comment_id' => $comment->id,
+                'deleted_count' => $deletedCount,
+            ]);
+        }
+
+        return back();
+    }
+
+    private function countCommentBranch(int $postId, int $commentId): int
+    {
+        $count = 0;
+        $pending = [$commentId];
+
+        while ($pending !== []) {
+            $count += count($pending);
+
+            $pending = PostComment::query()
+                ->where('post_id', $postId)
+                ->whereIn('parent_id', $pending)
+                ->pluck('id')
+                ->all();
+        }
+
+        return $count;
     }
 }
