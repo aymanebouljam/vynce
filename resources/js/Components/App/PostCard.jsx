@@ -39,6 +39,7 @@ export default function PostCard({
     const [isReposted, setIsReposted] = useState(post.is_reposted);
     const [repostsCount, setRepostsCount] = useState(post.reposts_count ?? 0);
     const [commentsCount, setCommentsCount] = useState(post.comments_count ?? 0);
+    const [localComments, setLocalComments] = useState(post.comments ?? []);
     const [liking, setLiking] = useState(false);
     const [reposting, setReposting] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
@@ -94,6 +95,10 @@ export default function PostCard({
     useEffect(() => {
         setSelectedVisibility(post.visibility);
     }, [post.id, post.visibility]);
+
+    useEffect(() => {
+        setLocalComments(post.comments ?? []);
+    }, [post.id, post.comments]);
 
     useEffect(() => {
         setViewerIndex(null);
@@ -267,6 +272,95 @@ export default function PostCard({
     const cancelReply = () => {
         setReplyTarget(null);
         commentForm.setData('parent_id', null);
+    };
+
+    const toggleCommentLove = async (comment) => {
+        const previousComments = localComments;
+
+        setLocalComments((current) =>
+            updateCommentTree(current, comment.id, (item) => ({
+                ...item,
+                is_liked: !item.is_liked,
+                likes_count: Math.max(0, (item.likes_count ?? 0) + (item.is_liked ? -1 : 1)),
+            })),
+        );
+
+        try {
+            const { data } = await window.axios.post(
+                route('posts.comments.likes.toggle', [post.id, comment.id]),
+                null,
+                {
+                    headers: {
+                        Accept: 'application/json',
+                    },
+                },
+            );
+
+            setLocalComments((current) =>
+                updateCommentTree(current, comment.id, (item) => ({
+                    ...item,
+                    is_liked: data.liked,
+                    likes_count: data.likes_count,
+                })),
+            );
+        } catch {
+            setLocalComments(previousComments);
+        }
+    };
+
+    const editComment = async (commentId, body) => {
+        const nextBody = body.trim();
+
+        if (!nextBody) {
+            return;
+        }
+
+        const previousComments = localComments;
+
+        setLocalComments((current) =>
+            updateCommentTree(current, commentId, (item) => ({
+                ...item,
+                body: nextBody,
+            })),
+        );
+
+        try {
+            await window.axios.patch(
+                route('posts.comments.update', [post.id, commentId]),
+                { body: nextBody },
+                {
+                    headers: {
+                        Accept: 'application/json',
+                    },
+                },
+            );
+        } catch {
+            setLocalComments(previousComments);
+        }
+    };
+
+    const deleteComment = async (comment) => {
+        if (!window.confirm('Delete this comment?')) {
+            return;
+        }
+
+        const previousComments = localComments;
+        const previousCount = commentsCount;
+        const { nextComments, removedCount } = removeCommentBranch(previousComments, comment.id);
+
+        setLocalComments(nextComments);
+        setCommentsCount((count) => Math.max(0, count - removedCount));
+
+        try {
+            await window.axios.delete(route('posts.comments.destroy', [post.id, comment.id]), {
+                headers: {
+                    Accept: 'application/json',
+                },
+            });
+        } catch {
+            setLocalComments(previousComments);
+            setCommentsCount(previousCount);
+        }
     };
 
     const toggleLike = async () => {
@@ -684,9 +778,15 @@ export default function PostCard({
                                         </div>
                                     )}
 
-                                    {post.comments?.length > 0 ? (
+                                    {localComments?.length > 0 ? (
                                         <div className="space-y-3">
-                                            {renderCommentThreads(post.comments, startReply)}
+                                            {renderCommentThreads(localComments, {
+                                                onReply: startReply,
+                                                onToggleLove: toggleCommentLove,
+                                                onEdit: editComment,
+                                                onDelete: deleteComment,
+                                                currentUserId: auth?.user?.id ?? null,
+                                            })}
                                         </div>
                                     ) : (
                                         <div className="app-text-soft text-sm">
@@ -914,53 +1014,256 @@ function postMediaTransformStyle(media) {
     };
 }
 
-function renderCommentThreads(comments, onReply, depth = 0) {
+function formatRelativeTime(value) {
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return null;
+    }
+
+    const diffMs = Date.now() - date.getTime();
+    const diffSeconds = Math.floor(diffMs / 1000);
+
+    if (diffSeconds < 60) {
+        return `${Math.max(1, diffSeconds)}s`;
+    }
+
+    const diffMinutes = Math.floor(diffSeconds / 60);
+
+    if (diffMinutes < 60) {
+        return `${diffMinutes}m`;
+    }
+
+    const diffHours = Math.floor(diffMinutes / 60);
+
+    if (diffHours < 24) {
+        return `${diffHours}h`;
+    }
+
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffDays < 30) {
+        return `${diffDays}d`;
+    }
+
+    const diffMonths = Math.floor(diffDays / 30);
+
+    if (diffMonths < 12) {
+        return `${diffMonths}M`;
+    }
+
+    const diffYears = Math.floor(diffMonths / 12);
+
+    return `${diffYears}y`;
+}
+
+function renderCommentThreads(threads, handlers, depth = 0) {
+    const comments = Array.isArray(threads) ? threads : [];
+
     return comments.map((comment) => (
-        <CommentThread key={comment.id} comment={comment} onReply={onReply} depth={depth} />
+        <CommentThread key={comment.id} comment={comment} handlers={handlers} depth={depth} />
     ));
 }
 
-function CommentThread({ comment, onReply, depth = 0 }) {
+function CommentThread({ comment, handlers, depth = 0 }) {
     const indentClass = depth > 0 ? 'ml-5 border-l border-white/10 pl-4' : '';
-    const createdAt = comment.created_at ? new Date(comment.created_at).toLocaleString() : null;
+    const createdAt = comment.created_at ? formatRelativeTime(comment.created_at) : null;
     const replies = comment.replies ?? [];
+    const avatarFallback = comment.user?.name
+        ?.split(' ')
+        .map((part) => part[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase();
+    const canManage = handlers.currentUserId && handlers.currentUserId === comment.user?.id;
+    const [isEditing, setIsEditing] = useState(false);
+    const [draftBody, setDraftBody] = useState(comment.body ?? '');
+
+    useEffect(() => {
+        setDraftBody(comment.body ?? '');
+    }, [comment.body]);
 
     return (
         <div className={`${indentClass} space-y-3`}>
-            <div className="app-card-inset rounded-2xl px-4 py-3">
-                <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2 text-sm">
-                            <span className="font-semibold">
-                                {comment.user?.name ?? 'Unknown user'}
-                            </span>
-                            {comment.user?.username && (
-                                <span className="app-text-muted text-xs">
-                                    @{comment.user.username}
-                                </span>
-                            )}
+            <div className="flex items-start gap-3">
+                <div className="shrink-0">
+                    {comment.user?.avatar_url ? (
+                        <img
+                            src={comment.user.avatar_url}
+                            alt={comment.user?.name ?? 'Unknown user'}
+                            className="h-9 w-9 rounded-2xl object-cover"
+                            style={{
+                                objectPosition: `${comment.user.avatar_position_x}% ${comment.user.avatar_position_y}%`,
+                                transform: `scale(${comment.user.avatar_zoom})`,
+                                transformOrigin: `${comment.user.avatar_position_x}% ${comment.user.avatar_position_y}%`,
+                            }}
+                        />
+                    ) : (
+                        <div className="app-avatar-fallback flex h-9 w-9 items-center justify-center rounded-2xl text-[11px] font-semibold">
+                            {avatarFallback ?? 'US'}
                         </div>
-                        {createdAt ? (
-                            <div className="app-text-muted mt-1 text-[11px]">{createdAt}</div>
-                        ) : null}
-                    </div>
-
-                    <button
-                        type="button"
-                        onClick={() => onReply(comment)}
-                        className="app-text-soft inline-flex items-center gap-1 text-xs font-medium hover:text-[rgba(241,235,251,0.95)]"
-                    >
-                        <CornerDownRight className="h-3.5 w-3.5" />
-                        Reply
-                    </button>
+                    )}
                 </div>
 
-                <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6">
-                    {comment.body}
-                </p>
+                <div className="min-w-0 flex-1">
+                    <div className="app-panel-muted rounded-2xl px-4 py-3">
+                        <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2 text-sm">
+                                    <span className="font-semibold">
+                                        {comment.user?.name ?? 'Unknown user'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {isEditing ? (
+                            <div className="mt-3 space-y-3">
+                                <textarea
+                                    value={draftBody}
+                                    onChange={(event) => setDraftBody(event.target.value)}
+                                    className="field min-h-24 resize-none text-sm"
+                                />
+
+                                <div className="flex items-center justify-end gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setDraftBody(comment.body ?? '');
+                                            setIsEditing(false);
+                                        }}
+                                        className="app-button-secondary rounded-full px-3 py-1.5 text-xs"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={async () => {
+                                            await handlers.onEdit(comment.id, draftBody);
+                                            setIsEditing(false);
+                                        }}
+                                        className="app-button-primary rounded-full px-3 py-1.5 text-xs"
+                                    >
+                                        Save
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6">
+                                {comment.body}
+                            </p>
+                        )}
+
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => handlers.onToggleLove(comment)}
+                                className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${
+                                    comment.is_liked
+                                        ? 'border border-rose-400/30 bg-rose-500/15 text-rose-100'
+                                        : 'app-button-secondary'
+                                }`}
+                            >
+                                <Heart
+                                    className={`h-3.5 w-3.5 ${comment.is_liked ? 'fill-current text-rose-400' : ''}`}
+                                    strokeWidth={1.9}
+                                />
+                                {comment.likes_count ?? 0}
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => handlers.onReply(comment)}
+                                className="app-button-secondary rounded-full px-3 py-1 text-xs font-medium"
+                            >
+                                Reply
+                            </button>
+
+                            {canManage ? (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsEditing(true)}
+                                        className="app-button-secondary rounded-full px-3 py-1 text-xs font-medium"
+                                    >
+                                        Edit
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handlers.onDelete(comment)}
+                                        className="app-button-secondary rounded-full px-3 py-1 text-xs font-medium text-rose-200"
+                                    >
+                                        Delete
+                                    </button>
+                                </>
+                            ) : null}
+                        </div>
+                    </div>
+
+                    {createdAt ? (
+                        <div className="app-text-muted mt-2 px-1 text-[11px]">{createdAt}</div>
+                    ) : null}
+                </div>
             </div>
 
-            {replies.length > 0 ? renderCommentThreads(replies, onReply, depth + 1) : null}
+            {replies.length > 0 ? renderCommentThreads(replies, handlers, depth + 1) : null}
         </div>
+    );
+}
+
+function updateCommentTree(comments, commentId, updater) {
+    return comments.map((comment) => {
+        if (comment.id === commentId) {
+            return updater(comment);
+        }
+
+        if (!comment.replies?.length) {
+            return comment;
+        }
+
+        return {
+            ...comment,
+            replies: updateCommentTree(comment.replies, commentId, updater),
+        };
+    });
+}
+
+function removeCommentBranch(comments, commentId) {
+    let removedCount = 0;
+
+    const nextComments = comments.flatMap((comment) => {
+        if (comment.id === commentId) {
+            removedCount += countCommentBranch(comment);
+            return [];
+        }
+
+        if (!comment.replies?.length) {
+            return [comment];
+        }
+
+        const result = removeCommentBranch(comment.replies, commentId);
+        removedCount += result.removedCount;
+
+        if (result.removedCount === 0) {
+            return [comment];
+        }
+
+        return [
+            {
+                ...comment,
+                replies: result.nextComments,
+            },
+        ];
+    });
+
+    return {
+        nextComments,
+        removedCount,
+    };
+}
+
+function countCommentBranch(comment) {
+    return (
+        1 + (comment.replies ?? []).reduce((count, reply) => count + countCommentBranch(reply), 0)
     );
 }
