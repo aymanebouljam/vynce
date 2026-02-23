@@ -8,6 +8,7 @@ use App\Http\Requests\Posts\StorePostRequest;
 use App\Http\Requests\Posts\UpdatePostRequest;
 use App\Http\Resources\PostResource;
 use App\Models\Post;
+use App\Services\Notifications\MentionNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -17,10 +18,17 @@ class PostController extends Controller
     public function store(
         StorePostRequest $request,
         CreatePostAction $createPostAction,
+        MentionNotificationService $mentionNotificationService,
     ): RedirectResponse {
         $this->authorize('create', Post::class);
 
         $post = $createPostAction->execute($request->user(), $request->validated());
+
+        $mentionNotificationService->notifyPostMentions(
+            $request->user(),
+            $post->fresh(['user']),
+            $request->string('body')->toString(),
+        );
 
         return back()->with('new_post_id', $post->id);
     }

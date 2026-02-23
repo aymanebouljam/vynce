@@ -7,7 +7,9 @@ use App\Http\Requests\Posts\StoreCommentRequest;
 use App\Http\Requests\Posts\UpdateCommentRequest;
 use App\Models\Post;
 use App\Models\PostComment;
+use App\Models\User;
 use App\Notifications\DatabaseActivityNotification;
+use App\Services\Notifications\MentionNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,8 +20,9 @@ class PostEngagementController extends Controller
     public function toggleLike(Post $post): RedirectResponse|JsonResponse
     {
         $this->authorize('view', $post);
+        $actor = request()->user();
 
-        $liked = DB::transaction(function () use ($post) {
+        $liked = DB::transaction(function () use ($post, $actor) {
             $like = $post->likes()->where('user_id', request()->user()->id)->first();
 
             if ($like) {
@@ -33,6 +36,20 @@ class PostEngagementController extends Controller
                 'user_id' => request()->user()->id,
             ]);
             $post->increment('likes_count');
+            $post->loadMissing('user');
+
+            if (! $post->user->is(request()->user())) {
+                $post->user->notify(new DatabaseActivityNotification([
+                    'type' => 'like',
+                    'title' => "{$actor->name} liked your post",
+                    'body' => str($post->body)->limit(100)->toString(),
+                    'href' => route('users.show', [
+                        'user' => $actor->username,
+                        'post' => $post->id,
+                    ]),
+                    'actor' => $this->actorPayload($actor),
+                ]));
+            }
 
             return true;
         });
@@ -52,8 +69,9 @@ class PostEngagementController extends Controller
     public function toggleRepost(Post $post): RedirectResponse|JsonResponse
     {
         $this->authorize('view', $post);
+        $actor = request()->user();
 
-        $reposted = DB::transaction(function () use ($post) {
+        $reposted = DB::transaction(function () use ($post, $actor) {
             $repost = $post->reposts()->where('user_id', request()->user()->id)->first();
 
             if ($repost) {
@@ -67,6 +85,20 @@ class PostEngagementController extends Controller
                 'user_id' => request()->user()->id,
             ]);
             $post->increment('reposts_count');
+            $post->loadMissing('user');
+
+            if (! $post->user->is(request()->user())) {
+                $post->user->notify(new DatabaseActivityNotification([
+                    'type' => 'repost',
+                    'title' => "{$actor->name} reposted your post",
+                    'body' => str($post->body)->limit(100)->toString(),
+                    'href' => route('users.show', [
+                        'user' => $actor->username,
+                        'post' => $post->id,
+                    ]),
+                    'actor' => $this->actorPayload($actor),
+                ]));
+            }
 
             return true;
         });
@@ -86,8 +118,9 @@ class PostEngagementController extends Controller
     public function storeComment(StoreCommentRequest $request, Post $post): RedirectResponse
     {
         $this->authorize('view', $post);
+        $mentionNotificationService = app(MentionNotificationService::class);
 
-        DB::transaction(function () use ($request, $post) {
+        DB::transaction(function () use ($request, $post, $mentionNotificationService) {
             $parentComment = null;
 
             if ($request->filled('parent_id')) {
@@ -129,6 +162,13 @@ class PostEngagementController extends Controller
                     ],
                 ]));
             }
+
+            $mentionNotificationService->notifyCommentMentions(
+                $request->user(),
+                $post,
+                $comment,
+                $comment->body,
+            );
 
             if ($parentComment && $parentComment->user && ! $parentComment->user->is($request->user()) && ! $parentComment->user->is($post->user)) {
                 $parentComment->user->notify(new DatabaseActivityNotification([
@@ -266,5 +306,20 @@ class PostEngagementController extends Controller
         }
 
         return $count;
+    }
+
+    private function actorPayload(User $user): array
+    {
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'username' => $user->username,
+            'avatar_url' => $user->avatar_path
+                ? route('media.public', ['path' => $user->avatar_path])
+                : null,
+            'avatar_position_x' => $user->avatar_position_x ?? 50,
+            'avatar_position_y' => $user->avatar_position_y ?? 50,
+            'avatar_zoom' => $user->avatar_zoom ?? 1,
+        ];
     }
 }
