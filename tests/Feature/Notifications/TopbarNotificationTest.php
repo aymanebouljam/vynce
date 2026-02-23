@@ -73,6 +73,99 @@ class TopbarNotificationTest extends TestCase
                     ->count() === 1));
     }
 
+    public function test_likes_and_reposts_create_bell_notifications_for_the_post_owner(): void
+    {
+        $owner = User::factory()->create([
+            'username' => 'owner-user',
+        ]);
+        $actor = User::factory()->create();
+        $post = Post::factory()->for($owner)->create([
+            'visibility' => 'public',
+        ]);
+
+        $this->actingAs($actor)
+            ->post(route('posts.likes.toggle', $post))
+            ->assertRedirect();
+
+        $this->actingAs($actor)
+            ->post(route('posts.reposts.toggle', $post))
+            ->assertRedirect();
+
+        $this->actingAs($owner)
+            ->get(route('feed.home'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('topbar.notifications_count', 2)
+                ->where('topbar.notifications', fn ($notifications) => collect($notifications)
+                    ->pluck('type')
+                    ->intersect(['like', 'repost'])
+                    ->count() === 2));
+
+        $this->assertSame(
+            route('users.show', [
+                'user' => $actor->username,
+                'post' => $post->id,
+            ]),
+            $owner->fresh()->notifications()->where('data->type', 'repost')->firstOrFail()->data['href'],
+        );
+    }
+
+    public function test_mentions_in_posts_and_comments_create_bell_notifications_with_deep_links(): void
+    {
+        $postAuthor = User::factory()->create([
+            'username' => 'post_author',
+        ]);
+        $postMentioned = User::factory()->create([
+            'username' => 'post_mentioned',
+        ]);
+        $commentMentioned = User::factory()->create([
+            'username' => 'comment_mentioned',
+        ]);
+        $commentAuthor = User::factory()->create([
+            'username' => 'comment_author',
+        ]);
+        $post = Post::factory()->for($postAuthor)->create([
+            'visibility' => 'public',
+        ]);
+
+        $this->actingAs($commentAuthor)
+            ->post(route('posts.store'), [
+                'body' => 'Shout out to @post_mentioned on this one.',
+                'visibility' => 'public',
+            ])
+            ->assertRedirect();
+
+        $createdPost = Post::query()->latest('id')->firstOrFail();
+
+        $this->actingAs($commentAuthor)
+            ->post(route('posts.comments.store', $post), [
+                'body' => 'Hello @comment_mentioned, check this out.',
+            ])
+            ->assertRedirect();
+
+        $createdComment = $post->comments()->latest('id')->firstOrFail();
+
+        $this->assertSame(1, $postMentioned->fresh()->notifications()->count());
+        $this->assertSame(1, $commentMentioned->fresh()->notifications()->count());
+
+        $this->assertSame(
+            route('users.show', [
+                'user' => $createdPost->user->username,
+                'post' => $createdPost->id,
+            ]),
+            $postMentioned->fresh()->notifications()->firstOrFail()->data['href'],
+        );
+
+        $this->assertSame(
+            route('users.show', [
+                'user' => $postAuthor->username,
+                'post' => $post->id,
+                'comments' => 1,
+                'comment_id' => $createdComment->id,
+            ]),
+            $commentMentioned->fresh()->notifications()->firstOrFail()->data['href'],
+        );
+    }
+
     public function test_receiving_a_message_updates_message_and_notification_badges(): void
     {
         $sender = User::factory()->create();

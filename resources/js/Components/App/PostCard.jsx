@@ -27,6 +27,7 @@ export default function PostCard({
     profileRepostLabel = null,
     highlighted = false,
     openCommentsByDefault = false,
+    targetCommentId = null,
 }) {
     const { auth } = usePage().props;
     const authorName = post.user?.name ?? 'Unknown user';
@@ -108,6 +109,19 @@ export default function PostCard({
     useEffect(() => {
         setCommentsOpen(openCommentsByDefault);
     }, [openCommentsByDefault, post.id]);
+
+    useEffect(() => {
+        if (!commentsOpen || !targetCommentId || typeof document === 'undefined') {
+            return;
+        }
+
+        window.requestAnimationFrame(() => {
+            document.getElementById(`comment-${targetCommentId}`)?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+            });
+        });
+    }, [commentsOpen, targetCommentId, localComments]);
 
     useEffect(() => {
         setReplyTarget(null);
@@ -729,6 +743,7 @@ export default function PostCard({
                                                     commentForm.setData('body', value),
                                                 processing: commentForm.processing,
                                                 error: commentForm.errors.body,
+                                                targetCommentId,
                                             })}
                                             {!replyTarget ? (
                                                 <CommentComposer
@@ -1034,11 +1049,17 @@ function renderCommentThreads(threads, handlers, depth = 0) {
     const comments = Array.isArray(threads) ? threads : [];
 
     return comments.map((comment) => (
-        <CommentThread key={comment.id} comment={comment} handlers={handlers} depth={depth} />
+        <CommentThread
+            key={comment.id}
+            comment={comment}
+            handlers={handlers}
+            depth={depth}
+            targetCommentId={handlers.targetCommentId}
+        />
     ));
 }
 
-function CommentThread({ comment, handlers, depth = 0 }) {
+function CommentThread({ comment, handlers, depth = 0, targetCommentId = null }) {
     const indentClass = depth > 0 ? 'ml-5 border-l border-white/10 pl-4' : '';
     const createdAt = comment.created_at ? formatRelativeTime(comment.created_at) : null;
     const replies = comment.replies ?? [];
@@ -1055,10 +1076,24 @@ function CommentThread({ comment, handlers, depth = 0 }) {
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const menuButtonRef = useRef(null);
     const menuPanelRef = useRef(null);
+    const isTargetComment = targetCommentId === comment.id;
 
     useEffect(() => {
         setDraftBody(comment.body ?? '');
     }, [comment.body]);
+
+    useEffect(() => {
+        if (!isTargetComment || typeof document === 'undefined') {
+            return;
+        }
+
+        window.requestAnimationFrame(() => {
+            document.getElementById(`comment-${comment.id}`)?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+            });
+        });
+    }, [isTargetComment, comment.id]);
 
     useEffect(() => {
         if (!menuOpen) {
@@ -1084,7 +1119,12 @@ function CommentThread({ comment, handlers, depth = 0 }) {
     const showComposer = handlers.replyTarget?.id === comment.id;
 
     return (
-        <div className={`${indentClass} space-y-3`}>
+        <div
+            id={`comment-${comment.id}`}
+            className={`${indentClass} space-y-3 ${
+                isTargetComment ? 'border-l-2 border-[rgba(120,88,166,0.35)] pl-4' : ''
+            }`}
+        >
             <div className="flex items-start gap-3">
                 <div className="shrink-0">
                     {comment.user?.avatar_url ? (
@@ -1106,7 +1146,7 @@ function CommentThread({ comment, handlers, depth = 0 }) {
                 </div>
 
                 <div className="min-w-0 flex-1">
-                    <div className="app-panel-muted rounded-2xl px-4 py-2.5">
+                    <div className="app-panel-muted mb-1.5 rounded-2xl px-4 py-2.5">
                         <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
                                 <div className="flex flex-wrap items-center gap-2 text-sm">

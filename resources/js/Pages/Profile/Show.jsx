@@ -43,6 +43,7 @@ export default function Show({ profile, relationship, feed, suggestions = [] }) 
     const newPostId = flash?.new_post_id;
     const [targetPostId, setTargetPostId] = useState(null);
     const [targetCommentsOpen, setTargetCommentsOpen] = useState(false);
+    const [targetCommentId, setTargetCommentId] = useState(null);
     const [composerOpen, setComposerOpen] = useState(false);
     const [avatarManagerOpen, setAvatarManagerOpen] = useState(false);
     const [coverManagerOpen, setCoverManagerOpen] = useState(false);
@@ -67,11 +68,17 @@ export default function Show({ profile, relationship, feed, suggestions = [] }) 
 
         const search = new URLSearchParams(window.location.search);
         const requestedPostId = Number(search.get('post'));
+        const requestedCommentId = Number(search.get('comment_id'));
 
         setTargetPostId(
             Number.isFinite(requestedPostId) && requestedPostId > 0 ? requestedPostId : null,
         );
-        setTargetCommentsOpen(search.get('comments') === '1');
+        setTargetCommentId(
+            Number.isFinite(requestedCommentId) && requestedCommentId > 0
+                ? requestedCommentId
+                : null,
+        );
+        setTargetCommentsOpen(search.get('comments') === '1' || Boolean(requestedCommentId));
     }, [pageUrl]);
 
     const submitFollow = () => {
@@ -511,6 +518,7 @@ export default function Show({ profile, relationship, feed, suggestions = [] }) 
                                 openCommentsByDefault={
                                     targetCommentsOpen && targetPostId === post.id
                                 }
+                                targetCommentId={targetPostId === post.id ? targetCommentId : null}
                                 profileRepostLabel={
                                     isOwnProfile ? 'Reposted' : `Reposted by @${profile.username}`
                                 }
