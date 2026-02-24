@@ -40,6 +40,24 @@ class ConversationTest extends TestCase
         $this->assertSame('Hey, want to compare launch notes?', $message->body);
     }
 
+    public function test_recipient_can_see_new_direct_conversation_in_the_inbox(): void
+    {
+        $sender = User::factory()->create();
+        $recipient = User::factory()->create();
+        $conversationService = app(ConversationService::class);
+
+        $conversation = $conversationService->startDirect($sender, $recipient);
+        $conversationService->sendMessage($sender, $conversation, 'Hello Julia.');
+
+        $this->actingAs($recipient)
+            ->get(route('messages.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('conversations.0.id', $conversation->id)
+                ->where('conversations.0.latest_message.body', 'Hello Julia.')
+                ->where('conversations.0.participant.id', $sender->id));
+    }
+
     public function test_blocked_users_cannot_start_direct_conversations(): void
     {
         $sender = User::factory()->create();
