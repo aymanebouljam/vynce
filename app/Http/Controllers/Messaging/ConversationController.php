@@ -37,13 +37,20 @@ class ConversationController extends Controller
         Conversation $conversation,
         ConversationService $conversationService,
         SocialGraphService $socialGraphService,
-    ): Response {
+    ): Response|JsonResponse {
         $this->authorize('view', $conversation);
 
         $user = request()->user();
         $conversations = $conversationService->inbox($user);
         $activeConversation = $conversationService->threadFor($user, $conversation);
         $contacts = $this->messageableContacts($user, $socialGraphService);
+
+        if (request()->expectsJson()) {
+            return response()->json([
+                'conversation' => ConversationResource::make($activeConversation)->resolve(),
+                'messages' => MessageResource::collection($activeConversation->messages)->resolve(),
+            ]);
+        }
 
         return Inertia::render(
             'Messages/Index',

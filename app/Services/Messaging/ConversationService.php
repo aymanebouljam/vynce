@@ -20,26 +20,20 @@ class ConversationService
 
     public function inbox(User $user): Collection
     {
-        $conversations = $user->conversations()
-            ->with(['participants', 'latestMessage.sender'])
-            ->withCount([
-                'messages as unread_messages_count' => function ($query) use ($user) {
-                    $query->where('messages.user_id', '!=', $user->id)
-                        ->where(function ($query) {
-                            $query->whereNull('conversation_participants.last_read_at')
-                                ->orWhereColumn('messages.created_at', '>', 'conversation_participants.last_read_at');
-                        });
-                },
-            ])
-            ->orderByDesc('latest_message_at')
-            ->orderByDesc('conversations.updated_at')
-            ->get();
+        $conversations = $this->recentConversations($user);
 
         if ($conversations->isNotEmpty()) {
             $this->markAsReceived($user, $conversations->modelKeys());
         }
 
         return $conversations;
+    }
+
+    public function recentConversations(User $user, int $limit = 4): Collection
+    {
+        return $this->conversationQuery($user)
+            ->limit($limit)
+            ->get();
     }
 
     public function startDirect(User $actor, User $target): Conversation
@@ -232,6 +226,23 @@ class ConversationService
         sort($ids);
 
         return sprintf('direct:%d:%d', $ids[0], $ids[1]);
+    }
+
+    private function conversationQuery(User $user)
+    {
+        return $user->conversations()
+            ->with(['participants', 'latestMessage.sender'])
+            ->withCount([
+                'messages as unread_messages_count' => function ($query) use ($user) {
+                    $query->where('messages.user_id', '!=', $user->id)
+                        ->where(function ($query) {
+                            $query->whereNull('conversation_participants.last_read_at')
+                                ->orWhereColumn('messages.created_at', '>', 'conversation_participants.last_read_at');
+                        });
+                },
+            ])
+            ->orderByDesc('latest_message_at')
+            ->orderByDesc('conversations.updated_at');
     }
 
     private function attachmentAttributes(?UploadedFile $attachment): array

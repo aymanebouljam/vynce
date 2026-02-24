@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Feed;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ConversationResource;
 use App\Http\Resources\PostResource;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Services\Feed\FeedService;
+use App\Services\Messaging\ConversationService;
 use App\Services\SocialGraph\SocialGraphService;
 use App\Support\InertiaPaginatedData;
 use Illuminate\Http\JsonResponse;
@@ -16,13 +18,19 @@ use Inertia\Response;
 
 class FeedController extends Controller
 {
-    public function home(FeedService $feedService, SocialGraphService $socialGraphService): Response
-    {
+    public function home(
+        FeedService $feedService,
+        SocialGraphService $socialGraphService,
+        ConversationService $conversationService,
+    ): Response {
         $feed = $feedService->home(request()->user());
 
         return Inertia::render('Feed/Home', [
             'feed' => InertiaPaginatedData::fromPaginator($feed, PostResource::class),
             'activeTab' => 'home',
+            'messages' => ConversationResource::collection(
+                $conversationService->recentConversations(request()->user()),
+            )->resolve(),
             'pendingRequests' => UserResource::collection(
                 $socialGraphService->pendingRequests(request()->user()),
             )->resolve(),
@@ -32,13 +40,19 @@ class FeedController extends Controller
         ]);
     }
 
-    public function following(FeedService $feedService, SocialGraphService $socialGraphService): Response
-    {
+    public function following(
+        FeedService $feedService,
+        SocialGraphService $socialGraphService,
+        ConversationService $conversationService,
+    ): Response {
         $feed = $feedService->following(request()->user());
 
         return Inertia::render('Feed/Home', [
             'feed' => InertiaPaginatedData::fromPaginator($feed, PostResource::class),
             'activeTab' => 'following',
+            'messages' => ConversationResource::collection(
+                $conversationService->recentConversations(request()->user()),
+            )->resolve(),
             'pendingRequests' => UserResource::collection(
                 $socialGraphService->pendingRequests(request()->user()),
             )->resolve(),
@@ -48,13 +62,19 @@ class FeedController extends Controller
         ]);
     }
 
-    public function discover(FeedService $feedService, SocialGraphService $socialGraphService): Response
-    {
+    public function discover(
+        FeedService $feedService,
+        SocialGraphService $socialGraphService,
+        ConversationService $conversationService,
+    ): Response {
         $feed = $feedService->discover(request()->user());
 
         return Inertia::render('Feed/Home', [
             'feed' => InertiaPaginatedData::fromPaginator($feed, PostResource::class),
             'activeTab' => 'discover',
+            'messages' => ConversationResource::collection(
+                $conversationService->recentConversations(request()->user()),
+            )->resolve(),
             'pendingRequests' => UserResource::collection(
                 $socialGraphService->pendingRequests(request()->user()),
             )->resolve(),
