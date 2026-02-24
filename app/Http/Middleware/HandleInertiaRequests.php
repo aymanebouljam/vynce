@@ -46,6 +46,7 @@ class HandleInertiaRequests extends Middleware
                     ->join('conversations', 'messages.conversation_id', '=', 'conversations.id')
                     ->join('conversation_participants', 'conversations.id', '=', 'conversation_participants.conversation_id')
                     ->where('conversation_participants.user_id', $user->id)
+                    ->whereNull('conversation_participants.hidden_at')
                     ->where('messages.user_id', '!=', $user->id)
                     ->where(function ($query) {
                         $query->whereNull('conversation_participants.last_read_at')

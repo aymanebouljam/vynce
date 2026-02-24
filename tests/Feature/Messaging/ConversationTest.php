@@ -114,4 +114,29 @@ class ConversationTest extends TestCase
 
         $this->assertNotNull($pivot->last_read_at);
     }
+
+    public function test_hiding_a_conversation_does_not_remove_it_for_the_other_participant(): void
+    {
+        $sender = User::factory()->create();
+        $recipient = User::factory()->create();
+        $conversationService = app(ConversationService::class);
+
+        $conversation = $conversationService->startDirect($sender, $recipient);
+        $conversationService->sendMessage($sender, $conversation, 'Hello Julia.');
+
+        $conversationService->deleteConversationFor($recipient, $conversation);
+
+        $this->actingAs($sender)
+            ->get(route('messages.show', $conversation))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('activeConversation.id', $conversation->id)
+                ->where('activeConversation.participant.id', $recipient->id)
+                ->where('messages.0.body', 'Hello Julia.'));
+
+        $this->actingAs($recipient)
+            ->get(route('messages.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('conversations', []));
+    }
 }

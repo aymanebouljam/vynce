@@ -60,10 +60,12 @@ class ConversationService
                 $actor->id => [
                     'last_read_at' => $now,
                     'last_received_at' => $now,
+                    'hidden_at' => null,
                 ],
                 $target->id => [
                     'last_read_at' => null,
                     'last_received_at' => null,
+                    'hidden_at' => null,
                 ],
             ]);
 
@@ -104,6 +106,7 @@ class ConversationService
             $conversation->participants()->updateExistingPivot($sender->id, [
                 'last_read_at' => $message->created_at,
                 'last_received_at' => $message->created_at,
+                'hidden_at' => null,
                 'updated_at' => now(),
             ]);
 
@@ -177,11 +180,16 @@ class ConversationService
     public function deleteConversationFor(User $user, Conversation $conversation): void
     {
         DB::transaction(function () use ($user, $conversation) {
-            $shouldDeleteConversation = $conversation->participants()->count() <= 1;
+            $conversation->participants()->updateExistingPivot($user->id, [
+                'hidden_at' => now(),
+                'updated_at' => now(),
+            ]);
 
-            $conversation->participants()->detach($user->id);
+            $hasVisibleParticipants = $conversation->participants()
+                ->wherePivotNull('hidden_at')
+                ->exists();
 
-            if ($shouldDeleteConversation) {
+            if (! $hasVisibleParticipants) {
                 $attachmentPaths = $conversation->messages()
                     ->whereNotNull('attachment_path')
                     ->pluck('attachment_path')
