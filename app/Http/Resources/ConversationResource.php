@@ -11,9 +11,15 @@ class ConversationResource extends JsonResource
     public function toArray(Request $request): array
     {
         $viewer = $request->user();
+        $participants = $this->relationLoaded('participants')
+            ? $this->participants
+            : $this->participants()->get();
 
-        $otherParticipant = $this->participants
-            ->first(fn (User $participant) => ! $viewer || ! $participant->is($viewer));
+        $otherParticipant = $participants
+            ->first(fn (User $participant) => ! $viewer || ! $participant->is($viewer))
+            ?? $this->participants()
+                ->when($viewer, fn ($query) => $query->where('users.id', '!=', $viewer->id))
+                ->first();
 
         return [
             'id' => $this->id,
