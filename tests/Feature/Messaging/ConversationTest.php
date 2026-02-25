@@ -139,4 +139,25 @@ class ConversationTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page->where('conversations', []));
     }
+
+    public function test_new_messages_restore_a_hidden_conversation_for_the_recipient(): void
+    {
+        $sender = User::factory()->create();
+        $recipient = User::factory()->create();
+        $conversationService = app(ConversationService::class);
+
+        $conversation = $conversationService->startDirect($sender, $recipient);
+        $conversationService->sendMessage($sender, $conversation, 'Hello Julia.');
+        $conversationService->deleteConversationFor($recipient, $conversation);
+
+        $conversationService->sendMessage($sender, $conversation, 'Are you there?');
+
+        $this->actingAs($recipient)
+            ->get(route('messages.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('conversations.0.id', $conversation->id)
+                ->where('conversations.0.latest_message.body', 'Are you there?')
+                ->where('conversations.0.participant.id', $sender->id));
+    }
 }
