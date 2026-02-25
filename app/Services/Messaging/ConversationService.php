@@ -20,7 +20,7 @@ class ConversationService
 
     public function inbox(User $user): Collection
     {
-        $conversations = $this->recentConversations($user);
+        $conversations = $this->conversationQuery($user)->get();
 
         if ($conversations->isNotEmpty()) {
             $this->markAsReceived($user, $conversations->modelKeys());
@@ -34,6 +34,13 @@ class ConversationService
         return $this->conversationQuery($user)
             ->limit($limit)
             ->get();
+    }
+
+    public function newestUnreadConversation(User $user): ?Conversation
+    {
+        return $this->conversationQuery($user)
+            ->get()
+            ->first(fn (Conversation $conversation) => (int) ($conversation->unread_messages_count ?? 0) > 0);
     }
 
     public function startDirect(User $actor, User $target): Conversation
