@@ -181,6 +181,7 @@ class TopbarNotificationTest extends TestCase
             ->get(route('feed.home'))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('topbar.unread_messages_count', 1)
+                ->where('topbar.unread_messages_href', route('messages.show', $conversation))
                 ->where('topbar.notifications_count', 0));
     }
 
@@ -198,6 +199,7 @@ class TopbarNotificationTest extends TestCase
             ->get(route('feed.home'))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('topbar.unread_messages_count', 2)
+                ->where('topbar.unread_messages_href', route('messages.show', $conversation))
                 ->where('topbar.notifications_count', 0));
     }
 

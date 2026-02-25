@@ -51,11 +51,7 @@ class ConversationTest extends TestCase
 
         $this->actingAs($recipient)
             ->get(route('messages.index'))
-            ->assertOk()
-            ->assertInertia(fn ($page) => $page
-                ->where('conversations.0.id', $conversation->id)
-                ->where('conversations.0.latest_message.body', 'Hello Julia.')
-                ->where('conversations.0.participant.id', $sender->id));
+            ->assertRedirect(route('messages.show', $conversation));
     }
 
     public function test_blocked_users_cannot_start_direct_conversations(): void
