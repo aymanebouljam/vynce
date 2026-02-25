@@ -27,6 +27,12 @@ class ConversationController extends Controller
         $conversations = $conversationService->inbox($user);
         $contacts = $this->messageableContacts($user, $socialGraphService);
 
+        if (request()->expectsJson()) {
+            return response()->json([
+                'conversations' => ConversationResource::collection($conversations)->resolve(),
+            ]);
+        }
+
         return Inertia::render(
             'Messages/Index',
             $this->payload($conversations, null, $contacts),

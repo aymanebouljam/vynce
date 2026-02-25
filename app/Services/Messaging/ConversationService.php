@@ -113,13 +113,20 @@ class ConversationService
             $conversation->participants()
                 ->whereKeyNot($sender->id)
                 ->get()
-                ->each(fn (User $recipient) => $recipient->notify(new DatabaseActivityNotification([
-                    'type' => 'message',
-                    'title' => "{$sender->name} sent you a message",
-                    'body' => str($body)->limit(100)->toString(),
-                    'href' => route('messages.show', $conversation),
-                    'actor' => $this->actorPayload($sender),
-                ])));
+                ->each(function (User $recipient) use ($sender, $conversation, $body): void {
+                    $conversation->participants()->updateExistingPivot($recipient->id, [
+                        'hidden_at' => null,
+                        'updated_at' => now(),
+                    ]);
+
+                    $recipient->notify(new DatabaseActivityNotification([
+                        'type' => 'message',
+                        'title' => "{$sender->name} sent you a message",
+                        'body' => str($body)->limit(100)->toString(),
+                        'href' => route('messages.show', $conversation),
+                        'actor' => $this->actorPayload($sender),
+                    ]));
+                });
 
             return $message->load('sender');
         });
