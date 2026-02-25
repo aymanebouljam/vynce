@@ -23,6 +23,7 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [] 
     const page = usePage();
     const { auth } = page.props;
     const { flash } = page.props;
+    const unreadMessagesHref = page.props?.topbar?.unread_messages_href ?? route('messages.index');
     const pageUrl = page.url;
     const newPostId = flash?.new_post_id;
     const [targetPostId, setTargetPostId] = useState(null);
@@ -411,7 +412,7 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [] 
                                             </div>
                                         </div>
                                         <Link
-                                            href={route('messages.index')}
+                                            href={unreadMessagesHref}
                                             className="app-text-soft text-[10px] font-medium transition hover:text-white/90 2xl:text-[11px]"
                                         >
                                             View all
@@ -485,7 +486,7 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [] 
                                     <div className="flex items-center justify-between gap-2 px-1 pb-2 text-[11px] font-semibold 2xl:text-[12px]">
                                         <span>Recent chats</span>
                                         <Link
-                                            href={route('messages.index')}
+                                            href={unreadMessagesHref}
                                             className="app-text-soft text-[10px] font-medium transition hover:text-white/90 2xl:text-[11px]"
                                         >
                                             View all

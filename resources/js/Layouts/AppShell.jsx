@@ -62,6 +62,7 @@ export default function AppShell({ children, title, sidebar }) {
     const [notificationConfirm, setNotificationConfirm] = useState(null);
     const notificationsModalCloseable = !notificationConfirm;
     const sidebarMenuCount = notificationsCount + pendingRequestsCount + unreadMessagesCount;
+    const unreadMessagesHref = topbar?.unread_messages_href ?? route('messages.index');
 
     useEffect(() => {
         if (sidebarNavOpen) {
@@ -657,7 +658,7 @@ export default function AppShell({ children, title, sidebar }) {
                                     <TopbarLinkButton
                                         label="Messages"
                                         ariaLabel="Open messages"
-                                        href={route('messages.index')}
+                                        href={unreadMessagesHref}
                                         active={
                                             route().current('messages.index') ||
                                             route().current('messages.show')

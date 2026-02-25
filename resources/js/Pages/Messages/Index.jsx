@@ -96,8 +96,9 @@ export default function Index({ conversations, activeConversation, contacts = []
     const displayedConversation = useMemo(
         () =>
             localConversations.find((conversation) => conversation.id === activeConversationId) ??
+            (activeConversation?.id === activeConversationId ? activeConversation : null) ??
             null,
-        [activeConversationId, localConversations],
+        [activeConversation, activeConversationId, localConversations],
     );
     const groupedMessages = useMemo(() => {
         const groups = [];
@@ -133,8 +134,24 @@ export default function Index({ conversations, activeConversation, contacts = []
 
     useEffect(() => {
         setActiveConversationId(activeConversation?.id ?? null);
+        if (activeConversation) {
+            setLocalConversations((current) => {
+                const exists = current.some(
+                    (conversation) => conversation.id === activeConversation.id,
+                );
+
+                return exists
+                    ? [
+                          activeConversation,
+                          ...current.filter(
+                              (conversation) => conversation.id !== activeConversation.id,
+                          ),
+                      ]
+                    : [activeConversation, ...current];
+            });
+        }
         autoOpenedUnreadConversationRef.current = Boolean(activeConversation?.id);
-    }, [activeConversation?.id]);
+    }, [activeConversation]);
 
     useEffect(() => {
         setLocalConversations(conversations);
