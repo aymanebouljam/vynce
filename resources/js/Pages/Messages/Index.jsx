@@ -58,7 +58,6 @@ export default function Index({ conversations, activeConversation, contacts = []
     const optimisticMessageIdRef = useRef(0);
     const previousConversationIdRef = useRef(activeConversation?.id ?? null);
     const shouldAutoScrollRef = useRef(true);
-    const autoOpenedUnreadConversationRef = useRef(false);
     const conversationParticipantIds = useMemo(
         () =>
             localConversations.map((conversation) => conversation.participant?.id).filter(Boolean),
@@ -85,13 +84,6 @@ export default function Index({ conversations, activeConversation, contacts = []
                 return rightTime - leftTime;
             }),
         [localConversations],
-    );
-    const newestUnreadConversation = useMemo(
-        () =>
-            sortedConversations.find(
-                (conversation) => (conversation.unread_messages_count ?? 0) > 0,
-            ) ?? null,
-        [sortedConversations],
     );
     const displayedConversation = useMemo(
         () =>
@@ -150,7 +142,6 @@ export default function Index({ conversations, activeConversation, contacts = []
                     : [activeConversation, ...current];
             });
         }
-        autoOpenedUnreadConversationRef.current = Boolean(activeConversation?.id);
     }, [activeConversation]);
 
     useEffect(() => {
@@ -160,25 +151,6 @@ export default function Index({ conversations, activeConversation, contacts = []
     useEffect(() => {
         setLocalMessages(messages);
     }, [messages]);
-
-    useEffect(() => {
-        if (
-            activeConversation?.id ||
-            activeConversationId ||
-            autoOpenedUnreadConversationRef.current
-        ) {
-            return;
-        }
-
-        if (!newestUnreadConversation) {
-            return;
-        }
-
-        autoOpenedUnreadConversationRef.current = true;
-        router.visit(route('messages.show', newestUnreadConversation.id), {
-            preserveScroll: true,
-        });
-    }, [activeConversation?.id, activeConversationId, newestUnreadConversation?.id]);
 
     useEffect(() => {
         router.reload({
@@ -237,7 +209,6 @@ export default function Index({ conversations, activeConversation, contacts = []
     const closeConversation = () => {
         setActiveConversationId(null);
         setLocalMessages([]);
-        autoOpenedUnreadConversationRef.current = true;
         router.visit(route('messages.index'), {
             preserveScroll: true,
             preserveState: true,
