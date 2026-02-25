@@ -22,14 +22,8 @@ class ConversationController extends Controller
     public function index(
         ConversationService $conversationService,
         SocialGraphService $socialGraphService,
-    ): Response|RedirectResponse {
+    ): Response {
         $user = request()->user();
-        $unreadConversation = $conversationService->newestUnreadConversation($user);
-
-        if ($unreadConversation) {
-            return redirect()->route('messages.show', $unreadConversation);
-        }
-
         $conversations = $conversationService->inbox($user);
         $contacts = $this->messageableContacts($user, $socialGraphService);
 

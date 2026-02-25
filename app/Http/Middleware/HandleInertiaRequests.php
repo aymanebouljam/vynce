@@ -52,19 +52,6 @@ class HandleInertiaRequests extends Middleware
                             ->orWhereColumn('messages.created_at', '>', 'conversation_participants.last_read_at');
                     })
                     ->count(),
-                'unread_messages_href' => ($conversationId = Message::query()
-                    ->join('conversations', 'messages.conversation_id', '=', 'conversations.id')
-                    ->join('conversation_participants', 'conversations.id', '=', 'conversation_participants.conversation_id')
-                    ->where('conversation_participants.user_id', $user->id)
-                    ->where('messages.user_id', '!=', $user->id)
-                    ->where(function ($query) {
-                        $query->whereNull('conversation_participants.last_read_at')
-                            ->orWhereColumn('messages.created_at', '>', 'conversation_participants.last_read_at');
-                    })
-                    ->orderByDesc('messages.created_at')
-                    ->value('conversations.id'))
-                    ? route('messages.show', $conversationId)
-                    : null,
                 'notifications' => NotificationController::serializeNotifications($notifications),
                 'notifications_page' => 1,
                 'notifications_has_more' => NotificationController::queryForCategory(
