@@ -41,8 +41,25 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [] 
     const [confirmedSuggestionIds, setConfirmedSuggestionIds] = useState([]);
     const [exitingSuggestionIds, setExitingSuggestionIds] = useState([]);
     const [removedSuggestionIds, setRemovedSuggestionIds] = useState([]);
+    const [messagesLoading, setMessagesLoading] = useState(false);
 
     useLiveInertiaReload(['feed', 'messages', 'topbar'], 5000);
+
+    const sortRecentThreads = (threads) =>
+        [...threads].sort((left, right) => {
+            const leftTime = left.latest_message_at
+                ? new Date(left.latest_message_at).getTime()
+                : left.updated_at
+                  ? new Date(left.updated_at).getTime()
+                  : 0;
+            const rightTime = right.latest_message_at
+                ? new Date(right.latest_message_at).getTime()
+                : right.updated_at
+                  ? new Date(right.updated_at).getTime()
+                  : 0;
+
+            return rightTime - leftTime;
+        });
 
     useEffect(() => {
         setVisibleSuggestions(
@@ -51,8 +68,38 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [] 
     }, [suggestions, removedSuggestionIds]);
 
     useEffect(() => {
-        setRecentThreads(messages);
+        setRecentThreads(sortRecentThreads(messages));
     }, [messages]);
+
+    useEffect(() => {
+        if (!messagesOpen) {
+            return;
+        }
+
+        const loadRecentThreads = async () => {
+            setMessagesLoading(true);
+
+            try {
+                const { data } = await window.axios.get(route('messages.index'), {
+                    headers: {
+                        Accept: 'application/json',
+                    },
+                });
+
+                setRecentThreads(sortRecentThreads(data.conversations ?? []));
+            } catch {
+                router.reload({
+                    only: ['messages', 'topbar'],
+                    preserveScroll: true,
+                    preserveState: true,
+                });
+            } finally {
+                setMessagesLoading(false);
+            }
+        };
+
+        loadRecentThreads();
+    }, [messagesOpen]);
 
     useEffect(() => {
         if (typeof window === 'undefined') {
@@ -159,10 +206,12 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [] 
             setActiveThread(nextConversation);
             setActiveThreadMessages(data.messages ?? []);
             setThreadDraft('');
-            setRecentThreads((current) => [
-                nextConversation,
-                ...current.filter((item) => item.id !== nextConversation.id),
-            ]);
+            setRecentThreads((current) =>
+                sortRecentThreads([
+                    nextConversation,
+                    ...current.filter((item) => item.id !== nextConversation.id),
+                ]),
+            );
         } catch {
             setActiveThread(conversation);
             setActiveThreadMessages([]);
@@ -222,10 +271,12 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [] 
             );
             const nextConversation = data.conversation ?? activeThread;
             setActiveThread(nextConversation);
-            setRecentThreads((current) => [
-                nextConversation,
-                ...current.filter((item) => item.id !== nextConversation.id),
-            ]);
+            setRecentThreads((current) =>
+                sortRecentThreads([
+                    nextConversation,
+                    ...current.filter((item) => item.id !== nextConversation.id),
+                ]),
+            );
         } catch {
             setActiveThreadMessages(previousMessages);
             setThreadDraft(body);
@@ -492,7 +543,11 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [] 
                                         </Link>
                                     </div>
                                     <div className="max-h-[11rem] space-y-2 overflow-y-auto pr-1 app-scrollbar-hidden">
-                                        {recentThreads.length === 0 ? (
+                                        {messagesLoading ? (
+                                            <div className="app-text-soft px-1 text-[11px] leading-4 2xl:text-[12px] 2xl:leading-5">
+                                                Loading recent chats...
+                                            </div>
+                                        ) : recentThreads.length === 0 ? (
                                             <div className="app-text-soft px-1 text-[11px] leading-4 2xl:text-[12px] 2xl:leading-5">
                                                 No conversations yet. Start one from a profile to
                                                 see it here.
