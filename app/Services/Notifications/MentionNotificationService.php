@@ -75,9 +75,7 @@ class MentionNotificationService
             'id' => $user->id,
             'name' => $user->name,
             'username' => $user->username,
-            'avatar_url' => $user->avatar_path
-                ? route('media.public', ['path' => $user->avatar_path])
-                : null,
+            'avatar_url' => User::mediaUrl($user->avatar_path),
             'avatar_position_x' => $user->avatar_position_x ?? 50,
             'avatar_position_y' => $user->avatar_position_y ?? 50,
             'avatar_zoom' => $user->avatar_zoom ?? 1,
