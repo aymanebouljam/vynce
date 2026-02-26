@@ -197,7 +197,7 @@ export default function GuestLayout({ children }) {
                 </div>
 
                 <div className="auth-form-panel flex min-h-screen items-start justify-center px-4 pb-8 pt-8 sm:px-6 lg:rounded-none lg:px-8 lg:pt-12 xl:px-14 xl:pt-[4.5rem] 2xl:pt-32">
-                    <div className="auth-form-floating max-w-xl">
+                    <div className="auth-form-floating app-scrollbar-hidden max-w-xl">
                         <div className="mb-6 lg:hidden">
                             <Link
                                 href="/"
