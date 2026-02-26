@@ -8,7 +8,6 @@ export default function useLiveInertiaReload(only, interval = 5000, enabled = tr
         if (!enabled || typeof window === 'undefined') {
             return undefined;
         }
-
         const reload = () => {
             if (document.visibilityState !== 'visible') {
                 return;
