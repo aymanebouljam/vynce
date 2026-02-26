@@ -26,7 +26,7 @@ class ProfileTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->patch('/profile', [
-            'name' => 'Updated User',
+            'name' => 'uPdAtEd uSeR',
             'username' => 'updated-user',
             'email' => 'updated@example.com',
             'bio' => 'A sharper profile bio.',

@@ -6,12 +6,14 @@ use App\Enums\FollowStatus;
 use App\Enums\FriendshipStatus;
 use App\Enums\UserRole;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -59,6 +61,16 @@ class User extends Authenticatable implements MustVerifyEmail
             'onboarding_completed_at' => 'datetime',
             'suspended_at' => 'datetime',
         ];
+    }
+
+    protected function name(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value) => $value,
+            set: fn (?string $value) => $value === null
+                ? null
+                : Str::of($value)->squish()->lower()->title()->toString(),
+        );
     }
 
     public static function mediaUrl(?string $path): ?string
