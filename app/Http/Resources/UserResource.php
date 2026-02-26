@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -19,11 +20,11 @@ class UserResource extends JsonResource
             'location' => $this->location,
             'is_private' => $this->is_private,
             'role' => $this->role?->value ?? $this->role,
-            'avatar_url' => $this->avatar_path ? route('media.public', ['path' => $this->avatar_path]) : null,
+            'avatar_url' => User::mediaUrl($this->avatar_path),
             'avatar_zoom' => $this->avatar_zoom ?? 1,
             'avatar_position_x' => $this->avatar_position_x ?? 50,
             'avatar_position_y' => $this->avatar_position_y ?? 50,
-            'cover_url' => $this->cover_path ? route('media.public', ['path' => $this->cover_path]) : null,
+            'cover_url' => User::mediaUrl($this->cover_path),
             'cover_zoom' => $this->cover_zoom ?? 1,
             'cover_position_x' => $this->cover_position_x ?? 50,
             'cover_position_y' => $this->cover_position_y ?? 50,

@@ -61,6 +61,19 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
+    public static function mediaUrl(?string $path): ?string
+    {
+        if (! $path) {
+            return null;
+        }
+
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            return $path;
+        }
+
+        return route('media.public', ['path' => $path]);
+    }
+
     public function posts(): HasMany
     {
         return $this->hasMany(Post::class);
