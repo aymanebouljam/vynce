@@ -19,6 +19,7 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'bio' => fake()->sentence(),
+            'avatar_path' => 'https://i.pravatar.cc/300?img='.fake()->numberBetween(1, 70),
             'website_url' => fake()->optional()->url(),
             'location' => fake()->optional()->city(),
             'is_private' => false,

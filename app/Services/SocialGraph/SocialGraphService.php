@@ -420,9 +420,7 @@ class SocialGraphService
             'id' => $actor->id,
             'name' => $actor->name,
             'username' => $actor->username,
-            'avatar_url' => $actor->avatar_path
-                ? route('media.public', ['path' => $actor->avatar_path])
-                : null,
+            'avatar_url' => User::mediaUrl($actor->avatar_path),
             'avatar_position_x' => $actor->avatar_position_x ?? 50,
             'avatar_position_y' => $actor->avatar_position_y ?? 50,
             'avatar_zoom' => $actor->avatar_zoom ?? 1,
