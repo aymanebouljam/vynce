@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\SocialGraph\SocialGraphService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator as Paginator;
 
 class FeedService
 {
@@ -46,7 +47,9 @@ class FeedService
 
     public function profile(?User $viewer, User $profileUser, int $perPage = 10): LengthAwarePaginator
     {
-        abort_unless($this->socialGraphService->canViewProfile($viewer, $profileUser), 403);
+        if (! $viewer || ! $this->socialGraphService->canViewProfilePosts($viewer, $profileUser)) {
+            return new Paginator(collect(), 0, $perPage, 1);
+        }
 
         $repostedAtSubquery = function ($query) use ($profileUser) {
             $query->from('post_reposts')

@@ -133,9 +133,12 @@ class FeedController extends Controller
             'acceptedFollowing',
         ]);
         $profile->friends_count = $socialGraphService->friendsCount($user);
+        $canViewPosts = $socialGraphService->canViewProfilePosts(request()->user(), $user);
+        $profileData = UserResource::make($profile)->resolve();
+        $profileData['can_view_posts'] = $canViewPosts;
 
         return Inertia::render('Profile/Show', [
-            'profile' => UserResource::make($profile)->resolve(),
+            'profile' => $profileData,
             'relationship' => [
                 'is_following' => $socialGraphService->follows(request()->user(), $user),
                 'has_pending_request' => $socialGraphService->hasPendingRequest(request()->user(), $user),
@@ -153,6 +156,7 @@ class FeedController extends Controller
                 $feedService->profile(request()->user(), $user),
                 PostResource::class,
             ),
+            'can_view_posts' => $canViewPosts,
             'pendingRequests' => UserResource::collection(
                 $socialGraphService->pendingRequests(request()->user()),
             )->resolve(),

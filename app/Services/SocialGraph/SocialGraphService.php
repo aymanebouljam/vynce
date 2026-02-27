@@ -293,23 +293,24 @@ class SocialGraphService
 
     public function canViewProfile(?User $viewer, User $target): bool
     {
-        if (! $target->is_private) {
-            return ! ($viewer && $this->hasBlockBetween($viewer, $target));
+        if (! $viewer) {
+            return ! $target->is_private;
         }
 
-        if (! $viewer) {
+        return ! $this->hasBlockBetween($viewer, $target);
+    }
+
+    public function canViewProfilePosts(User $viewer, User $target): bool
+    {
+        if (! $this->canViewProfile($viewer, $target)) {
             return false;
         }
 
-        if ($viewer->is($target)) {
+        if (! $target->is_private) {
             return true;
         }
 
-        if ($this->hasBlockBetween($viewer, $target)) {
-            return false;
-        }
-
-        return $this->follows($viewer, $target);
+        return $viewer->is($target) || $this->areFriends($viewer, $target);
     }
 
     public function followers(User $user, int $perPage = 20, ?string $search = null): LengthAwarePaginator
