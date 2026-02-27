@@ -13,11 +13,13 @@ import {
     Pencil,
     Rss,
     SlidersHorizontal,
+    SquarePen,
     Trash2,
     TrendingUp,
     UserRoundCheck,
     UserRoundPlus,
     UserRoundX,
+    X,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import PostCard from '@/Components/App/PostCard';
@@ -53,6 +55,7 @@ export default function Show({ profile, relationship, feed, suggestions = [] }) 
     const [confirmedSuggestionIds, setConfirmedSuggestionIds] = useState([]);
     const [exitingSuggestionIds, setExitingSuggestionIds] = useState([]);
     const [removedSuggestionIds, setRemovedSuggestionIds] = useState([]);
+    const [previewImage, setPreviewImage] = useState(null);
     const canViewPosts = profile.can_view_posts ?? true;
     const isPrivateProfileLocked = profile.is_private && !isOwnProfile && !canViewPosts;
 
@@ -105,6 +108,39 @@ export default function Show({ profile, relationship, feed, suggestions = [] }) 
         }
 
         followForm.post(route('users.friend-requests.store', profile.id));
+    };
+
+    const openPreview = (kind) => {
+        if (profile.is_private) {
+            return;
+        }
+
+        if (kind === 'avatar' && !profile.avatar_url) {
+            return;
+        }
+
+        if (kind === 'cover' && !profile.cover_url) {
+            return;
+        }
+
+        setPreviewImage({
+            kind,
+            title: kind === 'avatar' ? 'Profile photo' : 'Cover image',
+            src: kind === 'avatar' ? profile.avatar_url : profile.cover_url,
+            alt: kind === 'avatar' ? `${profile.name} profile photo` : `${profile.name} cover`,
+            style:
+                kind === 'avatar'
+                    ? imageTransformStyle({
+                          x: profile.avatar_position_x,
+                          y: profile.avatar_position_y,
+                          zoom: profile.avatar_zoom,
+                      })
+                    : imageTransformStyle({
+                          x: profile.cover_position_x,
+                          y: profile.cover_position_y,
+                          zoom: profile.cover_zoom,
+                      }),
+        });
     };
 
     const relationshipLabel =
@@ -169,16 +205,41 @@ export default function Show({ profile, relationship, feed, suggestions = [] }) 
             <section className="app-panel rounded-[28px] 2xl:rounded-[32px]">
                 <div className="relative h-40 overflow-hidden rounded-t-[28px] 2xl:h-44 2xl:rounded-t-[32px]">
                     {profile.cover_url ? (
-                        <img
-                            src={profile.cover_url}
-                            alt={`${profile.name} cover`}
-                            className="absolute inset-0 h-full w-full object-cover"
-                            style={imageTransformStyle({
-                                x: profile.cover_position_x,
-                                y: profile.cover_position_y,
-                                zoom: profile.cover_zoom,
-                            })}
-                        />
+                        <button
+                            type="button"
+                            onClick={() => openPreview('cover')}
+                            onContextMenu={(event) => event.preventDefault()}
+                            className={`absolute inset-0 ${
+                                profile.is_private ? 'cursor-default' : 'cursor-zoom-in'
+                            }`}
+                            aria-label="Preview cover image"
+                            disabled={profile.is_private}
+                        >
+                            {isPrivateProfileLocked ? (
+                                <div
+                                    className="absolute inset-0 bg-cover bg-center"
+                                    style={{
+                                        backgroundImage: `url(${profile.cover_url})`,
+                                        ...imageTransformStyle({
+                                            x: profile.cover_position_x,
+                                            y: profile.cover_position_y,
+                                            zoom: profile.cover_zoom,
+                                        }),
+                                    }}
+                                />
+                            ) : (
+                                <img
+                                    src={profile.cover_url}
+                                    alt={`${profile.name} cover`}
+                                    className="absolute inset-0 h-full w-full object-cover"
+                                    style={imageTransformStyle({
+                                        x: profile.cover_position_x,
+                                        y: profile.cover_position_y,
+                                        zoom: profile.cover_zoom,
+                                    })}
+                                />
+                            )}
+                        </button>
                     ) : (
                         <div
                             className="absolute inset-0"
@@ -203,24 +264,45 @@ export default function Show({ profile, relationship, feed, suggestions = [] }) 
                         <div>
                             <div className="relative -mt-14 mb-3 w-fit 2xl:-mt-16 2xl:mb-4">
                                 {profile.avatar_url ? (
-                                    <div
+                                    <button
+                                        type="button"
+                                        onClick={() => openPreview('avatar')}
+                                        onContextMenu={(event) => event.preventDefault()}
                                         className={`overflow-hidden border-4 border-[var(--vynce-bg)] ${
+                                            profile.is_private ? 'cursor-default' : 'cursor-zoom-in'
+                                        } ${
                                             isPrivateProfileLocked
                                                 ? 'h-16 w-16 rounded-[20px] 2xl:h-20 2xl:w-20 2xl:rounded-[24px]'
                                                 : 'h-20 w-20 rounded-[24px] 2xl:h-24 2xl:w-24 2xl:rounded-[28px]'
                                         }`}
+                                        aria-label="Preview profile photo"
+                                        disabled={profile.is_private}
                                     >
-                                        <img
-                                            src={profile.avatar_url}
-                                            alt={profile.name}
-                                            className="h-full w-full object-cover"
-                                            style={imageTransformStyle({
-                                                x: profile.avatar_position_x,
-                                                y: profile.avatar_position_y,
-                                                zoom: profile.avatar_zoom,
-                                            })}
-                                        />
-                                    </div>
+                                        {isPrivateProfileLocked ? (
+                                            <div
+                                                className="h-full w-full bg-cover bg-center"
+                                                style={{
+                                                    backgroundImage: `url(${profile.avatar_url})`,
+                                                    ...imageTransformStyle({
+                                                        x: profile.avatar_position_x,
+                                                        y: profile.avatar_position_y,
+                                                        zoom: profile.avatar_zoom,
+                                                    }),
+                                                }}
+                                            />
+                                        ) : (
+                                            <img
+                                                src={profile.avatar_url}
+                                                alt={profile.name}
+                                                className="h-full w-full object-cover"
+                                                style={imageTransformStyle({
+                                                    x: profile.avatar_position_x,
+                                                    y: profile.avatar_position_y,
+                                                    zoom: profile.avatar_zoom,
+                                                })}
+                                            />
+                                        )}
+                                    </button>
                                 ) : (
                                     <div className="app-panel-inset flex h-20 w-20 items-center justify-center rounded-[24px] border-4 border-[var(--vynce-bg)] text-xl font-bold 2xl:h-24 2xl:w-24 2xl:rounded-[28px] 2xl:text-2xl">
                                         {profile.name?.charAt(0)}
@@ -239,8 +321,12 @@ export default function Show({ profile, relationship, feed, suggestions = [] }) 
                                 )}
                             </div>
 
-                            {isPrivateProfileLocked && (
-                                <div className="app-panel-inset mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-medium 2xl:text-xs">
+                            {profile.is_private && (
+                                <div
+                                    className={`app-panel-inset inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-medium 2xl:text-xs ${
+                                        isOwnProfile ? 'mt-1 ml-1' : 'mt-3'
+                                    }`}
+                                >
                                     <Lock className="h-3.5 w-3.5" strokeWidth={1.9} />
                                     Private profile
                                 </div>
@@ -286,12 +372,6 @@ export default function Show({ profile, relationship, feed, suggestions = [] }) 
                             <div className="app-text-muted mt-1 text-[13px] 2xl:text-sm">
                                 @{profile.username}
                             </div>
-                            <div
-                                className="app-pill mt-3 inline-flex rounded-full px-3 py-1 text-[11px] 2xl:text-xs"
-                                style={{ background: 'var(--vynce-surface-inset-muted)' }}
-                            >
-                                {profile.is_private ? 'Private profile' : 'Public profile'}
-                            </div>
                             {profile.bio && (
                                 <p className="app-text-high mt-3 max-w-2xl whitespace-pre-wrap text-[13px] leading-6 2xl:mt-4 2xl:text-sm 2xl:leading-7">
                                     {profile.bio}
@@ -332,8 +412,9 @@ export default function Show({ profile, relationship, feed, suggestions = [] }) 
                                     <button
                                         type="button"
                                         onClick={() => setComposerOpen(true)}
-                                        className="app-button-primary rounded-full px-4 py-2.5 text-[13px] font-semibold 2xl:px-5 2xl:py-3 2xl:text-sm"
+                                        className="app-button-primary inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[13px] font-semibold 2xl:px-5 2xl:py-3 2xl:text-sm"
                                     >
+                                        <SquarePen className="h-4 w-4" strokeWidth={1.9} />
                                         Create post
                                     </button>
                                     <Link
@@ -525,6 +606,55 @@ export default function Show({ profile, relationship, feed, suggestions = [] }) 
                     />
                 </>
             )}
+
+            <Modal
+                show={Boolean(previewImage)}
+                onClose={() => setPreviewImage(null)}
+                maxWidth="7xl"
+                centered
+                panel={false}
+            >
+                {previewImage ? (
+                    <div className="relative mx-auto flex min-h-[70vh] w-full max-w-6xl items-center justify-center">
+                        <div className="app-panel w-full overflow-hidden rounded-[32px] border border-white/10 bg-[rgba(8,12,20,0.96)] p-4 shadow-[var(--vynce-shadow-lg)] sm:p-5">
+                            <div className="mb-4 flex items-center justify-between gap-3">
+                                <div>
+                                    <div className="text-base font-semibold 2xl:text-lg">
+                                        {previewImage.title}
+                                    </div>
+                                    <div className="app-text-soft mt-1 text-[13px] 2xl:text-sm">
+                                        Previewing {profile.name}&apos;s {previewImage.kind}
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setPreviewImage(null)}
+                                    className="app-button-secondary inline-flex h-10 w-10 items-center justify-center rounded-full"
+                                    aria-label="Close preview"
+                                >
+                                    <X className="h-4 w-4" strokeWidth={1.9} />
+                                </button>
+                            </div>
+
+                            <div
+                                className={`overflow-hidden bg-[rgba(3,7,12,0.92)] ${
+                                    previewImage.kind === 'avatar'
+                                        ? 'mx-auto aspect-square max-w-[min(100%,28rem)] rounded-[28px]'
+                                        : 'h-[min(72vh,36rem)] rounded-[28px]'
+                                }`}
+                            >
+                                <img
+                                    src={previewImage.src}
+                                    alt={previewImage.alt}
+                                    className="h-full w-full object-cover"
+                                    style={previewImage.style}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                ) : null}
+            </Modal>
 
             <section className="mt-5 grid gap-5 min-[1246px]:grid-cols-[minmax(0,1fr)_20rem] 2xl:min-[1246px]:grid-cols-[minmax(0,1fr)_22rem] 2xl:mt-6 2xl:gap-6">
                 <div className="space-y-3 2xl:space-y-4">
