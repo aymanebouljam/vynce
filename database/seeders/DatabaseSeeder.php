@@ -15,28 +15,22 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
-        $demo = User::factory()->create([
-            'name' => 'Vynce Admin',
-            'username' => 'vynce',
-            'email' => 'test@example.com',
-            'role' => 'admin',
-            'onboarding_completed_at' => now(),
-        ]);
-
         $users = User::factory(8)->create([
             'onboarding_completed_at' => now(),
         ]);
 
-        $users->take(3)->each(function (User $user) use ($demo) {
+        $leader = $users->first();
+
+        $users->slice(1, 3)->each(function (User $user) use ($leader) {
             Follow::query()->create([
-                'follower_id' => $demo->id,
+                'follower_id' => $leader->id,
                 'followed_id' => $user->id,
                 'status' => FollowStatus::Accepted,
                 'accepted_at' => now(),
             ]);
         });
 
-        Post::factory()->count(3)->for($demo)->create();
+        Post::factory()->count(3)->for($leader)->create();
         $users->each(fn (User $user) => Post::factory()->count(2)->for($user)->create());
     }
 }

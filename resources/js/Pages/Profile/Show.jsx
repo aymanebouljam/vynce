@@ -7,6 +7,7 @@ import {
     Eye,
     Handshake,
     ImagePlus,
+    Lock,
     MessageCircle,
     Move,
     Pencil,
@@ -52,6 +53,8 @@ export default function Show({ profile, relationship, feed, suggestions = [] }) 
     const [confirmedSuggestionIds, setConfirmedSuggestionIds] = useState([]);
     const [exitingSuggestionIds, setExitingSuggestionIds] = useState([]);
     const [removedSuggestionIds, setRemovedSuggestionIds] = useState([]);
+    const canViewPosts = profile.can_view_posts ?? true;
+    const isPrivateProfileLocked = profile.is_private && !isOwnProfile && !canViewPosts;
 
     useLiveInertiaReload(['feed'], 5000);
 
@@ -104,15 +107,16 @@ export default function Show({ profile, relationship, feed, suggestions = [] }) 
         followForm.post(route('users.friend-requests.store', profile.id));
     };
 
-    const relationshipLabel = profile.is_private
-        ? relationship.is_following
-            ? 'Friends'
-            : relationship.has_pending_request
-              ? 'Cancel invite'
-              : 'Add'
-        : relationship.is_following
-          ? 'Following'
-          : 'Follow';
+    const relationshipLabel =
+        profile.is_private && !relationship.is_friend
+            ? relationship.has_pending_friend_request
+                ? 'Request sent'
+                : relationship.has_incoming_friend_request
+                  ? 'Accept friendship'
+                  : 'Send friendship request'
+            : relationship.is_following
+              ? 'Following'
+              : 'Follow';
     const friendshipLabel = relationship.is_friend
         ? 'Friends'
         : relationship.has_incoming_friend_request
@@ -199,7 +203,13 @@ export default function Show({ profile, relationship, feed, suggestions = [] }) 
                         <div>
                             <div className="relative -mt-14 mb-3 w-fit 2xl:-mt-16 2xl:mb-4">
                                 {profile.avatar_url ? (
-                                    <div className="h-20 w-20 overflow-hidden rounded-[24px] border-4 border-[var(--vynce-bg)] 2xl:h-24 2xl:w-24 2xl:rounded-[28px]">
+                                    <div
+                                        className={`overflow-hidden border-4 border-[var(--vynce-bg)] ${
+                                            isPrivateProfileLocked
+                                                ? 'h-16 w-16 rounded-[20px] 2xl:h-20 2xl:w-20 2xl:rounded-[24px]'
+                                                : 'h-20 w-20 rounded-[24px] 2xl:h-24 2xl:w-24 2xl:rounded-[28px]'
+                                        }`}
+                                    >
                                         <img
                                             src={profile.avatar_url}
                                             alt={profile.name}
@@ -228,6 +238,13 @@ export default function Show({ profile, relationship, feed, suggestions = [] }) 
                                     </button>
                                 )}
                             </div>
+
+                            {isPrivateProfileLocked && (
+                                <div className="app-panel-inset mb-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-medium 2xl:text-xs">
+                                    <Lock className="h-3.5 w-3.5" strokeWidth={1.9} />
+                                    Private profile
+                                </div>
+                            )}
 
                             {(errors.avatar ||
                                 errors.cover ||
@@ -327,6 +344,17 @@ export default function Show({ profile, relationship, feed, suggestions = [] }) 
                                         Edit profile
                                     </Link>
                                 </>
+                            ) : isPrivateProfileLocked ? (
+                                <button
+                                    type="button"
+                                    onClick={submitFriendRequest}
+                                    className="app-button-primary inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[13px] font-semibold 2xl:px-5 2xl:py-3 2xl:text-sm"
+                                    aria-label={relationshipLabel}
+                                    title={relationshipLabel}
+                                >
+                                    <Handshake className="h-4 w-4" strokeWidth={1.9} />
+                                    {relationshipLabel}
+                                </button>
                             ) : (
                                 <>
                                     {relationship.can_follow &&
@@ -500,7 +528,26 @@ export default function Show({ profile, relationship, feed, suggestions = [] }) 
 
             <section className="mt-5 grid gap-5 min-[1246px]:grid-cols-[minmax(0,1fr)_20rem] 2xl:min-[1246px]:grid-cols-[minmax(0,1fr)_22rem] 2xl:mt-6 2xl:gap-6">
                 <div className="space-y-3 2xl:space-y-4">
-                    {feed.data.length === 0 ? (
+                    {isPrivateProfileLocked ? (
+                        <div className="app-panel-inset rounded-[24px] p-6 2xl:rounded-[28px] 2xl:p-8">
+                            <div className="flex items-center gap-2 text-[13px] font-semibold 2xl:text-sm">
+                                <Lock className="h-4 w-4" strokeWidth={1.9} />
+                                Private account
+                            </div>
+                            <p className="app-text-soft mt-3 max-w-2xl text-[13px] leading-6 2xl:text-sm 2xl:leading-7">
+                                Send a friendship request to view this account&apos;s posts and
+                                updates.
+                            </p>
+                            <button
+                                type="button"
+                                onClick={submitFriendRequest}
+                                className="app-button-primary mt-4 inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[13px] font-semibold 2xl:px-5 2xl:py-3 2xl:text-sm"
+                            >
+                                <Handshake className="h-4 w-4" strokeWidth={1.9} />
+                                {relationshipLabel}
+                            </button>
+                        </div>
+                    ) : feed.data.length === 0 ? (
                         <div className="app-dashed-panel app-text-muted rounded-[24px] p-6 text-[13px] 2xl:rounded-[28px] 2xl:p-8 2xl:text-sm">
                             No posts yet. This space will fill with updates, threads, and media as
                             soon as the first post goes live.
@@ -684,6 +731,7 @@ function ProfileImageManagerModal({
         position_x: positionX,
         position_y: positionY,
     });
+    const { data, setData } = transformForm;
     const deleteForm = useForm({});
     const fileInputRef = useRef(null);
 
@@ -694,13 +742,13 @@ function ProfileImageManagerModal({
 
         setPendingFile(null);
         setPreviewUrl(imageUrl);
-        transformForm.setData({
+        setData({
             zoom,
             position_x: positionX,
             position_y: positionY,
         });
         setConfirmingDelete(false);
-    }, [show, imageUrl, zoom, positionX, positionY, transformForm]);
+    }, [show, imageUrl, zoom, positionX, positionY, setData]);
 
     useEffect(() => {
         return () => {
@@ -721,7 +769,7 @@ function ProfileImageManagerModal({
 
         setPendingFile(file);
         setPreviewUrl(URL.createObjectURL(file));
-        transformForm.setData({
+        setData({
             zoom: 1,
             position_x: 50,
             position_y: 50,
@@ -737,9 +785,9 @@ function ProfileImageManagerModal({
                 uploadRoute,
                 {
                     [uploadKey]: pendingFile,
-                    zoom: transformForm.data.zoom,
-                    position_x: transformForm.data.position_x,
-                    position_y: transformForm.data.position_y,
+                    zoom: data.zoom,
+                    position_x: data.position_x,
+                    position_y: data.position_y,
                 },
                 {
                     forceFormData: true,
@@ -765,9 +813,9 @@ function ProfileImageManagerModal({
     };
 
     const previewStyle = imageTransformStyle({
-        x: transformForm.data.position_x,
-        y: transformForm.data.position_y,
-        zoom: transformForm.data.zoom,
+        x: data.position_x,
+        y: data.position_y,
+        zoom: data.zoom,
     });
 
     return (
@@ -881,32 +929,32 @@ function ProfileImageManagerModal({
                             <RangeField
                                 icon={SlidersHorizontal}
                                 label="Zoom"
-                                value={transformForm.data.zoom}
+                                value={data.zoom}
                                 min={1}
                                 max={3}
                                 step={0.05}
-                                displayValue={`${Number(transformForm.data.zoom).toFixed(2)}x`}
-                                onChange={(value) => transformForm.setData('zoom', value)}
+                                displayValue={`${Number(data.zoom).toFixed(2)}x`}
+                                onChange={(value) => setData('zoom', value)}
                             />
                             <RangeField
                                 icon={Move}
                                 label="Horizontal"
-                                value={transformForm.data.position_x}
+                                value={data.position_x}
                                 min={0}
                                 max={100}
                                 step={1}
-                                displayValue={`${transformForm.data.position_x}%`}
-                                onChange={(value) => transformForm.setData('position_x', value)}
+                                displayValue={`${data.position_x}%`}
+                                onChange={(value) => setData('position_x', value)}
                             />
                             <RangeField
                                 icon={Move}
                                 label="Vertical"
-                                value={transformForm.data.position_y}
+                                value={data.position_y}
                                 min={0}
                                 max={100}
                                 step={1}
-                                displayValue={`${transformForm.data.position_y}%`}
-                                onChange={(value) => transformForm.setData('position_y', value)}
+                                displayValue={`${data.position_y}%`}
+                                onChange={(value) => setData('position_y', value)}
                             />
                         </div>
 
