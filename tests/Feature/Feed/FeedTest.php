@@ -3,7 +3,9 @@
 namespace Tests\Feature\Feed;
 
 use App\Enums\FollowStatus;
+use App\Enums\FriendshipStatus;
 use App\Models\Follow;
+use App\Models\Friendship;
 use App\Models\Post;
 use App\Models\PostRepost;
 use App\Models\User;
@@ -91,5 +93,33 @@ class FeedTest extends TestCase
             ->component('Profile/Show')
             ->where('feed.data.0.body', $repostedPost->body)
             ->where('feed.data.0.profile_reposted_at', fn ($value) => filled($value)));
+    }
+
+    public function test_private_profile_posts_are_visible_to_friends(): void
+    {
+        $viewer = User::factory()->create();
+        $profileUser = User::factory()->create([
+            'is_private' => true,
+            'username' => 'private-profile',
+        ]);
+        $post = Post::factory()->for($profileUser)->create([
+            'body' => 'Friends only post',
+            'visibility' => 'public',
+        ]);
+
+        Friendship::query()->create([
+            'requester_id' => $viewer->id,
+            'addressee_id' => $profileUser->id,
+            'status' => FriendshipStatus::Accepted,
+            'accepted_at' => now(),
+        ]);
+
+        $response = $this->actingAs($viewer)->get(route('users.show', $profileUser->username));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Profile/Show')
+            ->where('profile.can_view_posts', true)
+            ->where('feed.data.0.body', $post->body));
     }
 }
