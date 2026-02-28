@@ -1,12 +1,16 @@
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import PrimaryButton from '@/Components/PrimaryButton';
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
-import { cloneElement } from 'react';
+import { cloneElement, useRef, useState } from 'react';
+import PrimaryButton from '@/Components/PrimaryButton';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { clearProfileDraft, saveProfileDraft } from '@/utils/profileDraft';
 import DeleteUserForm from './Partials/DeleteUserForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
 
 export default function Edit({ profile }) {
+    const page = usePage();
+    const previousProfileRef = useRef(null);
+    const [submissionMessage, setSubmissionMessage] = useState(null);
     const { data, setData, post, processing, errors } = useForm({
         _method: 'patch',
         name: profile.name ?? '',
@@ -17,6 +21,15 @@ export default function Edit({ profile }) {
         location: profile.location ?? '',
         is_private: profile.is_private ?? false,
     });
+    const updateOptimisticProfile = (nextProfile) => {
+        router.replaceProp('auth.user', (currentUser) =>
+            currentUser ? { ...currentUser, ...nextProfile } : nextProfile,
+        );
+        router.replaceProp('profile', (currentProfile) =>
+            currentProfile ? { ...currentProfile, ...nextProfile } : nextProfile,
+        );
+    };
+
     const goBack = () => {
         if (window.history.length > 1) {
             window.history.back();
@@ -28,9 +41,46 @@ export default function Edit({ profile }) {
 
     const submit = (event) => {
         event.preventDefault();
+        setSubmissionMessage(null);
+
+        previousProfileRef.current = {
+            authUser: page.props.auth.user,
+            profile,
+        };
+
+        const { _method, ...profileUpdates } = data;
+
+        updateOptimisticProfile({
+            ...page.props.auth.user,
+            ...profileUpdates,
+            email: profileUpdates.email ?? page.props.auth.user.email,
+        });
 
         post(route('profile.update'), {
             forceFormData: true,
+            onError: () => {
+                const previousProfile = previousProfileRef.current;
+
+                if (previousProfile) {
+                    router.replaceProp('auth.user', previousProfile.authUser);
+                    router.replaceProp('profile', previousProfile.profile);
+                    clearProfileDraft(previousProfile.authUser.id);
+                }
+
+                setSubmissionMessage(
+                    'Could not save your profile changes. Please review the highlighted fields.',
+                );
+                previousProfileRef.current = null;
+            },
+            onSuccess: () => {
+                saveProfileDraft({
+                    ...page.props.auth.user,
+                    ...profileUpdates,
+                    email: profileUpdates.email ?? page.props.auth.user.email,
+                });
+
+                previousProfileRef.current = null;
+            },
         });
     };
 
@@ -56,6 +106,18 @@ export default function Edit({ profile }) {
                             Keep identity fields clean and update your public-facing details here.
                         </p>
                     </div>
+
+                    {(submissionMessage || page.props.status) && (
+                        <div
+                            className={`mb-5 rounded-2xl border px-4 py-3 text-[13px] 2xl:text-sm ${
+                                submissionMessage
+                                    ? 'border-rose-500/25 bg-rose-500/10 text-rose-100'
+                                    : 'border-emerald-500/25 bg-emerald-500/10 text-emerald-100'
+                            }`}
+                        >
+                            {submissionMessage ?? page.props.status}
+                        </div>
+                    )}
 
                     <form onSubmit={submit} className="grid gap-4 md:grid-cols-2 2xl:gap-5">
                         <Field placeholder="Name" error={errors.name}>

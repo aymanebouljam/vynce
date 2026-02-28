@@ -30,6 +30,7 @@ import Modal from '@/Components/Modal';
 import SecondaryButton from '@/Components/SecondaryButton';
 import useLiveInertiaReload from '@/hooks/useLiveInertiaReload';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { clearProfileDraft, readProfileDraft } from '@/utils/profileDraft';
 
 const trends = [
     { label: 'Design systems', posts: '1,284 posts today' },
@@ -37,12 +38,15 @@ const trends = [
     { label: 'Creator workflow', posts: '511 posts today' },
 ];
 
-export default function Show({ profile, relationship, feed, suggestions = [] }) {
+export default function Show({ profile: initialProfile, relationship, feed, suggestions = [] }) {
     const page = usePage();
     const { auth, errors, flash } = page.props;
     const pageUrl = page.url;
     const followForm = useForm({});
-    const isOwnProfile = auth.user.id === profile.id;
+    const isOwnProfile = auth.user.id === initialProfile.id;
+    const draftProfile =
+        typeof window !== 'undefined' && isOwnProfile ? readProfileDraft(initialProfile.id) : null;
+    const profile = draftProfile ? { ...initialProfile, ...draftProfile } : initialProfile;
     const newPostId = flash?.new_post_id;
     const [targetPostId, setTargetPostId] = useState(null);
     const [targetCommentsOpen, setTargetCommentsOpen] = useState(false);
@@ -86,6 +90,26 @@ export default function Show({ profile, relationship, feed, suggestions = [] }) 
         );
         setTargetCommentsOpen(search.get('comments') === '1' || Boolean(requestedCommentId));
     }, [pageUrl]);
+
+    useEffect(() => {
+        if (!isOwnProfile || !draftProfile) {
+            return;
+        }
+
+        router.replaceProp('auth.user', profile);
+        router.replaceProp('profile', profile);
+
+        if (draftProfile.username && draftProfile.username !== initialProfile.username) {
+            const nextUrl = new URL(window.location.href);
+            nextUrl.pathname = new URL(
+                route('users.show', profile.username),
+                window.location.origin,
+            ).pathname;
+            window.history.replaceState(window.history.state, '', nextUrl.toString());
+        }
+
+        clearProfileDraft(initialProfile.id);
+    }, [draftProfile, initialProfile.id, initialProfile.username, isOwnProfile, profile]);
 
     const submitFollow = () => {
         if (relationship.is_following || relationship.has_pending_request) {
