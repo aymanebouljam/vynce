@@ -31,7 +31,7 @@ class ProfileController extends Controller
     ): RedirectResponse {
         $upsertProfileAction->execute($request->user(), $request->validated());
 
-        return Redirect::route('profile.edit');
+        return Redirect::route('profile.edit')->with('status', 'Profile updated successfully.');
     }
 
     public function updateAvatar(
