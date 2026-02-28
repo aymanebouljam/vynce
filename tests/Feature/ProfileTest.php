@@ -35,7 +35,9 @@ class ProfileTest extends TestCase
             'is_private' => true,
         ]);
 
-        $response->assertSessionHasNoErrors()->assertRedirect('/profile');
+        $response->assertSessionHasNoErrors()
+            ->assertRedirect('/profile')
+            ->assertSessionHas('status', 'Profile updated successfully.');
 
         $user->refresh();
 
