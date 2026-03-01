@@ -1,20 +1,17 @@
-import Modal from '@/Components/Modal';
-import InputError from '@/Components/InputError';
+import { useForm, usePage } from '@inertiajs/react';
 import {
     ChevronDown,
     Image,
     ImagePlus,
+    Lock as LockIcon,
     MessageCircle,
     SendHorizontal,
     SquareDashedMousePointer,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { useForm, usePage } from '@inertiajs/react';
+import InputError from '@/Components/InputError';
+import Modal from '@/Components/Modal';
 
-const visibilityOptions = [
-    { value: 'public', label: 'Public' },
-    { value: 'followers', label: 'Followers' },
-];
 const cropAspectRatio = 505 / 600;
 const minimumCropWidth = 160;
 const cropHandles = [
@@ -54,9 +51,17 @@ const cropHandles = [
 
 export default function PostComposer({ onSuccess = () => {}, compact = false }) {
     const { auth } = usePage().props;
+    const isPrivateProfile = auth.user.is_private;
+    const visibilityOptions = isPrivateProfile
+        ? [{ value: 'private', label: 'Private' }]
+        : [
+              { value: 'public', label: 'Public' },
+              { value: 'followers', label: 'Followers' },
+              { value: 'private', label: 'Private' },
+          ];
     const { data, setData, post, processing, errors, reset } = useForm({
         body: '',
-        visibility: 'public',
+        visibility: isPrivateProfile ? 'private' : 'public',
         media: [],
         media_transform: [],
     });
@@ -96,6 +101,12 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
+
+    useEffect(() => {
+        if (isPrivateProfile && data.visibility !== 'private') {
+            setData('visibility', 'private');
+        }
+    }, [data.visibility, isPrivateProfile, setData]);
 
     useEffect(() => {
         return () => {
@@ -479,18 +490,29 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
                         <div ref={audienceRef} className="relative">
                             <button
                                 type="button"
-                                onClick={() => setIsAudienceOpen((open) => !open)}
+                                onClick={() => {
+                                    if (!isPrivateProfile) {
+                                        setIsAudienceOpen((open) => !open);
+                                    }
+                                }}
                                 className="feed-composer-action"
+                                aria-disabled={isPrivateProfile}
                             >
-                                <MessageCircle className="h-4 w-4" />
+                                {activeVisibility.value === 'private' ? (
+                                    <LockIcon className="h-4 w-4" />
+                                ) : (
+                                    <MessageCircle className="h-4 w-4" />
+                                )}
                                 {activeVisibility.label}
-                                <ChevronDown
-                                    className={`app-text-muted h-4 w-4 transition ${isAudienceOpen ? 'rotate-180' : ''}`}
-                                    strokeWidth={2}
-                                />
+                                {!isPrivateProfile && (
+                                    <ChevronDown
+                                        className={`app-text-muted h-4 w-4 transition ${isAudienceOpen ? 'rotate-180' : ''}`}
+                                        strokeWidth={2}
+                                    />
+                                )}
                             </button>
 
-                            {isAudienceOpen && (
+                            {isAudienceOpen && !isPrivateProfile && (
                                 <div className="app-panel-inset absolute left-0 top-[calc(100%+0.5rem)] z-20 w-40 space-y-1 rounded-2xl p-2 shadow-[var(--vynce-shadow-md)]">
                                     {visibilityOptions.map((option) => (
                                         <button

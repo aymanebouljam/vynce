@@ -7,6 +7,7 @@ import {
     Ellipsis,
     Globe,
     Heart,
+    Lock as LockIcon,
     MessageCircle,
     Pencil,
     Repeat2,
@@ -20,6 +21,39 @@ import DangerButton from '@/Components/DangerButton';
 import Modal from '@/Components/Modal';
 import SecondaryButton from '@/Components/SecondaryButton';
 
+const COMMENT_EMOJIS = [
+    '😀',
+    '😁',
+    '😂',
+    '😅',
+    '😊',
+    '😍',
+    '🤩',
+    '😘',
+    '😎',
+    '🤔',
+    '🥰',
+    '😌',
+    '🙂',
+    '😇',
+    '🥳',
+    '🤗',
+    '🙌',
+    '👏',
+    '🔥',
+    '💯',
+    '🎉',
+    '❤️',
+    '🩷',
+    '💖',
+    '💘',
+    '💝',
+    '💙',
+    '🤍',
+    '💚',
+    '💛',
+];
+
 export default function PostCard({
     post,
     profileUsername = null,
@@ -30,6 +64,7 @@ export default function PostCard({
     targetCommentId = null,
 }) {
     const { auth } = usePage().props;
+    const isPrivateProfile = Boolean(auth?.user?.is_private);
     const authorName = post.user?.name ?? 'Unknown user';
     const authorUsername = post.user?.username ?? null;
     const authorHref = authorUsername ? route('users.show', authorUsername) : null;
@@ -67,7 +102,16 @@ export default function PostCard({
         visibility: post.visibility,
     });
     const deleteForm = useForm({});
-    const currentVisibility = selectedVisibility ?? post.visibility;
+    const currentVisibility = isPrivateProfile
+        ? 'private'
+        : (selectedVisibility ?? post.visibility);
+    const visibilityOptions = isPrivateProfile
+        ? [{ key: 'private', label: 'Private', icon: LockIcon }]
+        : [
+              { key: 'public', label: 'Public', icon: Globe },
+              { key: 'followers', label: 'Followers', icon: Users },
+              { key: 'private', label: 'Private', icon: LockIcon },
+          ];
     const initials = authorName
         .split(' ')
         .map((part) => part[0])
@@ -77,7 +121,9 @@ export default function PostCard({
     const isProfileRepost =
         Boolean(post.profile_reposted_at) && showProfileRepostLabel && profileUsername;
     const visibilityIcon =
-        currentVisibility === 'followers' ? (
+        currentVisibility === 'private' ? (
+            <LockIcon className="h-3.5 w-3.5" strokeWidth={1.9} />
+        ) : currentVisibility === 'followers' ? (
             <Users className="h-3.5 w-3.5" strokeWidth={1.9} />
         ) : (
             <Globe className="h-3.5 w-3.5" strokeWidth={1.9} />
@@ -97,6 +143,12 @@ export default function PostCard({
     useEffect(() => {
         setSelectedVisibility(post.visibility);
     }, [post.id, post.visibility]);
+
+    useEffect(() => {
+        if (isPrivateProfile && selectedVisibility !== 'private') {
+            setSelectedVisibility('private');
+        }
+    }, [isPrivateProfile, selectedVisibility]);
 
     useEffect(() => {
         setLocalComments(post.comments ?? []);
@@ -456,6 +508,10 @@ export default function PostCard({
     };
 
     const updateVisibility = (visibility) => {
+        if (isPrivateProfile && visibility !== 'private') {
+            return;
+        }
+
         if (editForm.processing || isVisibilitySaving || currentVisibility === visibility) {
             return;
         }
@@ -592,9 +648,11 @@ export default function PostCard({
                                     <button
                                         ref={visibilityButtonRef}
                                         type="button"
-                                        onClick={() =>
-                                            canManage && setVisibilityMenuOpen((open) => !open)
-                                        }
+                                        onClick={() => {
+                                            if (canManage && !isPrivateProfile) {
+                                                setVisibilityMenuOpen((open) => !open);
+                                            }
+                                        }}
                                         className="feed-post-card__visibility"
                                         title={currentVisibility}
                                         aria-label={currentVisibility}
@@ -824,6 +882,7 @@ export default function PostCard({
                     document.body,
                 )}
             {visibilityMenuOpen &&
+                !isPrivateProfile &&
                 typeof document !== 'undefined' &&
                 createPortal(
                     <div
@@ -838,10 +897,7 @@ export default function PostCard({
                             Visibility
                         </div>
                         <div className="space-y-1">
-                            {[
-                                { key: 'public', label: 'Public', icon: Globe },
-                                { key: 'followers', label: 'Followers', icon: Users },
-                            ].map((option) => (
+                            {visibilityOptions.map((option) => (
                                 <button
                                     key={option.key}
                                     type="button"
@@ -1074,13 +1130,21 @@ function CommentThread({ comment, handlers, depth = 0, targetCommentId = null })
     const [draftBody, setDraftBody] = useState(comment.body ?? '');
     const [menuOpen, setMenuOpen] = useState(false);
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
     const menuButtonRef = useRef(null);
     const menuPanelRef = useRef(null);
+    const editTextareaRef = useRef(null);
     const isTargetComment = targetCommentId === comment.id;
 
     useEffect(() => {
         setDraftBody(comment.body ?? '');
     }, [comment.body]);
+
+    useEffect(() => {
+        if (!isEditing) {
+            setEmojiPickerOpen(false);
+        }
+    }, [isEditing]);
 
     useEffect(() => {
         if (!isTargetComment || typeof document === 'undefined') {
@@ -1127,7 +1191,30 @@ function CommentThread({ comment, handlers, depth = 0, targetCommentId = null })
         >
             <div className="flex items-start gap-3">
                 <div className="shrink-0">
-                    {comment.user?.avatar_url ? (
+                    {comment.user?.username ? (
+                        <Link
+                            href={route('users.show', comment.user.username)}
+                            className="block"
+                            aria-label={`Open ${comment.user?.name ?? 'user'} profile`}
+                        >
+                            {comment.user?.avatar_url ? (
+                                <img
+                                    src={comment.user.avatar_url}
+                                    alt={comment.user?.name ?? 'Unknown user'}
+                                    className="h-9 w-9 rounded-2xl object-cover"
+                                    style={{
+                                        objectPosition: `${comment.user.avatar_position_x}% ${comment.user.avatar_position_y}%`,
+                                        transform: `scale(${comment.user.avatar_zoom})`,
+                                        transformOrigin: `${comment.user.avatar_position_x}% ${comment.user.avatar_position_y}%`,
+                                    }}
+                                />
+                            ) : (
+                                <div className="app-avatar-fallback flex h-9 w-9 items-center justify-center rounded-2xl text-[11px] font-semibold">
+                                    {avatarFallback ?? 'US'}
+                                </div>
+                            )}
+                        </Link>
+                    ) : comment.user?.avatar_url ? (
                         <img
                             src={comment.user.avatar_url}
                             alt={comment.user?.name ?? 'Unknown user'}
@@ -1150,9 +1237,19 @@ function CommentThread({ comment, handlers, depth = 0, targetCommentId = null })
                         <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
                                 <div className="flex flex-wrap items-center gap-2 text-sm">
-                                    <span className="font-semibold">
-                                        {comment.user?.name ?? 'Unknown user'}
-                                    </span>
+                                    {comment.user?.username ? (
+                                        <Link
+                                            href={route('users.show', comment.user.username)}
+                                            className="font-semibold transition hover:underline"
+                                            aria-label={`Open ${comment.user?.name ?? 'user'} profile`}
+                                        >
+                                            {comment.user?.name ?? 'Unknown user'}
+                                        </Link>
+                                    ) : (
+                                        <span className="font-semibold">
+                                            {comment.user?.name ?? 'Unknown user'}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
 
@@ -1219,11 +1316,22 @@ function CommentThread({ comment, handlers, depth = 0, targetCommentId = null })
 
                         {isEditing ? (
                             <div className="mt-3 space-y-3">
-                                <textarea
-                                    value={draftBody}
-                                    onChange={(event) => setDraftBody(event.target.value)}
-                                    className="field min-h-20 resize-none text-sm"
-                                />
+                                <div className="relative">
+                                    <textarea
+                                        ref={editTextareaRef}
+                                        value={draftBody}
+                                        onChange={(event) => setDraftBody(event.target.value)}
+                                        className="field min-h-20 resize-none pr-12 text-sm"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setEmojiPickerOpen(true)}
+                                        className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-transparent text-[rgba(241,235,251,0.88)] transition hover:bg-white/5 hover:text-white"
+                                        aria-label="Add emoji"
+                                    >
+                                        🙂
+                                    </button>
+                                </div>
 
                                 <div className="flex items-center justify-end gap-2">
                                     <button
@@ -1297,6 +1405,33 @@ function CommentThread({ comment, handlers, depth = 0, targetCommentId = null })
 
             {replies.length > 0 ? renderCommentThreads(replies, handlers, depth + 1) : null}
 
+            <EmojiPickerModal
+                show={emojiPickerOpen}
+                onClose={() => setEmojiPickerOpen(false)}
+                onSelect={(emoji) => {
+                    const textarea = editTextareaRef.current;
+
+                    if (!textarea) {
+                        setDraftBody((current) => `${current}${emoji}`);
+                        return;
+                    }
+
+                    const start = textarea.selectionStart ?? draftBody.length;
+                    const end = textarea.selectionEnd ?? draftBody.length;
+                    const nextBody = `${draftBody.slice(0, start)}${emoji}${draftBody.slice(end)}`;
+
+                    setDraftBody(nextBody);
+
+                    window.requestAnimationFrame(() => {
+                        textarea.focus();
+                        const caretPosition = start + emoji.length;
+                        textarea.setSelectionRange(caretPosition, caretPosition);
+                        textarea.style.height = '0px';
+                        textarea.style.height = `${textarea.scrollHeight}px`;
+                    });
+                }}
+            />
+
             <Modal
                 show={deleteConfirmOpen}
                 onClose={() => setDeleteConfirmOpen(false)}
@@ -1347,6 +1482,7 @@ function CommentComposer({
     nested = false,
 }) {
     const textareaRef = useRef(null);
+    const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
 
     useEffect(() => {
         const textarea = textareaRef.current;
@@ -1358,6 +1494,30 @@ function CommentComposer({
         textarea.style.height = '0px';
         textarea.style.height = `${textarea.scrollHeight}px`;
     }, [form.data.body, replyTarget?.id]);
+
+    const insertEmoji = (emoji) => {
+        const textarea = textareaRef.current;
+        const currentBody = form.data.body ?? '';
+
+        if (!textarea) {
+            onChange(`${currentBody}${emoji}`);
+            return;
+        }
+
+        const start = textarea.selectionStart ?? currentBody.length;
+        const end = textarea.selectionEnd ?? currentBody.length;
+        const nextBody = `${currentBody.slice(0, start)}${emoji}${currentBody.slice(end)}`;
+
+        onChange(nextBody);
+
+        window.requestAnimationFrame(() => {
+            textarea.focus();
+            const caretPosition = start + emoji.length;
+            textarea.setSelectionRange(caretPosition, caretPosition);
+            textarea.style.height = '0px';
+            textarea.style.height = `${textarea.scrollHeight}px`;
+        });
+    };
 
     return (
         <form onSubmit={onSubmit} className={`space-y-3 ${nested ? 'pl-0' : ''}`}>
@@ -1389,11 +1549,19 @@ function CommentComposer({
                     rows={1}
                     value={form.data.body}
                     onChange={(event) => onChange(event.target.value)}
-                    className={`field app-scrollbar-hidden min-h-10 resize-none overflow-hidden py-2 pr-11 text-sm leading-5 ${
+                    className={`field app-scrollbar-hidden min-h-10 resize-none overflow-hidden py-2 pr-20 text-sm leading-5 ${
                         nested ? 'app-panel-inset' : ''
                     }`}
                     placeholder={placeholder}
                 />
+                <button
+                    type="button"
+                    onClick={() => setEmojiPickerOpen(true)}
+                    className="absolute right-10 top-[45%] inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-transparent text-[rgba(241,235,251,0.88)] transition hover:bg-white/5 hover:text-white"
+                    aria-label="Add emoji"
+                >
+                    🙂
+                </button>
                 <button
                     type="submit"
                     disabled={processing}
@@ -1405,7 +1573,55 @@ function CommentComposer({
             </div>
 
             {error ? <div className="text-sm text-rose-300">{error}</div> : null}
+
+            <EmojiPickerModal
+                show={emojiPickerOpen}
+                onClose={() => setEmojiPickerOpen(false)}
+                onSelect={insertEmoji}
+            />
         </form>
+    );
+}
+
+function EmojiPickerModal({ show, onClose, onSelect }) {
+    return (
+        <Modal show={show} onClose={onClose} maxWidth="md" centered>
+            <div className="space-y-4 p-5 2xl:space-y-5 2xl:p-6">
+                <div>
+                    <div className="text-base font-semibold 2xl:text-lg">Pick an emoji</div>
+                    <p className="app-text-soft mt-2 text-[13px] leading-5 2xl:text-sm 2xl:leading-6">
+                        Add a little personality to your comment.
+                    </p>
+                </div>
+
+                <div className="grid grid-cols-6 gap-2">
+                    {COMMENT_EMOJIS.map((emoji) => (
+                        <button
+                            key={emoji}
+                            type="button"
+                            onClick={() => {
+                                onSelect(emoji);
+                                onClose();
+                            }}
+                            className="app-button-secondary inline-flex h-11 items-center justify-center rounded-2xl text-xl transition hover:scale-105"
+                            aria-label={`Insert ${emoji}`}
+                        >
+                            {emoji}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="flex justify-end">
+                    <SecondaryButton
+                        type="button"
+                        onClick={onClose}
+                        className="rounded-full px-4 py-2 text-sm normal-case tracking-normal"
+                    >
+                        Close
+                    </SecondaryButton>
+                </div>
+            </div>
+        </Modal>
     );
 }
 

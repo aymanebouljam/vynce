@@ -7,7 +7,7 @@ import {
     Eye,
     Handshake,
     ImagePlus,
-    Lock,
+    Lock as LockIcon,
     MessageCircle,
     Move,
     Pencil,
@@ -351,7 +351,7 @@ export default function Show({ profile: initialProfile, relationship, feed, sugg
                                         isOwnProfile ? 'mt-1 ml-1' : 'mt-3'
                                     }`}
                                 >
-                                    <Lock className="h-3.5 w-3.5" strokeWidth={1.9} />
+                                    <LockIcon className="h-3.5 w-3.5" strokeWidth={1.9} />
                                     Private profile
                                 </div>
                             )}
@@ -685,7 +685,7 @@ export default function Show({ profile: initialProfile, relationship, feed, sugg
                     {isPrivateProfileLocked ? (
                         <div className="app-panel-inset rounded-[24px] p-6 2xl:rounded-[28px] 2xl:p-8">
                             <div className="flex items-center gap-2 text-[13px] font-semibold 2xl:text-sm">
-                                <Lock className="h-4 w-4" strokeWidth={1.9} />
+                                <LockIcon className="h-4 w-4" strokeWidth={1.9} />
                                 Private account
                             </div>
                             <p className="app-text-soft mt-3 max-w-2xl text-[13px] leading-6 2xl:text-sm 2xl:leading-7">
