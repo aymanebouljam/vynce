@@ -57,6 +57,38 @@ class PostTest extends TestCase
         $this->assertCount(1, $post->media);
     }
 
+    public function test_authenticated_users_can_create_private_visibility_posts(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post('/posts', [
+            'body' => 'A friends only thought',
+            'visibility' => 'private',
+        ]);
+
+        $response->assertRedirect();
+
+        $post = Post::query()->first();
+
+        $this->assertSame('private', $post->visibility->value);
+    }
+
+    public function test_private_profiles_force_new_posts_to_private_visibility(): void
+    {
+        $user = User::factory()->create(['is_private' => true]);
+
+        $response = $this->actingAs($user)->post('/posts', [
+            'body' => 'This should stay private',
+            'visibility' => 'public',
+        ]);
+
+        $response->assertRedirect();
+
+        $post = Post::query()->first();
+
+        $this->assertSame('private', $post->visibility->value);
+    }
+
     public function test_users_cannot_delete_other_users_posts(): void
     {
         $owner = User::factory()->create();

@@ -104,7 +104,7 @@ class FeedTest extends TestCase
         ]);
         $post = Post::factory()->for($profileUser)->create([
             'body' => 'Friends only post',
-            'visibility' => 'public',
+            'visibility' => 'private',
         ]);
 
         Friendship::query()->create([
@@ -121,5 +121,43 @@ class FeedTest extends TestCase
             ->component('Profile/Show')
             ->where('profile.can_view_posts', true)
             ->where('feed.data.0.body', $post->body));
+    }
+
+    public function test_private_posts_are_visible_to_friends_but_not_followers(): void
+    {
+        $friend = User::factory()->create();
+        $follower = User::factory()->create();
+        $profileUser = User::factory()->create([
+            'username' => 'private-post-owner',
+        ]);
+        $post = Post::factory()->for($profileUser)->create([
+            'body' => 'Friends only post',
+            'visibility' => 'private',
+        ]);
+
+        Friendship::query()->create([
+            'requester_id' => $friend->id,
+            'addressee_id' => $profileUser->id,
+            'status' => FriendshipStatus::Accepted,
+            'accepted_at' => now(),
+        ]);
+
+        Follow::query()->create([
+            'follower_id' => $follower->id,
+            'followed_id' => $profileUser->id,
+            'status' => FollowStatus::Accepted,
+            'accepted_at' => now(),
+        ]);
+
+        $friendResponse = $this->actingAs($friend)->get(route('users.show', $profileUser->username));
+        $followerResponse = $this->actingAs($follower)->get(route('users.show', $profileUser->username));
+
+        $friendResponse->assertOk();
+        $friendResponse->assertInertia(fn (Assert $page) => $page
+            ->component('Profile/Show')
+            ->where('feed.data.0.body', $post->body));
+
+        $followerResponse->assertOk();
+        $followerResponse->assertDontSee($post->body);
     }
 }
