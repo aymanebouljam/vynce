@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { FileText, Hash, Search, Users } from 'lucide-react';
 import PostCard from '@/Components/App/PostCard';
+import BackButton from '@/Components/BackButton';
 import useLiveInertiaReload from '@/hooks/useLiveInertiaReload';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
@@ -13,6 +14,13 @@ export default function Index({ query, filter = 'people', users = [], posts = []
         <AuthenticatedLayout title="Search">
             <section className="space-y-5 2xl:space-y-6">
                 <div className="app-panel rounded-[28px] p-5 2xl:rounded-[32px] 2xl:p-6">
+                    <BackButton
+                        fallbackHref={route('feed.home')}
+                        fallbackLabel="Go back"
+                        className="mb-4"
+                    >
+                        Back
+                    </BackButton>
                     <div className="flex items-start gap-3">
                         <div className="app-avatar-fallback flex h-10 w-10 items-center justify-center rounded-[18px] text-sm font-semibold 2xl:h-12 2xl:w-12 2xl:rounded-2xl">
                             <Search className="h-4 w-4 2xl:h-5 2xl:w-5" strokeWidth={1.9} />

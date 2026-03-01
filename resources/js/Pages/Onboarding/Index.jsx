@@ -1,6 +1,7 @@
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { useForm } from '@inertiajs/react';
 import { cloneElement } from 'react';
+import BackButton from '@/Components/BackButton';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 export default function Onboarding({ profile }) {
     const { data, setData, post, processing, errors } = useForm({
@@ -26,6 +27,13 @@ export default function Onboarding({ profile }) {
         <AuthenticatedLayout title="Onboarding">
             <section className="app-panel rounded-[32px] p-6 md:p-8">
                 <div className="mb-8 max-w-2xl">
+                    <BackButton
+                        fallbackHref={route('feed.home')}
+                        fallbackLabel="Go back"
+                        className="mb-5"
+                    >
+                        Back
+                    </BackButton>
                     <h1 className="text-3xl font-semibold md:text-4xl">
                         Finish your profile in one pass
                     </h1>
