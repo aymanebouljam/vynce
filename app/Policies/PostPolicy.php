@@ -25,7 +25,9 @@ class PostPolicy
         return match ($post->visibility->value) {
             'public' => $this->socialGraphService->canViewProfile($viewer, $post->user),
             'followers' => $viewer ? $this->socialGraphService->follows($viewer, $post->user) || $post->user->is($viewer) : false,
-            'private' => $viewer ? $post->user->is($viewer) : false,
+            'private' => $viewer
+                ? $post->user->is($viewer) || $this->socialGraphService->areFriends($viewer, $post->user)
+                : false,
         };
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Posts;
 
+use App\Enums\PostVisibility;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -13,11 +14,20 @@ class StorePostRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->user()?->is_private) {
+            $this->merge([
+                'visibility' => PostVisibility::Private->value,
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         return [
             'body' => ['nullable', 'string', 'max:2000'],
-            'visibility' => ['required', Rule::in(['public', 'followers'])],
+            'visibility' => ['required', Rule::in(['public', 'followers', 'private'])],
             'media' => ['nullable', 'array', 'max:4'],
             'media.*' => ['image', 'max:8192'],
             'media_transform' => ['nullable', 'array'],

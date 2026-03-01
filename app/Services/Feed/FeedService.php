@@ -3,6 +3,7 @@
 namespace App\Services\Feed;
 
 use App\Enums\FollowStatus;
+use App\Enums\FriendshipStatus;
 use App\Models\Post;
 use App\Models\User;
 use App\Services\SocialGraph\SocialGraphService;
@@ -182,7 +183,28 @@ class FeedService
                     })
                     ->orWhere(function (Builder $privateQuery) use ($user) {
                         $privateQuery->where('posts.visibility', 'private')
-                            ->where('posts.user_id', $user->id);
+                            ->where(function (Builder $friendsQuery) use ($user) {
+                                $friendsQuery->where('posts.user_id', $user->id)
+                                    ->orWhereExists(function ($subQuery) use ($user) {
+                                        $subQuery->selectRaw('1')
+                                            ->from('friendships')
+                                            ->where('status', FriendshipStatus::Accepted->value)
+                                            ->where(function ($friendshipQuery) use ($user) {
+                                                $friendshipQuery->whereColumn(
+                                                    'friendships.requester_id',
+                                                    'posts.user_id',
+                                                )
+                                                    ->where('friendships.addressee_id', $user->id);
+                                            })
+                                            ->orWhere(function ($friendshipQuery) use ($user) {
+                                                $friendshipQuery->whereColumn(
+                                                    'friendships.addressee_id',
+                                                    'posts.user_id',
+                                                )
+                                                    ->where('friendships.requester_id', $user->id);
+                                            });
+                                    });
+                            });
                     });
             });
     }
