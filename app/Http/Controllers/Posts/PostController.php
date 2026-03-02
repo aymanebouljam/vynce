@@ -6,6 +6,7 @@ use App\Actions\Posts\CreatePostAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Posts\StorePostRequest;
 use App\Http\Requests\Posts\UpdatePostRequest;
+use App\Http\Requests\Posts\UpdatePostVisibilityRequest;
 use App\Http\Resources\PostResource;
 use App\Models\Post;
 use App\Services\Notifications\MentionNotificationService;
@@ -45,6 +46,27 @@ class PostController extends Controller
             'visibility' => $request->string('visibility')->value(),
             'hashtags' => array_values(array_unique(array_map('mb_strtolower', $hashtags[1] ?? []))),
             'mentions' => array_values(array_unique(array_map('strtolower', $mentions[1] ?? []))),
+        ]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'post' => PostResource::make(
+                    $post->fresh(['user', 'media', 'comments.user', 'comments.likes', 'likes', 'reposts']),
+                )->resolve($request),
+            ]);
+        }
+
+        return back();
+    }
+
+    public function updateVisibility(
+        UpdatePostVisibilityRequest $request,
+        Post $post,
+    ): RedirectResponse|JsonResponse {
+        $this->authorize('update', $post);
+
+        $post->update([
+            'visibility' => $request->string('visibility')->value(),
         ]);
 
         if ($request->expectsJson()) {

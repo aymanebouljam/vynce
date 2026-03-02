@@ -59,6 +59,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/posts', [PostController::class, 'store'])->middleware('throttle:30,1')->name('posts.store');
     Route::patch('/posts/{post}', [PostController::class, 'update'])->middleware('throttle:30,1')->name('posts.update');
+    Route::patch('/posts/{post}/visibility', [PostController::class, 'updateVisibility'])->middleware('throttle:30,1')->name('posts.visibility.update');
     Route::delete('/posts/{post}', [PostController::class, 'destroy'])->middleware('throttle:30,1')->name('posts.destroy');
     Route::post('/posts/{post}/likes/toggle', [PostEngagementController::class, 'toggleLike'])->middleware('throttle:60,1')->name('posts.likes.toggle');
     Route::post('/posts/{post}/reposts/toggle', [PostEngagementController::class, 'toggleRepost'])->middleware('throttle:60,1')->name('posts.reposts.toggle');
