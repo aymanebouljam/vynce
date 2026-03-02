@@ -1,4 +1,4 @@
-import { Link, useForm, usePage } from '@inertiajs/react';
+import { Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     ChevronDown,
     ChevronLeft,
@@ -524,9 +524,8 @@ export default function PostCard({
 
         window.axios
             .patch(
-                route('posts.update', post.id),
+                route('posts.visibility.update', post.id),
                 {
-                    body: editForm.data.body,
                     visibility,
                 },
                 {
@@ -543,6 +542,12 @@ export default function PostCard({
                     ...current,
                     visibility: persistedVisibility,
                 }));
+
+                router.reload({
+                    only: ['feed', 'profile'],
+                    preserveScroll: true,
+                    preserveState: true,
+                });
             })
             .catch(() => {
                 setSelectedVisibility(previousVisibility);
