@@ -151,6 +151,60 @@ class PostTest extends TestCase
         $this->assertSame('followers', $post->visibility->value);
     }
 
+    public function test_users_can_update_visibility_through_the_dedicated_visibility_endpoint(): void
+    {
+        $user = User::factory()->create();
+        $post = Post::factory()->for($user)->create([
+            'body' => 'Original thought',
+            'visibility' => 'public',
+            'hashtags' => [],
+            'mentions' => [],
+        ]);
+
+        $response = $this->actingAs($user)
+            ->patchJson(route('posts.visibility.update', $post), [
+                'visibility' => 'private',
+            ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('post.id', $post->id)
+            ->assertJsonPath('post.visibility', 'private');
+
+        $post->refresh();
+
+        $this->assertSame('private', $post->visibility->value);
+    }
+
+    public function test_users_can_change_public_posts_to_private_so_other_users_no_longer_see_them(): void
+    {
+        $author = User::factory()->create();
+        $viewer = User::factory()->create();
+        $post = Post::factory()->for($author)->create([
+            'body' => 'Public post becoming private',
+            'visibility' => 'public',
+            'hashtags' => [],
+            'mentions' => [],
+        ]);
+
+        $this->actingAs($author)
+            ->patchJson(route('posts.update', $post), [
+                'body' => 'Public post becoming private',
+                'visibility' => 'private',
+            ])
+            ->assertOk()
+            ->assertJsonPath('post.visibility', 'private');
+
+        $post->refresh();
+
+        $this->assertSame('private', $post->visibility->value);
+
+        $this->actingAs($viewer)
+            ->get(route('feed.home'))
+            ->assertOk()
+            ->assertDontSee($post->body);
+    }
+
     public function test_users_can_delete_their_own_posts(): void
     {
         $user = User::factory()->create();
