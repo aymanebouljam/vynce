@@ -64,12 +64,12 @@ export default function PostCard({
     targetCommentId = null,
 }) {
     const { auth } = usePage().props;
-    const isPrivateProfile = Boolean(auth?.user?.is_private);
     const authorName = post.user?.name ?? 'Unknown user';
     const authorUsername = post.user?.username ?? null;
     const authorHref = authorUsername ? route('users.show', authorUsername) : null;
     const publishedAt = new Date(post.published_at || post.created_at).toLocaleString();
     const canManage = auth?.user?.id === post.user?.id;
+    const isOwnPrivateProfile = canManage && Boolean(auth?.user?.is_private);
     const [commentsOpen, setCommentsOpen] = useState(false);
     const [isLiked, setIsLiked] = useState(post.is_liked);
     const [likesCount, setLikesCount] = useState(post.likes_count ?? 0);
@@ -102,10 +102,8 @@ export default function PostCard({
         visibility: post.visibility,
     });
     const deleteForm = useForm({});
-    const currentVisibility = isPrivateProfile
-        ? 'private'
-        : (selectedVisibility ?? post.visibility);
-    const visibilityOptions = isPrivateProfile
+    const currentVisibility = selectedVisibility ?? post.visibility;
+    const visibilityOptions = isOwnPrivateProfile
         ? [{ key: 'private', label: 'Private', icon: LockIcon }]
         : [
               { key: 'public', label: 'Public', icon: Globe },
@@ -143,12 +141,6 @@ export default function PostCard({
     useEffect(() => {
         setSelectedVisibility(post.visibility);
     }, [post.id, post.visibility]);
-
-    useEffect(() => {
-        if (isPrivateProfile && selectedVisibility !== 'private') {
-            setSelectedVisibility('private');
-        }
-    }, [isPrivateProfile, selectedVisibility]);
 
     useEffect(() => {
         setLocalComments(post.comments ?? []);
@@ -508,7 +500,7 @@ export default function PostCard({
     };
 
     const updateVisibility = (visibility) => {
-        if (isPrivateProfile && visibility !== 'private') {
+        if (isOwnPrivateProfile && visibility !== 'private') {
             return;
         }
 
@@ -654,7 +646,7 @@ export default function PostCard({
                                         ref={visibilityButtonRef}
                                         type="button"
                                         onClick={() => {
-                                            if (canManage && !isPrivateProfile) {
+                                            if (canManage && visibilityOptions.length > 1) {
                                                 setVisibilityMenuOpen((open) => !open);
                                             }
                                         }}
@@ -887,7 +879,7 @@ export default function PostCard({
                     document.body,
                 )}
             {visibilityMenuOpen &&
-                !isPrivateProfile &&
+                visibilityOptions.length > 1 &&
                 typeof document !== 'undefined' &&
                 createPortal(
                     <div
