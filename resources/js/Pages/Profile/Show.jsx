@@ -285,7 +285,7 @@ export default function Show({ profile: initialProfile, relationship, feed, sugg
 
                 <div className="p-5 2xl:p-6">
                     <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-                        <div>
+                        <div className="min-w-0 md:flex-1">
                             <div className="relative -mt-14 mb-3 w-fit 2xl:-mt-16 2xl:mb-4">
                                 {profile.avatar_url ? (
                                     <button
@@ -404,7 +404,10 @@ export default function Show({ profile: initialProfile, relationship, feed, sugg
                             <div className="app-text-muted mt-3 flex flex-wrap gap-3 text-[13px] 2xl:mt-4 2xl:gap-4 2xl:text-sm">
                                 {profile.location && <span>{profile.location}</span>}
                                 {profile.website_url && (
-                                    <a href={profile.website_url} className="app-link">
+                                    <a
+                                        href={profile.website_url}
+                                        className="app-link min-w-0 break-all"
+                                    >
                                         {profile.website_url}
                                     </a>
                                 )}
@@ -430,7 +433,7 @@ export default function Show({ profile: initialProfile, relationship, feed, sugg
                             </div>
                         </div>
 
-                        <div className="flex gap-3">
+                        <div className="flex shrink-0 flex-wrap gap-3">
                             {isOwnProfile ? (
                                 <>
                                     <button
