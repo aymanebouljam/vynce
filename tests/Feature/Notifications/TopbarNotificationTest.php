@@ -166,6 +166,39 @@ class TopbarNotificationTest extends TestCase
         );
     }
 
+    public function test_adding_a_mention_to_an_existing_post_notifies_that_user_with_a_post_link(): void
+    {
+        $author = User::factory()->create([
+            'username' => 'post_author',
+        ]);
+        $mentioned = User::factory()->create([
+            'username' => 'mentioned_user',
+        ]);
+        $post = Post::factory()->for($author)->create([
+            'visibility' => 'public',
+            'body' => 'Initial body without mentions.',
+            'mentions' => [],
+        ]);
+
+        $this->actingAs($author)
+            ->patch(route('posts.update', $post), [
+                'body' => 'Updated body with @mentioned_user now included.',
+                'visibility' => 'public',
+            ])
+            ->assertRedirect();
+
+        $notification = $mentioned->fresh()->notifications()->firstOrFail();
+
+        $this->assertSame('mention', $notification->data['type']);
+        $this->assertSame(
+            route('users.show', [
+                'user' => $author->username,
+                'post' => $post->id,
+            ]),
+            $notification->data['href'],
+        );
+    }
+
     public function test_receiving_a_message_updates_message_and_notification_badges(): void
     {
         $sender = User::factory()->create();

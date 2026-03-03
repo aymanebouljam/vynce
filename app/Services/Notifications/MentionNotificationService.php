@@ -9,8 +9,12 @@ use App\Notifications\DatabaseActivityNotification;
 
 class MentionNotificationService
 {
-    public function notifyPostMentions(User $actor, Post $post, string $body): void
-    {
+    public function notifyPostMentions(
+        User $actor,
+        Post $post,
+        string $body,
+        ?array $usernames = null,
+    ): void {
         $this->notifyMentions(
             actor: $actor,
             body: $body,
@@ -19,6 +23,7 @@ class MentionNotificationService
                 'user' => $post->user->username,
                 'post' => $post->id,
             ]),
+            usernames: $usernames,
         );
     }
 
@@ -37,9 +42,14 @@ class MentionNotificationService
         );
     }
 
-    private function notifyMentions(User $actor, string $body, string $title, string $href): void
-    {
-        $mentionedUsers = $this->mentionedUsers($body)
+    private function notifyMentions(
+        User $actor,
+        string $body,
+        string $title,
+        string $href,
+        ?array $usernames = null,
+    ): void {
+        $mentionedUsers = $this->mentionedUsers($body, $usernames)
             ->reject(fn (User $user) => $user->is($actor))
             ->values();
 
@@ -58,11 +68,13 @@ class MentionNotificationService
         }
     }
 
-    private function mentionedUsers(string $body)
+    private function mentionedUsers(string $body, ?array $usernames = null)
     {
-        preg_match_all('/@([a-z0-9_.]+)/i', $body, $matches);
+        $usernames ??= preg_match_all('/@([a-z0-9_.]+)/i', $body, $matches)
+            ? ($matches[1] ?? [])
+            : [];
 
-        return collect(array_values(array_unique(array_map('strtolower', $matches[1] ?? []))))
+        return collect(array_values(array_unique(array_map('strtolower', $usernames))))
             ->map(fn (string $username) => User::query()
                 ->whereRaw('LOWER(username) = ?', [$username])
                 ->first())
