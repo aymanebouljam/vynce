@@ -56,6 +56,67 @@ class FeedTest extends TestCase
         $response->assertSee($ownFollowersPost->body);
     }
 
+    public function test_home_feed_trending_hashtags_are_derived_from_recent_seeded_posts(): void
+    {
+        $viewer = User::factory()->create();
+        $author = User::factory()->create();
+
+        Post::factory()->for($author)->count(4)->create([
+            'visibility' => 'public',
+            'hashtags' => ['design_systems'],
+        ]);
+
+        Post::factory()->for($author)->count(3)->create([
+            'visibility' => 'public',
+            'hashtags' => ['launch_notes'],
+        ]);
+
+        Post::factory()->for($author)->count(2)->create([
+            'visibility' => 'public',
+            'hashtags' => ['creator_workflow'],
+        ]);
+
+        $response = $this->actingAs($viewer)->get(route('feed.home'));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('trends.0.label', 'Design Systems')
+            ->where('trends.0.posts', '4 posts today')
+            ->where('trends.1.label', 'Launch Notes')
+            ->where('trends.1.posts', '3 posts today')
+            ->where('trends.2.label', 'Creator Workflow')
+            ->where('trends.2.posts', '2 posts today'));
+    }
+
+    public function test_searching_a_trending_tag_shows_matching_posts(): void
+    {
+        $viewer = User::factory()->create();
+        $author = User::factory()->create();
+        $matchedPost = Post::factory()->for($author)->create([
+            'body' => 'A useful design note',
+            'visibility' => 'public',
+            'hashtags' => ['design_systems'],
+        ]);
+        Post::factory()->for($author)->create([
+            'body' => 'Another idea',
+            'visibility' => 'public',
+            'hashtags' => ['launch_notes'],
+        ]);
+
+        $response = $this->actingAs($viewer)->get(route('feed.search', [
+            'q' => 'design_systems',
+            'filter' => 'posts',
+        ]));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Search/Index')
+            ->where('query', 'design_systems')
+            ->where('filter', 'posts')
+            ->where('posts.0.body', $matchedPost->body)
+            ->where('posts.0.hashtags.0', 'design_systems'));
+    }
+
     public function test_discover_feed_shows_public_non_self_posts(): void
     {
         $viewer = User::factory()->create();
