@@ -17,6 +17,34 @@ class FeedService
         private readonly SocialGraphService $socialGraphService,
     ) {}
 
+    public function trending(User $user, int $limit = 3): array
+    {
+        return $this->visiblePostsQuery($user)
+            ->where('posts.published_at', '>=', now()->startOfDay())
+            ->get(['posts.hashtags'])
+            ->flatMap(fn (Post $post) => collect($post->hashtags ?? [])
+                ->map(fn (string $tag) => mb_strtolower(ltrim($tag, '#'))))
+            ->filter()
+            ->countBy()
+            ->sortDesc()
+            ->take($limit)
+            ->map(function (int $count, string $tag): array {
+                $label = str($tag)
+                    ->replace(['_', '-'], ' ')
+                    ->headline()
+                    ->toString();
+
+                return [
+                    'label' => $label,
+                    'posts' => $count === 1 ? '1 post today' : "{$count} posts today",
+                    'count' => $count,
+                    'slug' => $tag,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
     public function home(User $user, int $perPage = 10): LengthAwarePaginator
     {
         return $this->baseQuery($user)
@@ -154,8 +182,13 @@ class FeedService
 
     private function baseQuery(User $user): Builder
     {
+        return $this->visiblePostsQuery($user)
+            ->with(['user', 'media', 'comments.user', 'comments.likes', 'likes', 'reposts']);
+    }
+
+    private function visiblePostsQuery(User $user): Builder
+    {
         return Post::query()
-            ->with(['user', 'media', 'comments.user', 'comments.likes', 'likes', 'reposts'])
             ->whereNull('deleted_at')
             ->whereNotExists(function ($query) use ($user) {
                 $query->selectRaw('1')

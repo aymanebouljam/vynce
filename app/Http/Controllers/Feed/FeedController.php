@@ -28,6 +28,7 @@ class FeedController extends Controller
         return Inertia::render('Feed/Home', [
             'feed' => InertiaPaginatedData::fromPaginator($feed, PostResource::class),
             'activeTab' => 'home',
+            'trends' => $feedService->trending(request()->user()),
             'messages' => ConversationResource::collection(
                 $conversationService->recentConversations(request()->user()),
             )->resolve(),
@@ -50,6 +51,7 @@ class FeedController extends Controller
         return Inertia::render('Feed/Home', [
             'feed' => InertiaPaginatedData::fromPaginator($feed, PostResource::class),
             'activeTab' => 'following',
+            'trends' => $feedService->trending(request()->user()),
             'messages' => ConversationResource::collection(
                 $conversationService->recentConversations(request()->user()),
             )->resolve(),
@@ -72,6 +74,7 @@ class FeedController extends Controller
         return Inertia::render('Feed/Home', [
             'feed' => InertiaPaginatedData::fromPaginator($feed, PostResource::class),
             'activeTab' => 'discover',
+            'trends' => $feedService->trending(request()->user()),
             'messages' => ConversationResource::collection(
                 $conversationService->recentConversations(request()->user()),
             )->resolve(),
@@ -156,6 +159,7 @@ class FeedController extends Controller
                 $feedService->profile(request()->user(), $user),
                 PostResource::class,
             ),
+            'trends' => $feedService->trending(request()->user()),
             'can_view_posts' => $canViewPosts,
             'pendingRequests' => UserResource::collection(
                 $socialGraphService->pendingRequests(request()->user()),
