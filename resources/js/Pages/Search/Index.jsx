@@ -65,7 +65,7 @@ export default function Index({ query, filter = 'people', users = [], posts = []
                             {topics.map((topic) => (
                                 <Link
                                     key={topic}
-                                    href={route('feed.search', { q: topic, filter: activeFilter })}
+                                    href={route('feed.search', { q: topic, filter: 'posts' })}
                                     className="app-button-secondary inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] 2xl:py-2 2xl:text-sm"
                                 >
                                     <Hash className="h-4 w-4" strokeWidth={1.8} />

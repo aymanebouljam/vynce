@@ -13,13 +13,7 @@ import PostComposer from '@/Components/App/PostComposer';
 import useLiveInertiaReload from '@/hooks/useLiveInertiaReload';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
-const trends = [
-    { label: 'Design systems', posts: '1,284 posts today' },
-    { label: 'Launch notes', posts: '842 posts today' },
-    { label: 'Creator workflow', posts: '511 posts today' },
-];
-
-export default function Home({ feed, activeTab, suggestions = [], messages = [] }) {
+export default function Home({ feed, activeTab, suggestions = [], messages = [], trends = [] }) {
     const page = usePage();
     const { auth } = page.props;
     const { flash } = page.props;
@@ -297,14 +291,18 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [] 
                         <TrendingUp className="h-4 w-4" strokeWidth={1.9} />
                         Trending now
                     </div>
-                    <div className="mt-3 space-y-3 2xl:mt-4 2xl:space-y-4">
+                    <div className="mt-3 space-y-2.5 2xl:mt-4 2xl:space-y-3">
                         {trends.map((trend) => (
-                            <div key={trend.label}>
+                            <Link
+                                key={trend.slug}
+                                href={route('feed.search', { q: trend.slug, filter: 'posts' })}
+                                className="block rounded-[18px] px-2 py-1 transition hover:bg-[rgba(255,255,255,0.04)] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+                            >
                                 <div className="text-[13px] 2xl:text-sm">#{trend.label}</div>
                                 <div className="app-text-soft text-[11px] 2xl:text-xs">
                                     {trend.posts}
                                 </div>
-                            </div>
+                            </Link>
                         ))}
                     </div>
                 </div>
