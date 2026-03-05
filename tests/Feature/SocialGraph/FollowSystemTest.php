@@ -3,7 +3,9 @@
 namespace Tests\Feature\SocialGraph;
 
 use App\Enums\FollowStatus;
+use App\Enums\FriendshipStatus;
 use App\Models\Follow;
+use App\Models\Friendship;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -59,6 +61,7 @@ class FollowSystemTest extends TestCase
                 ->component('Profile/Show')
                 ->where('profile.is_private', true)
                 ->where('profile.can_view_posts', false)
+                ->where('profile.is_private_for_viewer', true)
                 ->where('feed.data', [])
                 ->where('profile.name', $target->name)
                 ->where('profile.avatar_url', fn ($value) => filled($value)));
@@ -66,6 +69,32 @@ class FollowSystemTest extends TestCase
         $this->assertDatabaseHas('posts', [
             'id' => $post->id,
         ]);
+    }
+
+    public function test_private_profiles_look_public_to_accepted_friends(): void
+    {
+        $viewer = User::factory()->create();
+        $target = User::factory()->create(['is_private' => true]);
+        $post = Post::factory()->for($target)->create(['body' => 'Friend-only post']);
+
+        Friendship::query()->create([
+            'requester_id' => $viewer->id,
+            'addressee_id' => $target->id,
+            'status' => FriendshipStatus::Accepted,
+            'accepted_at' => now(),
+        ]);
+
+        $this->actingAs($viewer)
+            ->get(route('users.show', $target->username))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Profile/Show')
+                ->where('profile.is_private', true)
+                ->where('profile.can_view_posts', true)
+                ->where('profile.is_private_for_viewer', false)
+                ->has('feed.data', 1)
+                ->where('feed.data.0.body', $post->body)
+                ->where('relationship.is_friend', true));
     }
 
     public function test_account_owner_can_accept_a_follow_request(): void
