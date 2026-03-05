@@ -87,12 +87,14 @@ export default function PostCard({
     const [selectedVisibility, setSelectedVisibility] = useState(post.visibility);
     const [isVisibilitySaving, setIsVisibilitySaving] = useState(false);
     const [replyTarget, setReplyTarget] = useState(null);
+    const [editEmojiPickerOpen, setEditEmojiPickerOpen] = useState(false);
     const menuButtonRef = useRef(null);
     const menuPanelRef = useRef(null);
     const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
     const visibilityButtonRef = useRef(null);
     const visibilityPanelRef = useRef(null);
     const [visibilityMenuPosition, setVisibilityMenuPosition] = useState({ top: 0, left: 0 });
+    const editPostTextareaRef = useRef(null);
     const commentForm = useForm({
         body: '',
         parent_id: null,
@@ -171,6 +173,17 @@ export default function PostCard({
         setReplyTarget(null);
         commentForm.setData('parent_id', null);
     }, [post.id]);
+
+    useEffect(() => {
+        const textarea = editPostTextareaRef.current;
+
+        if (!textarea || !editOpen) {
+            return;
+        }
+
+        textarea.style.height = '0px';
+        textarea.style.height = `${textarea.scrollHeight}px`;
+    }, [editForm.data.body, editOpen]);
 
     useEffect(() => {
         if (!highlighted || typeof document === 'undefined') {
@@ -497,6 +510,30 @@ export default function PostCard({
         });
         setSelectedVisibility(post.visibility);
         setEditOpen(true);
+    };
+
+    const insertEditPostEmoji = (emoji) => {
+        const textarea = editPostTextareaRef.current;
+        const currentBody = editForm.data.body ?? '';
+
+        if (!textarea) {
+            editForm.setData('body', `${currentBody}${emoji}`);
+            return;
+        }
+
+        const start = textarea.selectionStart ?? currentBody.length;
+        const end = textarea.selectionEnd ?? currentBody.length;
+        const nextBody = `${currentBody.slice(0, start)}${emoji}${currentBody.slice(end)}`;
+
+        editForm.setData('body', nextBody);
+
+        window.requestAnimationFrame(() => {
+            textarea.focus();
+            const caretPosition = start + emoji.length;
+            textarea.setSelectionRange(caretPosition, caretPosition);
+            textarea.style.height = '0px';
+            textarea.style.height = `${textarea.scrollHeight}px`;
+        });
     };
 
     const updateVisibility = (visibility) => {
@@ -929,12 +966,26 @@ export default function PostCard({
                                 </p>
                             </div>
 
-                            <textarea
-                                value={editForm.data.body}
-                                onChange={(event) => editForm.setData('body', event.target.value)}
-                                className="field min-h-40 resize-none text-sm"
-                                placeholder="Write something sharp, useful, or memorable."
-                            />
+                            <div className="relative">
+                                <textarea
+                                    ref={editPostTextareaRef}
+                                    value={editForm.data.body}
+                                    onChange={(event) =>
+                                        editForm.setData('body', event.target.value)
+                                    }
+                                    className="field min-h-40 resize-none pr-12 text-sm"
+                                    placeholder="Write something sharp, useful, or memorable."
+                                />
+
+                                <button
+                                    type="button"
+                                    onClick={() => setEditEmojiPickerOpen(true)}
+                                    className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-transparent text-[rgba(241,235,251,0.88)] transition hover:bg-white/5 hover:text-white"
+                                    aria-label="Add emoji"
+                                >
+                                    🙂
+                                </button>
+                            </div>
 
                             {editForm.errors.body && (
                                 <div className="text-sm text-rose-300">{editForm.errors.body}</div>
@@ -958,6 +1009,12 @@ export default function PostCard({
                             </div>
                         </form>
                     </Modal>
+
+                    <EmojiPickerModal
+                        show={editEmojiPickerOpen}
+                        onClose={() => setEditEmojiPickerOpen(false)}
+                        onSelect={insertEditPostEmoji}
+                    />
 
                     <Modal show={deleteOpen} onClose={() => setDeleteOpen(false)} maxWidth="md">
                         <div className="space-y-5 p-6">

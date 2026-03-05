@@ -11,6 +11,40 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import InputError from '@/Components/InputError';
 import Modal from '@/Components/Modal';
+import SecondaryButton from '@/Components/SecondaryButton';
+
+const COMMENT_EMOJIS = [
+    '😀',
+    '😁',
+    '😂',
+    '😅',
+    '😊',
+    '😍',
+    '🤩',
+    '😘',
+    '😎',
+    '🤔',
+    '🥰',
+    '😌',
+    '🙂',
+    '😇',
+    '🥳',
+    '🤗',
+    '🙌',
+    '👏',
+    '🔥',
+    '💯',
+    '🎉',
+    '❤️',
+    '🩷',
+    '💖',
+    '💘',
+    '💝',
+    '💙',
+    '🤍',
+    '💚',
+    '💛',
+];
 
 const cropAspectRatio = 505 / 600;
 const minimumCropWidth = 160;
@@ -72,8 +106,10 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
     const [cropBounds, setCropBounds] = useState(null);
     const [cropRect, setCropRect] = useState(null);
     const [cropInteractionState, setCropInteractionState] = useState(null);
+    const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
     const audienceRef = useRef(null);
     const mediaInputRef = useRef(null);
+    const textareaRef = useRef(null);
     const cropViewportRef = useRef(null);
     const cropImageRef = useRef(null);
     const initials = auth.user.name
@@ -107,6 +143,17 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
             setData('visibility', 'private');
         }
     }, [data.visibility, isPrivateProfile, setData]);
+
+    useEffect(() => {
+        const textarea = textareaRef.current;
+
+        if (!textarea) {
+            return;
+        }
+
+        textarea.style.height = '0px';
+        textarea.style.height = `${textarea.scrollHeight}px`;
+    }, [data.body]);
 
     useEffect(() => {
         return () => {
@@ -271,6 +318,30 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
         }
     };
 
+    const insertEmoji = (emoji) => {
+        const textarea = textareaRef.current;
+        const currentBody = data.body ?? '';
+
+        if (!textarea) {
+            setData('body', `${currentBody}${emoji}`);
+            return;
+        }
+
+        const start = textarea.selectionStart ?? currentBody.length;
+        const end = textarea.selectionEnd ?? currentBody.length;
+        const nextBody = `${currentBody.slice(0, start)}${emoji}${currentBody.slice(end)}`;
+
+        setData('body', nextBody);
+
+        window.requestAnimationFrame(() => {
+            textarea.focus();
+            const caretPosition = start + emoji.length;
+            textarea.setSelectionRange(caretPosition, caretPosition);
+            textarea.style.height = '0px';
+            textarea.style.height = `${textarea.scrollHeight}px`;
+        });
+    };
+
     const submit = (event) => {
         event.preventDefault();
 
@@ -419,6 +490,7 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
                 <div className="feed-composer-body">
                     <div className="feed-composer-pill">
                         <textarea
+                            ref={textareaRef}
                             value={data.body}
                             onChange={(event) => setData('body', event.target.value)}
                             className={`feed-composer-textarea ${
@@ -536,6 +608,15 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
                         </div>
 
                         <button
+                            type="button"
+                            onClick={() => setEmojiPickerOpen(true)}
+                            className="feed-composer-action"
+                            aria-label="Add emoji"
+                        >
+                            🙂
+                        </button>
+
+                        <button
                             type="submit"
                             disabled={processing}
                             className="feed-composer-send disabled:opacity-60"
@@ -550,6 +631,12 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
                     <InputError message={errors['media.0']} className="mt-2" />
                 </div>
             </div>
+
+            <EmojiPickerModal
+                show={emojiPickerOpen}
+                onClose={() => setEmojiPickerOpen(false)}
+                onSelect={insertEmoji}
+            />
 
             <Modal
                 show={activeMediaIndex !== null && Boolean(activeMediaPreview)}
@@ -693,6 +780,48 @@ export default function PostComposer({ onSuccess = () => {}, compact = false }) 
                 )}
             </Modal>
         </form>
+    );
+}
+
+function EmojiPickerModal({ show, onClose, onSelect }) {
+    return (
+        <Modal show={show} onClose={onClose} maxWidth="md" centered>
+            <div className="space-y-4 p-5 2xl:space-y-5 2xl:p-6">
+                <div>
+                    <div className="text-base font-semibold 2xl:text-lg">Pick an emoji</div>
+                    <p className="app-text-soft mt-2 text-[13px] leading-5 2xl:text-sm 2xl:leading-6">
+                        Add a little personality to your post.
+                    </p>
+                </div>
+
+                <div className="grid grid-cols-6 gap-2">
+                    {COMMENT_EMOJIS.map((emoji) => (
+                        <button
+                            key={emoji}
+                            type="button"
+                            onClick={() => {
+                                onSelect(emoji);
+                                onClose();
+                            }}
+                            className="app-button-secondary inline-flex h-11 items-center justify-center rounded-2xl text-xl transition hover:scale-105"
+                            aria-label={`Insert ${emoji}`}
+                        >
+                            {emoji}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="flex justify-end">
+                    <SecondaryButton
+                        type="button"
+                        onClick={onClose}
+                        className="rounded-full px-4 py-2 text-sm normal-case tracking-normal"
+                    >
+                        Close
+                    </SecondaryButton>
+                </div>
+            </div>
+        </Modal>
     );
 }
 

@@ -7,6 +7,7 @@ import {
     Menu,
     MessageCircle,
     Search,
+    SendHorizonal,
     Settings,
     Trash2,
     UserRoundPlus,
@@ -625,7 +626,7 @@ export default function AppShell({ children, title, sidebar }) {
                         <div className="app-sidebar-banner space-y-2.5 rounded-[22px] px-3.5 py-3 2xl:rounded-[26px] 2xl:px-4 2xl:py-3">
                             <form onSubmit={submitFeedSearch} className="space-y-3">
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <label className="app-search flex min-w-[12rem] flex-1 items-center gap-0 rounded-[18px] px-3.5 py-2.5 backdrop-blur 2xl:gap-1.5 2xl:rounded-2xl 2xl:px-4 2xl:py-3">
+                                    <label className="app-search flex min-w-[12rem] flex-1 items-center gap-0 rounded-[18px] px-3.5 py-2.5 backdrop-blur 2xl:gap-0.5 2xl:rounded-2xl 2xl:px-4 2xl:py-3">
                                         <Search
                                             className="app-text-muted h-4 w-4 shrink-0 2xl:h-5 2xl:w-5"
                                             strokeWidth={1.8}
@@ -761,7 +762,7 @@ export default function AppShell({ children, title, sidebar }) {
                     </div>
 
                     <form onSubmit={submitFeedSearch} className="space-y-3 2xl:space-y-4">
-                        <label className="app-search flex items-center gap-2.5 rounded-[20px] px-3.5 py-2.5 backdrop-blur transition 2xl:gap-3 2xl:rounded-[24px] 2xl:px-4 2xl:py-3">
+                        <label className="app-search relative flex items-center gap-0 rounded-[20px] px-3.5 py-2.5 pr-12 backdrop-blur transition 2xl:rounded-[24px] 2xl:px-4 2xl:py-3 2xl:pr-14">
                             <Search
                                 className="app-text-muted h-4 w-4 shrink-0 2xl:h-5 2xl:w-5"
                                 strokeWidth={1.8}
@@ -774,17 +775,15 @@ export default function AppShell({ children, title, sidebar }) {
                                 placeholder="Search people"
                                 className="app-search-input w-full bg-transparent text-[13px] focus:outline-none 2xl:text-sm"
                             />
-                        </label>
-
-                        <div className="flex justify-end">
                             <button
                                 type="submit"
                                 disabled={!feedSearchValue.trim()}
-                                className="app-button-primary rounded-full px-3.5 py-1.5 text-[13px] disabled:opacity-60 2xl:px-4 2xl:py-2 2xl:text-sm"
+                                className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-[rgba(120,88,166,0.9)] text-white transition hover:bg-[rgba(120,88,166,1)] disabled:opacity-60 2xl:right-2.5 2xl:h-9 2xl:w-9"
+                                aria-label="Search"
                             >
-                                Search
+                                <SendHorizonal className="h-4 w-4" strokeWidth={2} />
                             </button>
-                        </div>
+                        </label>
                     </form>
 
                     {feedSearchLoading ? (
