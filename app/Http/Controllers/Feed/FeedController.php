@@ -129,6 +129,7 @@ class FeedController extends Controller
         SocialGraphService $socialGraphService,
     ): Response {
         $this->authorize('view', $user);
+        $viewer = request()->user();
 
         $profile = $user->loadCount([
             'posts',
@@ -136,36 +137,39 @@ class FeedController extends Controller
             'acceptedFollowing',
         ]);
         $profile->friends_count = $socialGraphService->friendsCount($user);
-        $canViewPosts = $socialGraphService->canViewProfilePosts(request()->user(), $user);
+        $canViewPosts = $socialGraphService->canViewProfilePosts($viewer, $user);
         $profileData = UserResource::make($profile)->resolve();
         $profileData['can_view_posts'] = $canViewPosts;
+        $profileData['is_private_for_viewer'] = $user->is_private
+            && ! $canViewPosts
+            && ! $viewer->is($user);
 
         return Inertia::render('Profile/Show', [
             'profile' => $profileData,
             'relationship' => [
-                'is_following' => $socialGraphService->follows(request()->user(), $user),
-                'has_pending_request' => $socialGraphService->hasPendingRequest(request()->user(), $user),
-                'is_friend' => $socialGraphService->areFriends(request()->user(), $user),
-                'has_pending_friend_request' => $socialGraphService->hasPendingFriendRequest(request()->user(), $user),
-                'has_incoming_friend_request' => $socialGraphService->hasIncomingFriendRequest(request()->user(), $user),
-                'can_follow' => request()->user()->id !== $user->id
-                    && ! $socialGraphService->hasBlockBetween(request()->user(), $user),
-                'can_friend' => request()->user()->id !== $user->id
-                    && ! $socialGraphService->hasBlockBetween(request()->user(), $user),
-                'can_message' => request()->user()->id !== $user->id
-                    && ! $socialGraphService->hasBlockBetween(request()->user(), $user),
+                'is_following' => $socialGraphService->follows($viewer, $user),
+                'has_pending_request' => $socialGraphService->hasPendingRequest($viewer, $user),
+                'is_friend' => $socialGraphService->areFriends($viewer, $user),
+                'has_pending_friend_request' => $socialGraphService->hasPendingFriendRequest($viewer, $user),
+                'has_incoming_friend_request' => $socialGraphService->hasIncomingFriendRequest($viewer, $user),
+                'can_follow' => $viewer->id !== $user->id
+                    && ! $socialGraphService->hasBlockBetween($viewer, $user),
+                'can_friend' => $viewer->id !== $user->id
+                    && ! $socialGraphService->hasBlockBetween($viewer, $user),
+                'can_message' => $viewer->id !== $user->id
+                    && ! $socialGraphService->hasBlockBetween($viewer, $user),
             ],
             'feed' => InertiaPaginatedData::fromPaginator(
-                $feedService->profile(request()->user(), $user),
+                $feedService->profile($viewer, $user),
                 PostResource::class,
             ),
-            'trends' => $feedService->trending(request()->user()),
+            'trends' => $feedService->trending($viewer),
             'can_view_posts' => $canViewPosts,
             'pendingRequests' => UserResource::collection(
-                $socialGraphService->pendingRequests(request()->user()),
+                $socialGraphService->pendingRequests($viewer),
             )->resolve(),
             'suggestions' => UserResource::collection(
-                $socialGraphService->suggestions(request()->user()),
+                $socialGraphService->suggestions($viewer),
             )->resolve(),
         ]);
     }

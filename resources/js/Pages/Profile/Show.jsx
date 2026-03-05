@@ -62,6 +62,7 @@ export default function Show({
     const [previewImage, setPreviewImage] = useState(null);
     const canViewPosts = profile.can_view_posts ?? true;
     const isPrivateProfileLocked = profile.is_private && !isOwnProfile && !canViewPosts;
+    const isPrivateProfileLockedForViewer = profile.is_private_for_viewer ?? isPrivateProfileLocked;
 
     useLiveInertiaReload(['feed'], 5000);
 
@@ -135,7 +136,7 @@ export default function Show({
     };
 
     const openPreview = (kind) => {
-        if (profile.is_private) {
+        if (isPrivateProfileLockedForViewer) {
             return;
         }
 
@@ -167,16 +168,15 @@ export default function Show({
         });
     };
 
-    const relationshipLabel =
-        profile.is_private && !relationship.is_friend
-            ? relationship.has_pending_friend_request
-                ? 'Request sent'
-                : relationship.has_incoming_friend_request
-                  ? 'Accept friendship'
-                  : 'Send friendship request'
-            : relationship.is_following
-              ? 'Following'
-              : 'Follow';
+    const relationshipLabel = isPrivateProfileLockedForViewer
+        ? relationship.has_pending_friend_request
+            ? 'Request sent'
+            : relationship.has_incoming_friend_request
+              ? 'Accept friendship'
+              : 'Send friendship request'
+        : relationship.is_following
+          ? 'Following'
+          : 'Follow';
     const friendshipLabel = relationship.is_friend
         ? 'Friends'
         : relationship.has_incoming_friend_request
@@ -234,10 +234,12 @@ export default function Show({
                             onClick={() => openPreview('cover')}
                             onContextMenu={(event) => event.preventDefault()}
                             className={`absolute inset-0 ${
-                                profile.is_private ? 'cursor-default' : 'cursor-zoom-in'
+                                isPrivateProfileLockedForViewer
+                                    ? 'cursor-default'
+                                    : 'cursor-zoom-in'
                             }`}
                             aria-label="Preview cover image"
-                            disabled={profile.is_private}
+                            disabled={isPrivateProfileLockedForViewer}
                         >
                             {isPrivateProfileLocked ? (
                                 <div
@@ -293,14 +295,16 @@ export default function Show({
                                         onClick={() => openPreview('avatar')}
                                         onContextMenu={(event) => event.preventDefault()}
                                         className={`overflow-hidden border-4 border-[var(--vynce-bg)] ${
-                                            profile.is_private ? 'cursor-default' : 'cursor-zoom-in'
+                                            isPrivateProfileLockedForViewer
+                                                ? 'cursor-default'
+                                                : 'cursor-zoom-in'
                                         } ${
                                             isPrivateProfileLocked
                                                 ? 'h-16 w-16 rounded-[20px] 2xl:h-20 2xl:w-20 2xl:rounded-[24px]'
                                                 : 'h-20 w-20 rounded-[24px] 2xl:h-24 2xl:w-24 2xl:rounded-[28px]'
                                         }`}
                                         aria-label="Preview profile photo"
-                                        disabled={profile.is_private}
+                                        disabled={isPrivateProfileLockedForViewer}
                                     >
                                         {isPrivateProfileLocked ? (
                                             <div
@@ -345,16 +349,17 @@ export default function Show({
                                 )}
                             </div>
 
-                            {profile.is_private && (
-                                <div
-                                    className={`app-panel-inset inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-medium 2xl:text-xs ${
-                                        isOwnProfile ? 'mt-1 ml-1' : 'mt-3'
-                                    }`}
-                                >
-                                    <LockIcon className="h-3.5 w-3.5" strokeWidth={1.9} />
-                                    Private profile
-                                </div>
-                            )}
+                            {profile.is_private &&
+                                (isOwnProfile || isPrivateProfileLockedForViewer) && (
+                                    <div
+                                        className={`app-panel-inset inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-medium 2xl:text-xs ${
+                                            isOwnProfile ? 'mt-1 ml-1' : 'mt-3'
+                                        }`}
+                                    >
+                                        <LockIcon className="h-3.5 w-3.5" strokeWidth={1.9} />
+                                        Private profile
+                                    </div>
+                                )}
 
                             {(errors.avatar ||
                                 errors.cover ||
