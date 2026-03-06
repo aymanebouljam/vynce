@@ -19,30 +19,13 @@ class FeedService
 
     public function trending(User $user, int $limit = 3): array
     {
-        return $this->visiblePostsQuery($user)
-            ->where('posts.published_at', '>=', now()->startOfDay())
-            ->get(['posts.hashtags'])
-            ->flatMap(fn (Post $post) => collect($post->hashtags ?? [])
-                ->map(fn (string $tag) => mb_strtolower(ltrim($tag, '#'))))
-            ->filter()
-            ->countBy()
-            ->sortDesc()
-            ->take($limit)
-            ->map(function (int $count, string $tag): array {
-                $label = str($tag)
-                    ->replace(['_', '-'], ' ')
-                    ->headline()
-                    ->toString();
+        $todayTrends = $this->trendingForPeriod($user, now()->startOfDay(), 'today', $limit);
 
-                return [
-                    'label' => $label,
-                    'posts' => $count === 1 ? '1 post today' : "{$count} posts today",
-                    'count' => $count,
-                    'slug' => $tag,
-                ];
-            })
-            ->values()
-            ->all();
+        if ($todayTrends !== []) {
+            return $todayTrends;
+        }
+
+        return $this->trendingForPeriod($user, now()->subDays(7)->startOfDay(), 'this week', $limit);
     }
 
     public function home(User $user, int $perPage = 10): LengthAwarePaginator
@@ -184,6 +167,34 @@ class FeedService
     {
         return $this->visiblePostsQuery($user)
             ->with(['user', 'media', 'comments.user', 'comments.likes', 'likes', 'reposts']);
+    }
+
+    private function trendingForPeriod(User $user, $since, string $periodLabel, int $limit): array
+    {
+        return $this->visiblePostsQuery($user)
+            ->where('posts.published_at', '>=', $since)
+            ->get(['posts.hashtags'])
+            ->flatMap(fn (Post $post) => collect($post->hashtags ?? [])
+                ->map(fn (string $tag) => mb_strtolower(ltrim($tag, '#'))))
+            ->filter()
+            ->countBy()
+            ->sortDesc()
+            ->take($limit)
+            ->map(function (int $count, string $tag) use ($periodLabel): array {
+                $label = str($tag)
+                    ->replace(['_', '-'], ' ')
+                    ->headline()
+                    ->toString();
+
+                return [
+                    'label' => $label,
+                    'posts' => $count === 1 ? "1 post {$periodLabel}" : "{$count} posts {$periodLabel}",
+                    'count' => $count,
+                    'slug' => $tag,
+                ];
+            })
+            ->values()
+            ->all();
     }
 
     private function visiblePostsQuery(User $user): Builder

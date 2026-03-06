@@ -390,6 +390,24 @@ class SocialGraphService
                     ->where('follower_id', $user->id);
             })
             ->whereNotIn('users.id', function ($query) use ($user) {
+                $query->select('follower_id')
+                    ->from('follows')
+                    ->where('followed_id', $user->id)
+                    ->where('status', FollowStatus::Accepted);
+            })
+            ->whereNotIn('users.id', function ($query) use ($user) {
+                $query->select('addressee_id')
+                    ->from('friendships')
+                    ->where('requester_id', $user->id)
+                    ->where('status', FriendshipStatus::Accepted);
+            })
+            ->whereNotIn('users.id', function ($query) use ($user) {
+                $query->select('requester_id')
+                    ->from('friendships')
+                    ->where('addressee_id', $user->id)
+                    ->where('status', FriendshipStatus::Accepted);
+            })
+            ->whereNotIn('users.id', function ($query) use ($user) {
                 $query->select('blocked_id')
                     ->from('user_blocks')
                     ->where('blocker_id', $user->id);

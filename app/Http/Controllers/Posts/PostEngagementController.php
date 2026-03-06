@@ -44,7 +44,7 @@ class PostEngagementController extends Controller
                     'title' => "{$actor->name} liked your post",
                     'body' => str($post->body)->limit(100)->toString(),
                     'href' => route('users.show', [
-                        'user' => $actor->username,
+                        'user' => $post->user->username,
                         'post' => $post->id,
                     ]),
                     'actor' => $this->actorPayload($actor),
