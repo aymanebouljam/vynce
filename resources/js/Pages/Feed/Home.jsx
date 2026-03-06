@@ -145,7 +145,7 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [],
         setProcessingSuggestionIds((current) => [...current, person.id]);
 
         try {
-            await window.axios.post(route('users.follow', person.id), null, {
+            await window.axios.post(route('users.friend-requests.store', person.id), null, {
                 headers: {
                     Accept: 'application/json',
                 },
@@ -292,18 +292,24 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [],
                         Trending now
                     </div>
                     <div className="mt-3 space-y-2.5 2xl:mt-4 2xl:space-y-3">
-                        {trends.map((trend) => (
-                            <Link
-                                key={trend.slug}
-                                href={route('feed.search', { q: trend.slug, filter: 'posts' })}
-                                className="block rounded-[18px] px-2 py-1 transition hover:bg-[rgba(255,255,255,0.04)] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
-                            >
-                                <div className="text-[13px] 2xl:text-sm">#{trend.label}</div>
-                                <div className="app-text-soft text-[11px] 2xl:text-xs">
-                                    {trend.posts}
-                                </div>
-                            </Link>
-                        ))}
+                        {trends.length === 0 ? (
+                            <div className="app-text-soft rounded-[18px] px-2 py-1 text-[13px] leading-5 2xl:text-sm 2xl:leading-6">
+                                No trending tags yet.
+                            </div>
+                        ) : (
+                            trends.map((trend) => (
+                                <Link
+                                    key={trend.slug}
+                                    href={route('feed.search', { q: trend.slug, filter: 'posts' })}
+                                    className="block rounded-[18px] px-2 py-1 transition hover:bg-[rgba(255,255,255,0.04)] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+                                >
+                                    <div className="text-[13px] 2xl:text-sm">#{trend.label}</div>
+                                    <div className="app-text-soft text-[11px] 2xl:text-xs">
+                                        {trend.posts}
+                                    </div>
+                                </Link>
+                            ))
+                        )}
                     </div>
                 </div>
             )}
@@ -325,6 +331,7 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [],
                                 const isProcessing = processingSuggestionIds.includes(person.id);
                                 const isConfirmed = confirmedSuggestionIds.includes(person.id);
                                 const isExiting = exitingSuggestionIds.includes(person.id);
+                                const suggestionActionLabel = `Send friendship request to ${person.name}`;
 
                                 return (
                                     <div
@@ -376,11 +383,7 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [],
                                                         ? 'app-panel-inset text-emerald-200'
                                                         : 'app-button-primary'
                                                 } disabled:opacity-100`}
-                                                aria-label={
-                                                    person.is_private
-                                                        ? `Add ${person.name}`
-                                                        : `Follow ${person.name}`
-                                                }
+                                                aria-label={suggestionActionLabel}
                                             >
                                                 {isConfirmed ? (
                                                     <Check className="h-4 w-4" strokeWidth={2.2} />
