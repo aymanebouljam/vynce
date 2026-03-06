@@ -102,6 +102,14 @@ class TopbarNotificationTest extends TestCase
 
         $this->assertSame(
             route('users.show', [
+                'user' => $owner->username,
+                'post' => $post->id,
+            ]),
+            $owner->fresh()->notifications()->where('data->type', 'like')->firstOrFail()->data['href'],
+        );
+
+        $this->assertSame(
+            route('users.show', [
                 'user' => $actor->username,
                 'post' => $post->id,
             ]),

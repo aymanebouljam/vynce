@@ -88,6 +88,81 @@ class FeedTest extends TestCase
             ->where('trends.2.posts', '2 posts today'));
     }
 
+    public function test_home_feed_trending_hashtags_fall_back_to_recent_posts_when_today_is_empty(): void
+    {
+        $viewer = User::factory()->create();
+        $author = User::factory()->create();
+
+        Post::factory()->for($author)->count(3)->create([
+            'visibility' => 'public',
+            'published_at' => now()->subDays(2),
+            'hashtags' => ['weekly_design'],
+        ]);
+
+        Post::factory()->for($author)->count(2)->create([
+            'visibility' => 'public',
+            'published_at' => now()->subDays(2),
+            'hashtags' => ['weekly_launch'],
+        ]);
+
+        $response = $this->actingAs($viewer)->get(route('feed.home'));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->where('trends.0.label', 'Weekly Design')
+            ->where('trends.0.posts', '3 posts this week')
+            ->where('trends.1.label', 'Weekly Launch')
+            ->where('trends.1.posts', '2 posts this week'));
+    }
+
+    public function test_home_feed_suggestions_exclude_followers_friends_and_following(): void
+    {
+        $viewer = User::factory()->create([
+            'username' => 'viewer',
+        ]);
+        $following = User::factory()->create([
+            'username' => 'following',
+        ]);
+        $follower = User::factory()->create([
+            'username' => 'follower',
+        ]);
+        $friend = User::factory()->create([
+            'username' => 'friend',
+        ]);
+        $outsider = User::factory()->create([
+            'username' => 'outsider',
+        ]);
+
+        Follow::query()->create([
+            'follower_id' => $viewer->id,
+            'followed_id' => $following->id,
+            'status' => FollowStatus::Accepted,
+            'accepted_at' => now(),
+        ]);
+
+        Follow::query()->create([
+            'follower_id' => $follower->id,
+            'followed_id' => $viewer->id,
+            'status' => FollowStatus::Accepted,
+            'accepted_at' => now(),
+        ]);
+
+        Friendship::query()->create([
+            'requester_id' => $viewer->id,
+            'addressee_id' => $friend->id,
+            'status' => FriendshipStatus::Accepted,
+            'accepted_at' => now(),
+        ]);
+
+        $response = $this->actingAs($viewer)->get(route('feed.home'));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Feed/Home')
+            ->has('suggestions', 1)
+            ->where('suggestions.0.username', $outsider->username));
+    }
+
     public function test_searching_a_trending_tag_shows_matching_posts(): void
     {
         $viewer = User::factory()->create();
