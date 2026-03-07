@@ -163,6 +163,38 @@ class FeedTest extends TestCase
             ->where('suggestions.0.username', $outsider->username));
     }
 
+    public function test_home_feed_suggestions_restore_former_friends_after_unfriending(): void
+    {
+        $viewer = User::factory()->create();
+        $friend = User::factory()->create([
+            'username' => 'former-friend',
+        ]);
+
+        Friendship::query()->create([
+            'requester_id' => $viewer->id,
+            'addressee_id' => $friend->id,
+            'status' => FriendshipStatus::Accepted,
+            'accepted_at' => now(),
+        ]);
+
+        $this->actingAs($viewer)
+            ->get(route('feed.home'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('suggestions', fn ($suggestions) => ! collect($suggestions)
+                    ->pluck('username')
+                    ->contains($friend->username)));
+
+        Friendship::query()
+            ->where('requester_id', $viewer->id)
+            ->where('addressee_id', $friend->id)
+            ->delete();
+
+        $this->actingAs($viewer)
+            ->get(route('feed.home'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('suggestions.0.username', $friend->username));
+    }
+
     public function test_searching_a_trending_tag_shows_matching_posts(): void
     {
         $viewer = User::factory()->create();

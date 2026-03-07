@@ -70,4 +70,26 @@ class FriendshipSystemTest extends TestCase
             'addressee_id' => $owner->id,
         ]);
     }
+
+    public function test_users_can_unfriend_an_accepted_friend(): void
+    {
+        $owner = User::factory()->create();
+        $friend = User::factory()->create();
+
+        Friendship::query()->create([
+            'requester_id' => $owner->id,
+            'addressee_id' => $friend->id,
+            'status' => FriendshipStatus::Accepted,
+            'accepted_at' => now(),
+        ]);
+
+        $this->actingAs($owner)
+            ->delete(route('users.friend-requests.destroy', $friend))
+            ->assertRedirect();
+
+        $this->assertDatabaseMissing('friendships', [
+            'requester_id' => $owner->id,
+            'addressee_id' => $friend->id,
+        ]);
+    }
 }

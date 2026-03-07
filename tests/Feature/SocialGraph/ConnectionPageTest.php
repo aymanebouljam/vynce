@@ -75,4 +75,24 @@ class ConnectionPageTest extends TestCase
             ->assertSee('Mutual Friend')
             ->assertDontSee('One Way Follow');
     }
+
+    public function test_friends_page_for_other_profiles_does_not_show_unfriend_action(): void
+    {
+        $viewer = User::factory()->create();
+        $owner = User::factory()->create();
+        $friend = User::factory()->create(['name' => 'Mutual Friend']);
+
+        Friendship::query()->create([
+            'requester_id' => $owner->id,
+            'addressee_id' => $friend->id,
+            'status' => 'accepted',
+            'accepted_at' => now(),
+        ]);
+
+        $this->actingAs($viewer)
+            ->get(route('users.friends', $owner->username))
+            ->assertOk()
+            ->assertSee('Mutual Friend')
+            ->assertDontSee('Unfriend');
+    }
 }
