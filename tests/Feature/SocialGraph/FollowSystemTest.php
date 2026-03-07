@@ -75,7 +75,10 @@ class FollowSystemTest extends TestCase
     {
         $viewer = User::factory()->create();
         $target = User::factory()->create(['is_private' => true]);
-        $post = Post::factory()->for($target)->create(['body' => 'Friend-only post']);
+        $post = Post::factory()->for($target)->create([
+            'body' => 'Friend-only post',
+            'visibility' => 'private',
+        ]);
 
         Friendship::query()->create([
             'requester_id' => $viewer->id,
