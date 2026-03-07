@@ -1,8 +1,8 @@
-import Modal from '@/Components/Modal';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Link, router, usePage } from '@inertiajs/react';
 import { ArrowLeft, Search } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import Modal from '@/Components/Modal';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 export default function Index({
     profile,
@@ -33,6 +33,8 @@ export default function Index({
     const [connectionsMeta, setConnectionsMeta] = useState(connections.meta);
     const [personToUnfollow, setPersonToUnfollow] = useState(null);
     const [isUnfollowing, setIsUnfollowing] = useState(false);
+    const [personToUnfriend, setPersonToUnfriend] = useState(null);
+    const [isUnfriending, setIsUnfriending] = useState(false);
     const [searchTerm, setSearchTerm] = useState(search);
     const [activeSearch, setActiveSearch] = useState(search);
     const [searchOpen, setSearchOpen] = useState(Boolean(search));
@@ -129,6 +131,14 @@ export default function Index({
         setPersonToUnfollow(null);
     };
 
+    const closeUnfriendModal = () => {
+        if (isUnfriending) {
+            return;
+        }
+
+        setPersonToUnfriend(null);
+    };
+
     const confirmUnfollow = () => {
         if (!personToUnfollow) {
             return;
@@ -159,6 +169,46 @@ export default function Index({
             })
             .finally(() => {
                 setIsUnfollowing(false);
+            });
+    };
+
+    const confirmUnfriend = () => {
+        if (!personToUnfriend) {
+            return;
+        }
+
+        const person = personToUnfriend;
+        const previousSourceConnections = sourceConnections;
+        const previousFilteredConnections = filteredConnections;
+
+        setIsUnfriending(true);
+        setSourceConnections((current) =>
+            current.filter((connection) => connection.id !== person.id),
+        );
+        setFilteredConnections((current) =>
+            current.filter((connection) => connection.id !== person.id),
+        );
+        setPersonToUnfriend(null);
+
+        window.axios
+            .delete(route('users.friend-requests.destroy', person.id), {
+                headers: {
+                    Accept: 'application/json',
+                },
+            })
+            .then(() => {
+                router.reload({
+                    only: ['connections'],
+                    preserveScroll: true,
+                    preserveState: true,
+                });
+            })
+            .catch(() => {
+                setSourceConnections(previousSourceConnections);
+                setFilteredConnections(previousFilteredConnections);
+            })
+            .finally(() => {
+                setIsUnfriending(false);
             });
     };
 
@@ -314,6 +364,15 @@ export default function Index({
                                 </div>
 
                                 <div className="flex shrink-0 gap-2">
+                                    {type === 'friends' && isOwnProfile && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setPersonToUnfriend(person)}
+                                            className="app-button-secondary rounded-full px-3.5 py-1.5 text-[13px] 2xl:px-4 2xl:py-2 2xl:text-sm"
+                                        >
+                                            Unfriend
+                                        </button>
+                                    )}
                                     {canUnfollow && (
                                         <button
                                             type="button"
@@ -375,6 +434,39 @@ export default function Index({
                             className="app-button-primary rounded-full px-3.5 py-1.5 text-[13px] disabled:opacity-60 2xl:px-4 2xl:py-2 2xl:text-sm"
                         >
                             Unfollow
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            <Modal show={Boolean(personToUnfriend)} onClose={closeUnfriendModal} maxWidth="md">
+                <div className="space-y-4 p-5 2xl:space-y-5 2xl:p-6">
+                    <div>
+                        <div className="text-base font-semibold 2xl:text-lg">
+                            Unfriend {personToUnfriend?.name}?
+                        </div>
+                        <p className="app-text-soft mt-2 text-[13px] leading-5 2xl:text-sm 2xl:leading-6">
+                            You’ll no longer be mutual friends, and the connection will be removed
+                            from both sides.
+                        </p>
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                        <button
+                            type="button"
+                            onClick={closeUnfriendModal}
+                            className="app-button-secondary rounded-full px-3.5 py-1.5 text-[13px] 2xl:px-4 2xl:py-2 2xl:text-sm"
+                            disabled={isUnfriending}
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            onClick={confirmUnfriend}
+                            className="app-button-primary rounded-full px-3.5 py-1.5 text-[13px] 2xl:px-4 2xl:py-2 2xl:text-sm"
+                            disabled={isUnfriending}
+                        >
+                            {isUnfriending ? 'Unfriending...' : 'Unfriend'}
                         </button>
                     </div>
                 </div>

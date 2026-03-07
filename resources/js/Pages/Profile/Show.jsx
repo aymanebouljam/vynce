@@ -64,7 +64,7 @@ export default function Show({
     const isPrivateProfileLocked = profile.is_private && !isOwnProfile && !canViewPosts;
     const isPrivateProfileLockedForViewer = profile.is_private_for_viewer ?? isPrivateProfileLocked;
 
-    useLiveInertiaReload(['feed'], 5000);
+    useLiveInertiaReload(['feed', 'suggestions'], 5000);
 
     useEffect(() => {
         setVisibleSuggestions(

@@ -37,7 +37,7 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [],
     const [removedSuggestionIds, setRemovedSuggestionIds] = useState([]);
     const [messagesLoading, setMessagesLoading] = useState(false);
 
-    useLiveInertiaReload(['feed', 'messages', 'topbar'], 5000);
+    useLiveInertiaReload(['feed', 'messages', 'topbar', 'suggestions'], 5000);
 
     const sortRecentThreads = (threads) =>
         [...threads].sort((left, right) => {
