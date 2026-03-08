@@ -399,7 +399,10 @@ class SocialGraphService
                 $query->select('addressee_id')
                     ->from('friendships')
                     ->where('requester_id', $user->id)
-                    ->where('status', FriendshipStatus::Accepted);
+                    ->whereIn('status', [
+                        FriendshipStatus::Accepted,
+                        FriendshipStatus::Pending,
+                    ]);
             })
             ->whereNotIn('users.id', function ($query) use ($user) {
                 $query->select('requester_id')

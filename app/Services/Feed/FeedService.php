@@ -124,17 +124,6 @@ class FeedService
                     ->from('user_blocks')
                     ->where('blocked_id', $user->id);
             })
-            ->where(function (Builder $query) use ($user) {
-                $query->where('users.is_private', false)
-                    ->orWhere('users.id', $user->id)
-                    ->orWhereExists(function ($subQuery) use ($user) {
-                        $subQuery->selectRaw('1')
-                            ->from('follows')
-                            ->whereColumn('follows.followed_id', 'users.id')
-                            ->where('follows.follower_id', $user->id)
-                            ->where('follows.status', FollowStatus::Accepted);
-                    });
-            })
             ->limit($userLimit)
             ->get();
 
@@ -234,18 +223,17 @@ class FeedService
                                             ->from('friendships')
                                             ->where('status', FriendshipStatus::Accepted->value)
                                             ->where(function ($friendshipQuery) use ($user) {
-                                                $friendshipQuery->whereColumn(
-                                                    'friendships.requester_id',
-                                                    'posts.user_id',
-                                                )
-                                                    ->where('friendships.addressee_id', $user->id);
-                                            })
-                                            ->orWhere(function ($friendshipQuery) use ($user) {
-                                                $friendshipQuery->whereColumn(
-                                                    'friendships.addressee_id',
-                                                    'posts.user_id',
-                                                )
-                                                    ->where('friendships.requester_id', $user->id);
+                                                $friendshipQuery->where(function ($forwardQuery) use ($user) {
+                                                    $forwardQuery->whereColumn(
+                                                        'friendships.requester_id',
+                                                        'posts.user_id',
+                                                    )->where('friendships.addressee_id', $user->id);
+                                                })->orWhere(function ($reverseQuery) use ($user) {
+                                                    $reverseQuery->whereColumn(
+                                                        'friendships.addressee_id',
+                                                        'posts.user_id',
+                                                    )->where('friendships.requester_id', $user->id);
+                                                });
                                             });
                                     });
                             });
