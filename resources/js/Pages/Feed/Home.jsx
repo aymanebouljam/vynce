@@ -8,6 +8,7 @@ import {
     UserRoundPlus,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import EmojiPickerModal from '@/Components/App/EmojiPickerModal';
 import PostCard from '@/Components/App/PostCard';
 import PostComposer from '@/Components/App/PostComposer';
 import useLiveInertiaReload from '@/hooks/useLiveInertiaReload';
@@ -28,6 +29,7 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [],
     const [threadDraft, setThreadDraft] = useState('');
     const [threadSending, setThreadSending] = useState(false);
     const threadComposerRef = useRef(null);
+    const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
     const [recentThreads, setRecentThreads] = useState(messages);
     const isDiscover = activeTab === 'discover';
     const [visibleSuggestions, setVisibleSuggestions] = useState(suggestions);
@@ -136,6 +138,35 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [],
         const nextHeight = Math.min(textarea.scrollHeight, 112);
         textarea.style.height = `${Math.max(nextHeight, 36)}px`;
     }, [threadDraft, activeThread?.id, messagesOpen]);
+
+    const insertThreadEmoji = (emoji) => {
+        const textarea = threadComposerRef.current;
+        const currentBody = threadDraft ?? '';
+
+        if (!textarea) {
+            setThreadDraft(`${currentBody}${emoji}`);
+            return;
+        }
+
+        const start = textarea.selectionStart ?? currentBody.length;
+        const end = textarea.selectionEnd ?? currentBody.length;
+        const nextBody = `${currentBody.slice(0, start)}${emoji}${currentBody.slice(end)}`;
+
+        setThreadDraft(nextBody);
+
+        window.requestAnimationFrame(() => {
+            textarea.focus();
+            const caretPosition = start + emoji.length;
+            textarea.setSelectionRange(caretPosition, caretPosition);
+            textarea.style.height = '0px';
+            textarea.style.height = `${textarea.scrollHeight}px`;
+        });
+    };
+
+    useEffect(() => {
+        void emojiPickerOpen;
+        void insertThreadEmoji;
+    }, [emojiPickerOpen, insertThreadEmoji]);
 
     const addSuggestion = async (person) => {
         if (processingSuggestionIds.includes(person.id)) {
@@ -520,6 +551,14 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [],
                                             placeholder={`Message ${activeThread.participant?.name ?? 'conversation'}...`}
                                         />
                                         <button
+                                            type="button"
+                                            onClick={() => setEmojiPickerOpen(true)}
+                                            className="absolute right-10 top-[43%] inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-none bg-transparent p-0 text-[var(--vynce-text-muted)] shadow-none transition hover:text-white 2xl:right-8 2xl:h-8 2xl:w-8"
+                                            aria-label="Add emoji"
+                                        >
+                                            🙂
+                                        </button>
+                                        <button
                                             type="submit"
                                             disabled={threadSending || !threadDraft.trim()}
                                             className="absolute right-2 top-[43%] inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-none bg-transparent p-0 text-[var(--vynce-text-muted)] shadow-none transition hover:text-white disabled:opacity-60 2xl:right-1 2xl:h-8 2xl:w-8"
@@ -702,6 +741,12 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [],
                         </Link>
                     </div>
                 )}
+
+                <EmojiPickerModal
+                    show={emojiPickerOpen}
+                    onClose={() => setEmojiPickerOpen(false)}
+                    onSelect={insertThreadEmoji}
+                />
             </section>
         </AuthenticatedLayout>
     );

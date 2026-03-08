@@ -24,6 +24,7 @@ import {
     X,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import EmojiPickerModal from '@/Components/App/EmojiPickerModal';
 import Modal from '@/Components/Modal';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
@@ -33,6 +34,7 @@ export default function Index({ conversations, activeConversation, contacts = []
         activeConversation?.id ?? null,
     );
     const [pickerOpen, setPickerOpen] = useState(false);
+    const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
     const [messageToDelete, setMessageToDelete] = useState(null);
     const [conversationToDelete, setConversationToDelete] = useState(null);
     const [conversationToClear, setConversationToClear] = useState(null);
@@ -55,6 +57,7 @@ export default function Index({ conversations, activeConversation, contacts = []
     const fileInputRef = useRef(null);
     const messageMenuRef = useRef(null);
     const conversationMenuRef = useRef(null);
+    const messageTextareaRef = useRef(null);
     const optimisticMessageIdRef = useRef(0);
     const previousConversationIdRef = useRef(activeConversation?.id ?? null);
     const shouldAutoScrollRef = useRef(true);
@@ -383,6 +386,30 @@ export default function Index({ conversations, activeConversation, contacts = []
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
+    };
+
+    const insertDraftEmoji = (emoji) => {
+        const textarea = messageTextareaRef.current;
+        const currentBody = draft ?? '';
+
+        if (!textarea) {
+            setDraft(`${currentBody}${emoji}`);
+            return;
+        }
+
+        const start = textarea.selectionStart ?? currentBody.length;
+        const end = textarea.selectionEnd ?? currentBody.length;
+        const nextBody = `${currentBody.slice(0, start)}${emoji}${currentBody.slice(end)}`;
+
+        setDraft(nextBody);
+
+        window.requestAnimationFrame(() => {
+            textarea.focus();
+            const caretPosition = start + emoji.length;
+            textarea.setSelectionRange(caretPosition, caretPosition);
+            textarea.style.height = '0px';
+            textarea.style.height = `${textarea.scrollHeight}px`;
+        });
     };
 
     const startConversation = (contactId) => {
@@ -1462,6 +1489,7 @@ export default function Index({ conversations, activeConversation, contacts = []
                                     onChange={selectDraftAttachment}
                                 />
                                 <textarea
+                                    ref={messageTextareaRef}
                                     value={draft}
                                     onChange={(event) => setDraft(event.target.value)}
                                     className="field app-scrollbar-hidden min-h-24 w-full resize-none overflow-y-auto pb-5 pr-14 text-[13px] 2xl:pb-18 2xl:pr-16 2xl:text-sm"
@@ -1511,6 +1539,14 @@ export default function Index({ conversations, activeConversation, contacts = []
                                     </div>
                                 )}
                                 <div className="absolute bottom-4 left-3 flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setEmojiPickerOpen(true)}
+                                        className="app-button-secondary inline-flex h-8 w-8 items-center justify-center rounded-full p-0 2xl:h-9 2xl:w-9"
+                                        aria-label="Add emoji"
+                                    >
+                                        🙂
+                                    </button>
                                     <button
                                         type="button"
                                         onClick={() => imageInputRef.current?.click()}
@@ -1596,6 +1632,12 @@ export default function Index({ conversations, activeConversation, contacts = []
                     )}
                 </div>
             </Modal>
+
+            <EmojiPickerModal
+                show={emojiPickerOpen}
+                onClose={() => setEmojiPickerOpen(false)}
+                onSelect={insertDraftEmoji}
+            />
 
             <Modal show={Boolean(messageToDelete)} onClose={closeDeleteModal} maxWidth="md">
                 <div className="space-y-4 p-5 2xl:space-y-5 2xl:p-6">
