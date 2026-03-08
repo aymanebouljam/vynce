@@ -9,6 +9,12 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 
 class PostFactory extends Factory
 {
+    private const SEED_HASHTAGS = [
+        'sport',
+        'art',
+        'pets',
+    ];
+
     protected $model = Post::class;
 
     public function definition(): array
@@ -19,7 +25,7 @@ class PostFactory extends Factory
             'user_id' => User::factory(),
             'body' => $body,
             'visibility' => fake()->randomElement(PostVisibility::cases()),
-            'hashtags' => ['vynce'],
+            'hashtags' => [fake()->randomElement(self::SEED_HASHTAGS)],
             'mentions' => [],
             'published_at' => now(),
         ];

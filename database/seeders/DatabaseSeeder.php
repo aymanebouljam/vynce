@@ -19,6 +19,14 @@ class DatabaseSeeder extends Seeder
             'onboarding_completed_at' => now(),
         ]);
 
+        $frenchCreator = User::factory()->create([
+            'onboarding_completed_at' => now(),
+        ]);
+
+        $arabicCreator = User::factory()->create([
+            'onboarding_completed_at' => now(),
+        ]);
+
         $leader = $users->first();
 
         $users->slice(1, 3)->each(function (User $user) use ($leader) {
@@ -47,6 +55,10 @@ class DatabaseSeeder extends Seeder
             [$users[6], 'Refining layout details today #design_systems', ['design_systems']],
             [$users[6], 'Tracking delivery milestones #launch_notes', ['launch_notes']],
             [$users[7], 'Shipping flow improvements #creator_workflow', ['creator_workflow']],
+            [$frenchCreator, 'On construit une expérience plus calme et plus utile #design_systems', ['design_systems']],
+            [$frenchCreator, 'Cette semaine, on peaufine les derniers détails avant la sortie #launch_notes', ['launch_notes']],
+            [$arabicCreator, 'نصمم تجربة أبسط وأكثر وضوحًا للمستخدمين #creator_workflow', ['creator_workflow']],
+            [$arabicCreator, 'الدفعة الجديدة جاهزة تقريبًا بعد مراجعة كل التفاصيل #launch_notes', ['launch_notes']],
         ];
 
         foreach ($seedPosts as [$user, $body, $hashtags]) {
