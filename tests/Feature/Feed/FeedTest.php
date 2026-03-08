@@ -129,6 +129,9 @@ class FeedTest extends TestCase
         $friend = User::factory()->create([
             'username' => 'friend',
         ]);
+        $pendingFriendRequest = User::factory()->create([
+            'username' => 'pending-friend-request',
+        ]);
         $outsider = User::factory()->create([
             'username' => 'outsider',
         ]);
@@ -152,6 +155,12 @@ class FeedTest extends TestCase
             'addressee_id' => $friend->id,
             'status' => FriendshipStatus::Accepted,
             'accepted_at' => now(),
+        ]);
+
+        Friendship::query()->create([
+            'requester_id' => $viewer->id,
+            'addressee_id' => $pendingFriendRequest->id,
+            'status' => FriendshipStatus::Pending,
         ]);
 
         $response = $this->actingAs($viewer)->get(route('feed.home'));
@@ -224,6 +233,29 @@ class FeedTest extends TestCase
             ->where('posts.0.hashtags.0', 'design_systems'));
     }
 
+    public function test_search_results_include_private_profiles(): void
+    {
+        $viewer = User::factory()->create();
+        $privateProfile = User::factory()->create([
+            'name' => 'Secret Creator',
+            'username' => 'secret-creator',
+            'is_private' => true,
+        ]);
+
+        $response = $this->actingAs($viewer)->get(route('feed.search', [
+            'q' => 'secret',
+            'filter' => 'people',
+        ]));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Search/Index')
+            ->where('query', 'secret')
+            ->where('filter', 'people')
+            ->where('users.0.username', $privateProfile->username)
+            ->where('users.0.is_private', true));
+    }
+
     public function test_discover_feed_shows_public_non_self_posts(): void
     {
         $viewer = User::factory()->create();
@@ -235,6 +267,48 @@ class FeedTest extends TestCase
         $response->assertOk();
         $response->assertSee($publicPost->body);
         $response->assertDontSee($ownPost->body);
+    }
+
+    public function test_home_feed_hides_private_posts_from_non_friends(): void
+    {
+        $viewer = User::factory()->create();
+        $privateAuthor = User::factory()->create([
+            'is_private' => true,
+            'username' => 'private-author',
+        ]);
+        $privatePost = Post::factory()->for($privateAuthor)->create([
+            'body' => 'Private post that should stay hidden',
+            'visibility' => 'private',
+        ]);
+
+        $response = $this->actingAs($viewer)->get(route('feed.home'));
+
+        $response->assertOk();
+        $response->assertDontSee($privatePost->body);
+    }
+
+    public function test_home_feed_hides_private_posts_from_pending_friend_requests(): void
+    {
+        $viewer = User::factory()->create();
+        $privateAuthor = User::factory()->create([
+            'is_private' => true,
+            'username' => 'pending-private-author',
+        ]);
+        $privatePost = Post::factory()->for($privateAuthor)->create([
+            'body' => 'Private post behind a pending request',
+            'visibility' => 'private',
+        ]);
+
+        Friendship::query()->create([
+            'requester_id' => $viewer->id,
+            'addressee_id' => $privateAuthor->id,
+            'status' => FriendshipStatus::Pending,
+        ]);
+
+        $response = $this->actingAs($viewer)->get(route('feed.home'));
+
+        $response->assertOk();
+        $response->assertDontSee($privatePost->body);
     }
 
     public function test_profile_feed_includes_reposted_posts(): void
