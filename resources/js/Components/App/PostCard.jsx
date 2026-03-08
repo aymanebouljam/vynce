@@ -67,7 +67,7 @@ export default function PostCard({
     const authorName = post.user?.name ?? 'Unknown user';
     const authorUsername = post.user?.username ?? null;
     const authorHref = authorUsername ? route('users.show', authorUsername) : null;
-    const publishedAt = new Date(post.published_at || post.created_at).toLocaleString();
+    const publishedAt = formatRelativeTime(post.published_at || post.created_at);
     const canManage = auth?.user?.id === post.user?.id;
     const isOwnPrivateProfile = canManage && Boolean(auth?.user?.is_private);
     const [commentsOpen, setCommentsOpen] = useState(false);
@@ -674,7 +674,7 @@ export default function PostCard({
                                     )}
                                     <div className="app-text-muted mt-0.5 text-[11px]">
                                         {authorUsername ? `@${authorUsername} · ` : ''}
-                                        {publishedAt}
+                                        {publishedAt ? `${publishedAt} ago` : 'just now'}
                                     </div>
                                 </div>
 
