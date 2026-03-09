@@ -435,7 +435,6 @@ export default function Index({ conversations, activeConversation, contacts = []
         try {
             await navigator.clipboard.writeText(body);
         } catch {
-            // Swallow clipboard errors so the rest of the UI stays responsive.
         } finally {
             setOpenMenuMessageId(null);
         }

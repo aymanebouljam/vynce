@@ -27,6 +27,22 @@ class DatabaseSeeder extends Seeder
             'onboarding_completed_at' => now(),
         ]);
 
+        $spanishCreator = User::factory()->create([
+            'name' => 'Sofía Rojas',
+            'username' => 'sofia-rojas',
+            'email' => 'sofia.rojas@example.com',
+            'bio' => 'Diseño productos claros y publicaciones útiles para equipos pequeños.',
+            'onboarding_completed_at' => now(),
+        ]);
+
+        $portugueseCreator = User::factory()->create([
+            'name' => 'Mateus Costa',
+            'username' => 'mateus-costa',
+            'email' => 'mateus.costa@example.com',
+            'bio' => 'Compartilho notas sobre produto, design e colaboração no dia a dia.',
+            'onboarding_completed_at' => now(),
+        ]);
+
         $leader = $users->first();
 
         $users->slice(1, 3)->each(function (User $user) use ($leader) {
@@ -59,6 +75,10 @@ class DatabaseSeeder extends Seeder
             [$frenchCreator, 'Cette semaine, on peaufine les derniers détails avant la sortie #launch_notes', ['launch_notes']],
             [$arabicCreator, 'نصمم تجربة أبسط وأكثر وضوحًا للمستخدمين #creator_workflow', ['creator_workflow']],
             [$arabicCreator, 'الدفعة الجديدة جاهزة تقريبًا بعد مراجعة كل التفاصيل #launch_notes', ['launch_notes']],
+            [$spanishCreator, 'Estamos ajustando los flujos para que la experiencia se sienta más natural #creator_workflow', ['creator_workflow']],
+            [$spanishCreator, 'Hoy compartimos notas breves sobre los cambios de la semana #launch_notes', ['launch_notes']],
+            [$portugueseCreator, 'Estamos refinando os detalhes para deixar a navegação mais fluida #design_systems', ['design_systems']],
+            [$portugueseCreator, 'As novidades de hoje destacam clareza, ritmo e colaboração #community_updates', ['community_updates']],
         ];
 
         foreach ($seedPosts as [$user, $body, $hashtags]) {

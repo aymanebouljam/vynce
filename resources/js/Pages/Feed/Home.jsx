@@ -29,8 +29,11 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [],
     const [threadDraft, setThreadDraft] = useState('');
     const [threadSending, setThreadSending] = useState(false);
     const threadComposerRef = useRef(null);
+    const threadMessagesViewportRef = useRef(null);
     const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
     const [recentThreads, setRecentThreads] = useState(messages);
+    const previousThreadIdRef = useRef(null);
+    const shouldAutoScrollThreadRef = useRef(true);
     const isDiscover = activeTab === 'discover';
     const [visibleSuggestions, setVisibleSuggestions] = useState(suggestions);
     const [processingSuggestionIds, setProcessingSuggestionIds] = useState([]);
@@ -57,6 +60,29 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [],
             return rightTime - leftTime;
         });
 
+    const promoteRecentThread = (thread) => {
+        if (!thread?.id) {
+            return;
+        }
+
+        setRecentThreads((current) => [thread, ...current.filter((item) => item.id !== thread.id)]);
+    };
+
+    const mergeRecentThreads = (incomingThreads, currentThreads) => {
+        if (!Array.isArray(currentThreads) || currentThreads.length === 0) {
+            return sortRecentThreads(incomingThreads);
+        }
+
+        const incomingById = new Map(incomingThreads.map((thread) => [thread.id, thread]));
+        const currentIds = new Set(currentThreads.map((thread) => thread.id));
+        const mergedCurrent = currentThreads
+            .filter((thread) => incomingById.has(thread.id))
+            .map((thread) => incomingById.get(thread.id) ?? thread);
+        const appendedIncoming = incomingThreads.filter((thread) => !currentIds.has(thread.id));
+
+        return [...mergedCurrent, ...appendedIncoming];
+    };
+
     useEffect(() => {
         setVisibleSuggestions(
             suggestions.filter((person) => !removedSuggestionIds.includes(person.id)),
@@ -64,7 +90,7 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [],
     }, [suggestions, removedSuggestionIds]);
 
     useEffect(() => {
-        setRecentThreads(sortRecentThreads(messages));
+        setRecentThreads((current) => mergeRecentThreads(messages, current));
     }, [messages]);
 
     useEffect(() => {
@@ -124,6 +150,7 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [],
             setLoadingThreadId(null);
             setThreadDraft('');
             setThreadSending(false);
+            shouldAutoScrollThreadRef.current = true;
         }
     }, [messagesOpen]);
 
@@ -138,6 +165,36 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [],
         const nextHeight = Math.min(textarea.scrollHeight, 112);
         textarea.style.height = `${Math.max(nextHeight, 36)}px`;
     }, [threadDraft, activeThread?.id, messagesOpen]);
+
+    useEffect(() => {
+        const viewport = threadMessagesViewportRef.current;
+
+        if (!viewport || !activeThread?.id) {
+            return;
+        }
+
+        const threadChanged = previousThreadIdRef.current !== activeThread.id;
+
+        if (threadChanged || shouldAutoScrollThreadRef.current) {
+            viewport.scrollTop = viewport.scrollHeight;
+            shouldAutoScrollThreadRef.current = true;
+        }
+
+        previousThreadIdRef.current = activeThread.id;
+    }, [activeThread?.id, activeThreadMessages.length]);
+
+    const handleThreadMessagesScroll = () => {
+        const viewport = threadMessagesViewportRef.current;
+
+        if (!viewport) {
+            return;
+        }
+
+        const distanceFromBottom =
+            viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
+
+        shouldAutoScrollThreadRef.current = distanceFromBottom < 80;
+    };
 
     const insertThreadEmoji = (emoji) => {
         const textarea = threadComposerRef.current;
@@ -219,6 +276,7 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [],
 
         setMessagesOpen(true);
         setLoadingThreadId(conversation.id);
+        shouldAutoScrollThreadRef.current = true;
 
         try {
             const { data } = await window.axios.get(route('messages.show', conversation.id), {
@@ -231,12 +289,8 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [],
             setActiveThread(nextConversation);
             setActiveThreadMessages(data.messages ?? []);
             setThreadDraft('');
-            setRecentThreads((current) =>
-                sortRecentThreads([
-                    nextConversation,
-                    ...current.filter((item) => item.id !== nextConversation.id),
-                ]),
-            );
+            shouldAutoScrollThreadRef.current = true;
+            promoteRecentThread(nextConversation);
         } catch {
             setActiveThread(conversation);
             setActiveThreadMessages([]);
@@ -274,11 +328,21 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [],
                 username: auth.user.username,
             },
         };
+        const optimisticConversation = {
+            ...activeThread,
+            latest_message: optimisticMessage,
+            latest_message_at: optimisticMessage.created_at,
+        };
         const previousMessages = activeThreadMessages;
+        const previousThread = activeThread;
+        const previousRecentThreads = recentThreads;
 
         setThreadDraft('');
         setThreadSending(true);
         setActiveThreadMessages((current) => [...current, optimisticMessage]);
+        setActiveThread(optimisticConversation);
+        shouldAutoScrollThreadRef.current = true;
+        promoteRecentThread(optimisticConversation);
 
         try {
             const { data } = await window.axios.post(
@@ -296,14 +360,12 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [],
             );
             const nextConversation = data.conversation ?? activeThread;
             setActiveThread(nextConversation);
-            setRecentThreads((current) =>
-                sortRecentThreads([
-                    nextConversation,
-                    ...current.filter((item) => item.id !== nextConversation.id),
-                ]),
-            );
+            shouldAutoScrollThreadRef.current = true;
+            promoteRecentThread(nextConversation);
         } catch {
             setActiveThreadMessages(previousMessages);
+            setActiveThread(previousThread);
+            setRecentThreads(previousRecentThreads);
             setThreadDraft(body);
         } finally {
             setThreadSending(false);
@@ -501,7 +563,11 @@ export default function Home({ feed, activeTab, suggestions = [], messages = [],
                                         </Link>
                                     </div>
 
-                                    <div className="app-panel-inset app-scrollbar-hidden min-h-0 flex-1 overflow-y-auto rounded-[18px] px-2.5 pb-2.5 pt-3 2xl:rounded-[20px] 2xl:px-3 2xl:pb-3 2xl:pt-4">
+                                    <div
+                                        ref={threadMessagesViewportRef}
+                                        onScroll={handleThreadMessagesScroll}
+                                        className="app-panel-inset app-scrollbar-hidden min-h-0 flex-1 overflow-y-auto rounded-[18px] px-2.5 pb-2.5 pt-3 2xl:rounded-[20px] 2xl:px-3 2xl:pb-3 2xl:pt-4"
+                                    >
                                         {loadingThreadId === activeThread.id ? (
                                             <div className="app-text-soft text-[11px] 2xl:text-[12px]">
                                                 Loading thread...
@@ -822,6 +888,8 @@ function DiscoverExperience({ posts, newPostId, targetPostId, targetCommentsOpen
                             ['english', 'English'],
                             ['french', 'French'],
                             ['arabic', 'Arabic'],
+                            ['spanish', 'Spanish'],
+                            ['portuguese', 'Portuguese'],
                             ['other', 'Other'],
                         ]}
                     />
@@ -971,6 +1039,14 @@ function guessLanguage(text) {
 
     if (/[àâçéèêëîïôûùüÿœ]/i.test(text)) {
         return 'french';
+    }
+
+    if (/[ñ¡¿áéíóúü]/i.test(text)) {
+        return 'spanish';
+    }
+
+    if (/[ãõçáàâéêíóôúü]/i.test(text)) {
+        return 'portuguese';
     }
 
     if (/[a-z]/i.test(text)) {
