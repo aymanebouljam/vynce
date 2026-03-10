@@ -1,7 +1,5 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import InputError from '@/Components/InputError';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
 
 export default function ResetPassword({ token, email }) {
@@ -12,8 +10,8 @@ export default function ResetPassword({ token, email }) {
         password_confirmation: '',
     });
 
-    const submit = (e) => {
-        e.preventDefault();
+    const submit = (event) => {
+        event.preventDefault();
 
         post(route('password.store'), {
             onFinish: () => reset('password', 'password_confirmation'),
@@ -24,61 +22,71 @@ export default function ResetPassword({ token, email }) {
         <GuestLayout>
             <Head title="Reset Password" />
 
-            <div className="mt-10 pt-6 lg:mt-16 lg:pt-0 2xl:mt-20">
-                <form onSubmit={submit}>
-                    <div>
-                        <TextInput
-                            id="email"
-                            type="email"
-                            name="email"
-                            value={data.email}
-                            className="block w-full"
-                            autoComplete="username"
-                            placeholder="Email"
-                            aria-label="Email"
-                            onChange={(e) => setData('email', e.target.value)}
-                        />
+            <div className="pt-12 lg:pt-20 2xl:pt-10">
+                <div className="mb-6 2xl:mb-7">
+                    <div className="app-text-muted text-[0.7rem] font-semibold uppercase tracking-[0.28em]">
+                        Choose a new password
+                    </div>
+                    <p className="mt-2.5 text-[13px] font-medium leading-5 text-[rgba(241,235,251,0.9)] lg:text-[0.84rem] lg:leading-6 xl:text-lg xl:leading-7">
+                        Pick a strong password to get back into your account.
+                    </p>
+                </div>
 
+                <form onSubmit={submit} className="space-y-4 2xl:space-y-5">
+                    <div>
+                        <input
+                            type="email"
+                            value={data.email}
+                            autoFocus
+                            autoComplete="username"
+                            onChange={(event) => setData('email', event.target.value)}
+                            className="field w-full px-3.5 py-2.5 text-[13px] 2xl:px-4 2xl:py-3 2xl:text-sm"
+                            placeholder="Email"
+                        />
                         <InputError message={errors.email} className="mt-2" />
                     </div>
 
-                    <div className="mt-4">
-                        <TextInput
-                            id="password"
+                    <div>
+                        <input
                             type="password"
-                            name="password"
                             value={data.password}
-                            className="block w-full"
                             autoComplete="new-password"
-                            isFocused={true}
+                            onChange={(event) => setData('password', event.target.value)}
+                            className="field w-full px-3.5 py-2.5 text-[13px] 2xl:px-4 2xl:py-3 2xl:text-sm"
                             placeholder="New password"
-                            aria-label="New password"
-                            onChange={(e) => setData('password', e.target.value)}
                         />
-
                         <InputError message={errors.password} className="mt-2" />
                     </div>
 
-                    <div className="mt-4">
-                        <TextInput
+                    <div>
+                        <input
                             type="password"
-                            id="password_confirmation"
-                            name="password_confirmation"
                             value={data.password_confirmation}
-                            className="block w-full"
                             autoComplete="new-password"
+                            onChange={(event) =>
+                                setData('password_confirmation', event.target.value)
+                            }
+                            className="field w-full px-3.5 py-2.5 text-[13px] 2xl:px-4 2xl:py-3 2xl:text-sm"
                             placeholder="Confirm new password"
-                            aria-label="Confirm new password"
-                            onChange={(e) => setData('password_confirmation', e.target.value)}
                         />
-
                         <InputError message={errors.password_confirmation} className="mt-2" />
                     </div>
 
-                    <div className="mt-4 flex items-center justify-end">
-                        <PrimaryButton className="ms-4" disabled={processing}>
+                    <div className="space-y-3">
+                        <button
+                            type="submit"
+                            disabled={processing}
+                            className="app-button-primary w-full rounded-full px-4 py-2.5 text-[13px] font-semibold disabled:opacity-60 2xl:px-5 2xl:py-3 2xl:text-sm"
+                        >
                             Reset Password
-                        </PrimaryButton>
+                        </button>
+
+                        <Link
+                            href={route('login')}
+                            className="app-link app-text-muted block text-center text-[13px] 2xl:text-sm"
+                        >
+                            Back to login
+                        </Link>
                     </div>
                 </form>
             </div>
