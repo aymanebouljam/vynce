@@ -22,13 +22,17 @@ PHP_FILES=$(filter_files '\.php$')
 BIOME_FILES=$(filter_files '\.(js|jsx|ts|tsx|json|jsonc|css)$')
 
 if [ -n "$PHP_FILES" ]; then
-    if [ ! -x vendor/bin/pint ]; then
-        echo "pre-commit: vendor/bin/pint is not available."
+    if command -v cmd.exe >/dev/null 2>&1; then
+        PINT_COMMAND="cmd.exe /c vendor\\bin\\pint.bat"
+    elif command -v php >/dev/null 2>&1; then
+        PINT_COMMAND="php vendor/bin/pint"
+    else
+        echo "pre-commit: php is not available."
         exit 1
     fi
 
     echo "Running Pint on staged PHP files..."
-    vendor/bin/pint $PHP_FILES
+    $PINT_COMMAND $PHP_FILES
     git add $PHP_FILES
 fi
 
