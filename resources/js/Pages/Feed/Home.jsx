@@ -1033,20 +1033,37 @@ function inferTopicsFromPost(post) {
 }
 
 function guessLanguage(text) {
+    const normalized = text.toLowerCase();
+
     if (/[\u0600-\u06FF]/.test(text)) {
         return 'arabic';
     }
 
-    if (/[àâçéèêëîïôûùüÿœ]/i.test(text)) {
-        return 'french';
+    if (
+        hasLanguageSignal(normalized, [
+            /\b(?:estamos|navega(?:ç|c)ão|colabora(?:ç|c)ão|refinando|detalhes|fluida|novidades|hoje)\b/i,
+            /[ãõ]/i,
+        ])
+    ) {
+        return 'portuguese';
     }
 
-    if (/[ñ¡¿áéíóúü]/i.test(text)) {
+    if (
+        hasLanguageSignal(normalized, [
+            /\b(?:estamos|hoy|compartimos|cambios|semana|natural|notas)\b/i,
+            /[ñ¡¿áéíóúü]/i,
+        ])
+    ) {
         return 'spanish';
     }
 
-    if (/[ãõçáàâéêíóôúü]/i.test(text)) {
-        return 'portuguese';
+    if (
+        hasLanguageSignal(normalized, [
+            /\b(?:nous|construit|expérience|peaufine|sortie|détails|calme|utile)\b/i,
+            /[àâèêëîïôùûœ]/i,
+        ])
+    ) {
+        return 'french';
     }
 
     if (/[a-z]/i.test(text)) {
@@ -1054,4 +1071,8 @@ function guessLanguage(text) {
     }
 
     return 'other';
+}
+
+function hasLanguageSignal(text, patterns) {
+    return patterns.some((pattern) => pattern.test(text));
 }
