@@ -1050,20 +1050,20 @@ function guessLanguage(text) {
 
     if (
         hasLanguageSignal(normalized, [
-            /\b(?:estamos|hoy|compartimos|cambios|semana|natural|notas)\b/i,
-            /[ñ¡¿áéíóúü]/i,
+            /\b(?:nous|construit|expérience|peaufine|sortie|détails|calme|utile)\b/i,
+            /[àâèêëîïôûùœ]/i,
         ])
     ) {
-        return 'spanish';
+        return 'french';
     }
 
     if (
         hasLanguageSignal(normalized, [
-            /\b(?:nous|construit|expérience|peaufine|sortie|détails|calme|utile)\b/i,
-            /[àâèêëîïôùûœ]/i,
+            /\b(?:estamos|hoy|compartimos|cambios|semana|natural|notas)\b/i,
+            /[ñ¡¿áíóúü]/i,
         ])
     ) {
-        return 'french';
+        return 'spanish';
     }
 
     if (/[a-z]/i.test(text)) {
