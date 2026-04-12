@@ -61,6 +61,7 @@ export default function AppShell({ children, title, sidebar }) {
     );
     const [notificationsLoadingMore, setNotificationsLoadingMore] = useState(false);
     const [notificationConfirm, setNotificationConfirm] = useState(null);
+    const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
     const notificationsModalCloseable = !notificationConfirm;
     const sidebarMenuCount = notificationsCount + pendingRequestsCount + unreadMessagesCount;
 
@@ -297,6 +298,17 @@ export default function AppShell({ children, title, sidebar }) {
     const closeNotifications = () => {
         setNotificationsOpen(false);
         setNotificationConfirm(null);
+    };
+
+    const closeLogoutConfirm = () => {
+        setLogoutConfirmOpen(false);
+    };
+
+    const confirmLogout = () => {
+        router.post(route('logout'), {
+            preserveScroll: true,
+            onFinish: closeLogoutConfirm,
+        });
     };
 
     const visitNotification = (event, href) => {
@@ -583,10 +595,9 @@ export default function AppShell({ children, title, sidebar }) {
                             </div>
 
                             <div className="mt-auto space-y-3 pt-1 2xl:space-y-4 2xl:pt-2">
-                                <Link
-                                    href={route('logout')}
-                                    method="post"
-                                    as="button"
+                                <button
+                                    type="button"
+                                    onClick={() => setLogoutConfirmOpen(true)}
                                     className="app-button-secondary app-button-secondary--logout app-panel-inset flex w-full items-center gap-2.5 rounded-[18px] px-3.5 py-2.5 text-left text-[13px] 2xl:gap-3 2xl:rounded-2xl 2xl:px-4 2xl:py-3 2xl:text-sm"
                                 >
                                     <LogOut
@@ -594,7 +605,7 @@ export default function AppShell({ children, title, sidebar }) {
                                         strokeWidth={1.8}
                                     />
                                     Log out
-                                </Link>
+                                </button>
                             </div>
                         </div>
                     </aside>
@@ -612,6 +623,35 @@ export default function AppShell({ children, title, sidebar }) {
                     )}
                 </div>
             </div>
+
+            <Modal show={logoutConfirmOpen} onClose={closeLogoutConfirm} maxWidth="md" centered>
+                <div className="space-y-4 p-4 2xl:space-y-5 2xl:p-6">
+                    <div className="space-y-1.5">
+                        <div className="text-[15px] font-semibold 2xl:text-lg">
+                            Log out of Vynce?
+                        </div>
+                        <div className="app-text-soft text-[12px] leading-5 2xl:text-sm 2xl:leading-6">
+                            You’ll need to sign in again to keep using your account.
+                        </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                        <button
+                            type="button"
+                            onClick={closeLogoutConfirm}
+                            className="app-button-secondary rounded-full px-2.5 py-1 text-[11px] font-medium normal-case tracking-normal 2xl:px-3 2xl:py-1.5 2xl:text-[12px]"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            onClick={confirmLogout}
+                            className="app-button-primary rounded-full px-2.5 py-1 text-[11px] font-medium normal-case tracking-normal 2xl:px-3 2xl:py-1.5 2xl:text-[12px]"
+                        >
+                            Log out
+                        </button>
+                    </div>
+                </div>
+            </Modal>
 
             <Modal
                 show={sidebarNavOpen}
