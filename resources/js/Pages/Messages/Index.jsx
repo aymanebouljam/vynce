@@ -152,7 +152,22 @@ export default function Index({ conversations, activeConversation, contacts = []
     }, [conversations]);
 
     useEffect(() => {
-        setLocalMessages(messages);
+        setLocalMessages((current) => {
+            const optimisticMessages = current.filter((message) =>
+                String(message.id).startsWith('temp-'),
+            );
+
+            if (optimisticMessages.length === 0) {
+                return messages;
+            }
+
+            const serverMessageIds = new Set(messages.map((message) => message.id));
+
+            return [
+                ...messages,
+                ...optimisticMessages.filter((message) => !serverMessageIds.has(message.id)),
+            ];
+        });
     }, [messages]);
 
     useEffect(() => {
