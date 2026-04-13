@@ -34,7 +34,7 @@ import { clearProfileDraft, readProfileDraft } from '@/utils/profileDraft';
 
 export default function Show({
     profile: initialProfile,
-    relationship,
+    relationship: initialRelationship,
     feed,
     suggestions = [],
     trends = [],
@@ -42,11 +42,17 @@ export default function Show({
     const page = usePage();
     const { auth, errors, flash } = page.props;
     const pageUrl = page.url;
-    const followForm = useForm({});
     const isOwnProfile = auth.user.id === initialProfile.id;
     const draftProfile =
         typeof window !== 'undefined' && isOwnProfile ? readProfileDraft(initialProfile.id) : null;
     const profile = draftProfile ? { ...initialProfile, ...draftProfile } : initialProfile;
+    const [relationship, setRelationship] = useState(initialRelationship);
+    const [relationshipActionPending, setRelationshipActionPending] = useState(false);
+    const [profileCounts, setProfileCounts] = useState({
+        followers: initialProfile.followers_count ?? 0,
+        following: initialProfile.following_count ?? 0,
+        friends: initialProfile.friends_count ?? 0,
+    });
     const newPostId = flash?.new_post_id;
     const [targetPostId, setTargetPostId] = useState(null);
     const [targetCommentsOpen, setTargetCommentsOpen] = useState(false);
@@ -63,8 +69,31 @@ export default function Show({
     const canViewPosts = profile.can_view_posts ?? true;
     const isPrivateProfileLocked = profile.is_private && !isOwnProfile && !canViewPosts;
     const isPrivateProfileLockedForViewer = profile.is_private_for_viewer ?? isPrivateProfileLocked;
+    const profileView = {
+        ...profile,
+        followers_count: profileCounts.followers,
+        following_count: profileCounts.following,
+        friends_count: profileCounts.friends,
+    };
 
     useLiveInertiaReload(['feed', 'suggestions'], 5000);
+
+    useEffect(() => {
+        setRelationship(initialRelationship);
+    }, [initialRelationship]);
+
+    useEffect(() => {
+        setProfileCounts({
+            followers: initialProfile.followers_count ?? 0,
+            following: initialProfile.following_count ?? 0,
+            friends: initialProfile.friends_count ?? 0,
+        });
+    }, [
+        initialProfile.followers_count,
+        initialProfile.following_count,
+        initialProfile.friends_count,
+        initialProfile.id,
+    ]);
 
     useEffect(() => {
         setVisibleSuggestions(
@@ -112,27 +141,136 @@ export default function Show({
         clearProfileDraft(initialProfile.id);
     }, [draftProfile, initialProfile.id, initialProfile.username, isOwnProfile, profile]);
 
-    const submitFollow = () => {
-        if (relationship.is_following || relationship.has_pending_request) {
-            followForm.delete(route('users.unfollow', profile.id));
+    const runRelationshipMutation = async ({ nextRelationship, nextProfileCounts, request }) => {
+        if (relationshipActionPending) {
             return;
         }
 
-        followForm.post(route('users.follow', profile.id));
+        const previousRelationship = relationship;
+        const previousProfileCounts = profileCounts;
+
+        setRelationship(nextRelationship);
+        if (nextProfileCounts) {
+            setProfileCounts(nextProfileCounts);
+        }
+        setRelationshipActionPending(true);
+
+        try {
+            await request();
+        } catch {
+            setRelationship(previousRelationship);
+            setProfileCounts(previousProfileCounts);
+        } finally {
+            setRelationshipActionPending(false);
+        }
     };
 
-    const submitFriendRequest = () => {
+    const submitFollow = async () => {
+        if (relationship.is_following || relationship.has_pending_request) {
+            await runRelationshipMutation({
+                nextRelationship: {
+                    ...relationship,
+                    is_following: false,
+                    has_pending_request: false,
+                },
+                nextProfileCounts: relationship.is_following
+                    ? {
+                          ...profileCounts,
+                          followers: Math.max(0, profileCounts.followers - 1),
+                      }
+                    : null,
+                request: () =>
+                    window.axios.delete(route('users.unfollow', profile.id), {
+                        headers: {
+                            Accept: 'application/json',
+                        },
+                    }),
+            });
+            return;
+        }
+
+        await runRelationshipMutation({
+            nextRelationship: {
+                ...relationship,
+                is_following: true,
+                has_pending_request: false,
+            },
+            nextProfileCounts: profile.is_private
+                ? null
+                : {
+                      ...profileCounts,
+                      followers: profileCounts.followers + 1,
+                  },
+            request: () =>
+                window.axios.post(route('users.follow', profile.id), null, {
+                    headers: {
+                        Accept: 'application/json',
+                    },
+                }),
+        });
+    };
+
+    const submitFriendRequest = async () => {
         if (relationship.is_friend || relationship.has_pending_friend_request) {
-            followForm.delete(route('users.friend-requests.destroy', profile.id));
+            await runRelationshipMutation({
+                nextRelationship: {
+                    ...relationship,
+                    is_friend: false,
+                    has_pending_friend_request: false,
+                    has_incoming_friend_request: false,
+                },
+                nextProfileCounts: relationship.is_friend
+                    ? {
+                          ...profileCounts,
+                          friends: Math.max(0, profileCounts.friends - 1),
+                      }
+                    : null,
+                request: () =>
+                    window.axios.delete(route('users.friend-requests.destroy', profile.id), {
+                        headers: {
+                            Accept: 'application/json',
+                        },
+                    }),
+            });
             return;
         }
 
         if (relationship.has_incoming_friend_request) {
-            followForm.post(route('users.friend-requests.accept', profile.id));
+            await runRelationshipMutation({
+                nextRelationship: {
+                    ...relationship,
+                    is_friend: true,
+                    has_pending_friend_request: false,
+                    has_incoming_friend_request: false,
+                },
+                nextProfileCounts: {
+                    ...profileCounts,
+                    friends: profileCounts.friends + 1,
+                },
+                request: () =>
+                    window.axios.post(route('users.friend-requests.accept', profile.id), null, {
+                        headers: {
+                            Accept: 'application/json',
+                        },
+                    }),
+            });
             return;
         }
 
-        followForm.post(route('users.friend-requests.store', profile.id));
+        await runRelationshipMutation({
+            nextRelationship: {
+                ...relationship,
+                has_pending_friend_request: true,
+                has_incoming_friend_request: false,
+            },
+            nextProfileCounts: null,
+            request: () =>
+                window.axios.post(route('users.friend-requests.store', profile.id), null, {
+                    headers: {
+                        Accept: 'application/json',
+                    },
+                }),
+        });
     };
 
     const openPreview = (kind) => {
@@ -420,19 +558,19 @@ export default function Show({
                                     href={route('users.friends', profile.username)}
                                     className="app-link"
                                 >
-                                    {profile.friends_count ?? 0} friends
+                                    {profileView.friends_count ?? 0} friends
                                 </Link>
                                 <Link
                                     href={route('users.followers', profile.username)}
                                     className="app-link"
                                 >
-                                    {profile.followers_count ?? 0} followers
+                                    {profileView.followers_count ?? 0} followers
                                 </Link>
                                 <Link
                                     href={route('users.following', profile.username)}
                                     className="app-link"
                                 >
-                                    {profile.following_count ?? 0} following
+                                    {profileView.following_count ?? 0} following
                                 </Link>
                                 <span>{profile.posts_count ?? 0} posts</span>
                             </div>
@@ -461,6 +599,7 @@ export default function Show({
                                 <button
                                     type="button"
                                     onClick={submitFriendRequest}
+                                    disabled={relationshipActionPending}
                                     className="app-button-primary inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[13px] font-semibold 2xl:px-5 2xl:py-3 2xl:text-sm"
                                     aria-label={relationshipLabel}
                                     title={relationshipLabel}
@@ -476,6 +615,7 @@ export default function Show({
                                                 <Dropdown.Trigger>
                                                     <button
                                                         type="button"
+                                                        disabled={relationshipActionPending}
                                                         className="app-button-primary inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[13px] font-semibold 2xl:px-5 2xl:py-3 2xl:text-sm"
                                                         aria-label={relationshipLabel}
                                                         title={relationshipLabel}
@@ -496,24 +636,25 @@ export default function Show({
                                                     width="40"
                                                     contentClasses="app-panel-inset rounded-[18px] p-1.5 2xl:rounded-[20px]"
                                                 >
-                                                    <Dropdown.Link
-                                                        href={route('users.unfollow', profile.id)}
-                                                        method="delete"
-                                                        as="button"
-                                                        className="!flex !items-center !gap-2 !rounded-[14px] !bg-transparent !px-4 !py-2.5 !text-[13px] !text-white hover:!bg-[var(--vynce-surface-muted)] focus:!bg-[var(--vynce-surface-muted)] 2xl:!text-sm"
+                                                    <button
+                                                        type="button"
+                                                        onClick={submitFollow}
+                                                        disabled={relationshipActionPending}
+                                                        className="flex w-full items-center gap-2 rounded-[14px] bg-transparent px-4 py-2.5 text-[13px] text-white transition hover:bg-[var(--vynce-surface-muted)] focus:bg-[var(--vynce-surface-muted)] focus:outline-none disabled:opacity-60 2xl:text-sm"
                                                     >
                                                         <UserRoundX
                                                             className="h-4 w-4"
                                                             strokeWidth={1.9}
                                                         />
                                                         Unfollow
-                                                    </Dropdown.Link>
+                                                    </button>
                                                 </Dropdown.Content>
                                             </Dropdown>
                                         ) : (
                                             <button
                                                 type="button"
                                                 onClick={submitFollow}
+                                                disabled={relationshipActionPending}
                                                 className="app-button-primary inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[13px] font-semibold 2xl:px-5 2xl:py-3 2xl:text-sm"
                                                 aria-label={relationshipLabel}
                                                 title={relationshipLabel}
@@ -531,6 +672,7 @@ export default function Show({
                                                 <Dropdown.Trigger>
                                                     <button
                                                         type="button"
+                                                        disabled={relationshipActionPending}
                                                         className="app-button-secondary inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[13px] font-semibold 2xl:px-5 2xl:py-3 2xl:text-sm"
                                                         aria-label={friendshipLabel}
                                                         title={friendshipLabel}
@@ -551,27 +693,25 @@ export default function Show({
                                                     width="40"
                                                     contentClasses="app-panel-inset rounded-[18px] p-1.5 2xl:rounded-[20px]"
                                                 >
-                                                    <Dropdown.Link
-                                                        href={route(
-                                                            'users.friend-requests.destroy',
-                                                            profile.id,
-                                                        )}
-                                                        method="delete"
-                                                        as="button"
-                                                        className="!flex !items-center !gap-2 !rounded-[14px] !bg-transparent !px-4 !py-2.5 !text-[13px] !text-white hover:!bg-[var(--vynce-surface-muted)] focus:!bg-[var(--vynce-surface-muted)] 2xl:!text-sm"
+                                                    <button
+                                                        type="button"
+                                                        onClick={submitFriendRequest}
+                                                        disabled={relationshipActionPending}
+                                                        className="flex w-full items-center gap-2 rounded-[14px] bg-transparent px-4 py-2.5 text-[13px] text-white transition hover:bg-[var(--vynce-surface-muted)] focus:bg-[var(--vynce-surface-muted)] focus:outline-none disabled:opacity-60 2xl:text-sm"
                                                     >
                                                         <BadgeX
                                                             className="h-4 w-4"
                                                             strokeWidth={1.9}
                                                         />
                                                         Unfriend
-                                                    </Dropdown.Link>
+                                                    </button>
                                                 </Dropdown.Content>
                                             </Dropdown>
                                         ) : (
                                             <button
                                                 type="button"
                                                 onClick={submitFriendRequest}
+                                                disabled={relationshipActionPending}
                                                 className="app-button-secondary inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[13px] font-semibold 2xl:px-5 2xl:py-3 2xl:text-sm"
                                                 aria-label={friendshipLabel}
                                                 title={friendshipLabel}
