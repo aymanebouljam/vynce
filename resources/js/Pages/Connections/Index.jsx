@@ -196,13 +196,6 @@ export default function Index({
                     Accept: 'application/json',
                 },
             })
-            .then(() => {
-                router.reload({
-                    only: ['connections'],
-                    preserveScroll: true,
-                    preserveState: true,
-                });
-            })
             .catch(() => {
                 setSourceConnections(previousSourceConnections);
                 setFilteredConnections(previousFilteredConnections);
