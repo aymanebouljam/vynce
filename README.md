@@ -2,6 +2,14 @@
 
 Vynce is a modern social platform built with Laravel and Inertia. It focuses on core community features such as publishing posts, following and connecting with people, direct messaging, notifications, and profile management.
 
+## Project Demo
+
+<p>Click the preview below to watch the demo. Use Ctrl + Click or open in a new tab if needed.</p>
+
+<a href="https://youtu.be/fe_dRFOq5Y8">
+  <img src="https://img.youtube.com/vi/fe_dRFOq5Y8/maxresdefault.jpg" alt="Project Demo" width="100%" />
+</a>
+
 ## Overview
 
 The application is designed as a clean, responsive web experience with a React frontend and a Laravel backend. The UI is driven through Inertia, which keeps the app fast and cohesive while preserving a familiar single-page feel.
@@ -17,19 +25,6 @@ The application is designed as a clean, responsive web experience with a React f
 - **Code Quality:** Biome, Laravel Pint
 - **Testing:** PHPUnit
 
-## Screenshots
-
-### Feed
-![Feed screenshot](resources/screenshots/feed2.png)
-
-### Profile
-![Profile screenshot](resources/screenshots/profile.png)
-
-### Messages
-![Messages screenshot](resources/screenshots/messages.png)
-
-### Registration
-![Registration screenshot](resources/screenshots/register.png)
 
 ## Getting Started
 
