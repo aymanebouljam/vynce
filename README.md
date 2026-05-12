@@ -1,6 +1,6 @@
 # Vynce
 
-Vynce is a modern social platform built with Laravel and Inertia. It focuses on core community features such as publishing posts, following and connecting with people, direct messaging, notifications, and profile management.
+Vynce is a modern social platform built with Laravel and Inertia, designed around meaningful online interaction. Users can publish posts, follow and connect with others, send direct messages, manage notifications, and customize their profiles in one organized experience.
 
 ## Project Demo
 
