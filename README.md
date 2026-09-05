@@ -8,7 +8,7 @@ Vynce is a modern social platform built with Laravel and Inertia, designed aroun
 
 ## Overview
 
-The application is designed as a clean, responsive web experience with a React frontend and a Laravel backend. The UI is driven through Inertia, which keeps the app fast and cohesive while preserving a familiar single-page feel.
+The application delivers a clean, responsive web experience with a React frontend and Laravel backend. Inertia connects both layers, providing a fast, cohesive interface with a familiar single-page application feel.
 
 ## Tech Stack
 
